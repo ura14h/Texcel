@@ -2,7 +2,7 @@
 
 Texcel is a desktop app for editing the tables in Markdown files the way you would edit a spreadsheet. It also opens CSV/TSV files and imports tables from XLSX and HTML files into Markdown.
 
-Texcel is written in Rust with [egui](https://github.com/emilk/egui) and runs on macOS, Windows, and Linux. Version: 0.1.0.
+Texcel is written in Rust with [egui](https://github.com/emilk/egui) and runs on macOS, Windows, and Linux. Version: 0.1.1.
 
 [日本語での概要](#日本語での概要)
 
@@ -70,8 +70,8 @@ Each script builds the release binary itself with an explicit `--target`, so eve
 Pushing a tag that is a semantic version (`v1.2.3`, `1.2.3`, or with a pre-release part such as `v1.2.3-rc.1`) runs `.github/workflows/package.yml`. The tag must match the version in `Cargo.toml` and `packaging/macos/Info.plist`; `tools/release-version.sh` checks this. The workflow builds `Texcel-mac-<version>.zip` and `Texcel-windows-<version>.zip` on macOS and attaches them to a GitHub Release named "Texcel <version>" with generated release notes. A tag with a pre-release part makes a pre-release, and re-running the workflow replaces the zips on the existing release. Each zip holds the app, its `licenses` folder, and `docs/user-manual.en.md` and `docs/user-manual.ja.md`. To build the same zips locally:
 
 ```sh
-sh tools/package-zip.sh mac 0.1.0
-sh tools/package-zip.sh windows 0.1.0
+sh tools/package-zip.sh mac 0.1.1
+sh tools/package-zip.sh windows 0.1.1
 ```
 
 The zips are written to `target/dist/`.
@@ -90,7 +90,7 @@ The zips are written to `target/dist/`.
 
 ## Status
 
-Texcel 0.1.0 is an early release. Automated tests cover editing, formulas, file formats, saving, and undo. It has been built and run on macOS (arm64). Windows and Linux builds, real Japanese IME input on each OS, and screen readers have not been checked yet. See section 12 of [docs/detail-spec.md](docs/detail-spec.md) for details.
+Texcel 0.1.1 is an early release. Automated tests cover editing, formulas, file formats, saving, and undo. It has been built and run on macOS (arm64). Windows and Linux builds, real Japanese IME input on each OS, and screen readers have not been checked yet. See section 12 of [docs/detail-spec.md](docs/detail-spec.md) for details.
 
 ## License
 
