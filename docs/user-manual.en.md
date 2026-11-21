@@ -1,6 +1,6 @@
 # Texcel User Manual
 
-Version: 0.1.1
+Version: 0.2.0
 
 This manual covers starting Texcel from its release package, editing tables, and saving them. [日本語版](user-manual.ja.md)
 
@@ -43,7 +43,7 @@ Texcel-mac-<version>/
 1. Copy `Texcel.app` to the Applications folder.
 2. Double-click `Texcel.app`.
 
-This version is for Macs with Apple silicon (M1 or later).
+This version runs on Macs with Apple silicon (M1 or later) and on Intel Macs.
 
 This package is not notarized. If you copied or downloaded it from another Mac, macOS may say that it cannot open Texcel the first time. Open System Settings > Privacy & Security, select **Open Anyway** next to the message about Texcel, and start Texcel again.
 

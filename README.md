@@ -2,7 +2,7 @@
 
 Texcel is a desktop app for editing the tables in Markdown files the way you would edit a spreadsheet. It also opens CSV/TSV files and imports tables from XLSX and HTML files into Markdown.
 
-Texcel is written in Rust with [egui](https://github.com/emilk/egui) and runs on macOS, Windows, and Linux. Version: 0.1.1.
+Texcel is written in Rust with [egui](https://github.com/emilk/egui) and runs on macOS, Windows, and Linux. Version: 0.2.0.
 
 [日本語での概要](#日本語での概要)
 
@@ -58,20 +58,20 @@ cargo run --locked --features icon-converter --bin texcel-icon-convert
 
 | Platform | Command | Output |
 | --- | --- | --- |
-| macOS | `sh tools/package-macos.sh` | `target/package/mac/Texcel.app`, ad hoc signed for local use, with `licenses` beside it |
+| macOS | `sh tools/package-macos.sh` | `target/package/mac/Texcel.app`, a universal binary for Apple silicon and Intel Macs, ad hoc signed for local use, with `licenses` beside it |
 | Windows | `.\tools\package-windows.ps1` | `target/package/windows/Texcel.exe` with `licenses` beside it |
 | Windows (from macOS or Linux) | `sh tools/package-windows.sh` | the same folder, cross-built for `x86_64-pc-windows-gnu` with MinGW-w64 |
 | Linux | `sh tools/package-linux.sh` | `target/package/linux/usr`, a freedesktop tree with the desktop entry, icon, and `usr/share/doc/texcel/licenses` |
 
-Each script builds the release binary itself with an explicit `--target`, so every release build lands in `target/<target-triple>/release` (for example `target/aarch64-apple-darwin/release` and `target/x86_64-pc-windows-gnu/release`); everyday `cargo build` and `cargo test` still use `target/debug`. `package-windows.sh` needs `x86_64-w64-mingw32-gcc` and `x86_64-w64-mingw32-windres` (for example from Homebrew's `mingw-w64`) and adds the Rust target with `rustup` when it is missing. On Windows, the build script embeds the icon using `rc.exe` (MSVC) or `windres` (GNU); set `RC` to use another resource compiler. Public distribution needs real code signing (and notarization on macOS).
+Each script builds the release binary itself with an explicit `--target`, so every release build lands in `target/<target-triple>/release` (for example `target/aarch64-apple-darwin/release` and `target/x86_64-pc-windows-gnu/release`); everyday `cargo build` and `cargo test` still use `target/debug`. `package-macos.sh` builds both `aarch64-apple-darwin` and `x86_64-apple-darwin`, joins them with `lipo`, and adds either Rust target with `rustup` when it is missing. `package-windows.sh` needs `x86_64-w64-mingw32-gcc` and `x86_64-w64-mingw32-windres` (for example from Homebrew's `mingw-w64`) and adds the Rust target with `rustup` when it is missing. On Windows, the build script embeds the icon using `rc.exe` (MSVC) or `windres` (GNU); set `RC` to use another resource compiler. Public distribution needs real code signing (and notarization on macOS).
 
 ### Release zips
 
 Pushing a tag that is a semantic version (`v1.2.3`, `1.2.3`, or with a pre-release part such as `v1.2.3-rc.1`) runs `.github/workflows/package.yml`. The tag must match the version in `Cargo.toml` and `packaging/macos/Info.plist`; `tools/release-version.sh` checks this. The workflow builds `Texcel-mac-<version>.zip` and `Texcel-windows-<version>.zip` on macOS and attaches them to a GitHub Release named "Texcel <version>" with generated release notes. A tag with a pre-release part makes a pre-release, and re-running the workflow replaces the zips on the existing release. Each zip holds the app, its `licenses` folder, and `docs/user-manual.en.md` and `docs/user-manual.ja.md`. To build the same zips locally:
 
 ```sh
-sh tools/package-zip.sh mac 0.1.1
-sh tools/package-zip.sh windows 0.1.1
+sh tools/package-zip.sh mac 0.2.0
+sh tools/package-zip.sh windows 0.2.0
 ```
 
 The zips are written to `target/dist/`.
@@ -90,7 +90,7 @@ The zips are written to `target/dist/`.
 
 ## Status
 
-Texcel 0.1.1 is an early release. Automated tests cover editing, formulas, file formats, saving, and undo. It has been built and run on macOS (arm64). Windows and Linux builds, real Japanese IME input on each OS, and screen readers have not been checked yet. See section 12 of [docs/detail-spec.md](docs/detail-spec.md) for details.
+Texcel 0.2.0 is an early release. Automated tests cover editing, formulas, file formats, saving, and undo. It has been built and run on macOS (arm64); the Intel part of the universal macOS app has only been started under Rosetta 2, not on an Intel Mac. Windows and Linux builds, real Japanese IME input on each OS, and screen readers have not been checked yet. See section 12 of [docs/detail-spec.md](docs/detail-spec.md) for details.
 
 ## License
 
