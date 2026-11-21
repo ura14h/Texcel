@@ -282,7 +282,8 @@ fn install_winit_method(
     let added = unsafe {
         objc2::ffi::class_addMethod(winit_ptr, selector.as_ptr(), implementation, encoding)
     };
-    if !added {
+    // BOOL's underlying Rust type varies by arch (bool on aarch64, i8 elsewhere); normalize it.
+    if !objc2::runtime::Bool::from_raw(added).as_bool() {
         panic!("could not add Texcel's file-open handler to winit's delegate");
     }
     let installed = unsafe { objc2::ffi::class_getInstanceMethod(winit_ptr, selector.as_ptr()) };
@@ -341,7 +342,8 @@ fn install_terminate_method(winit_class: &'static AnyClass) {
     let added = unsafe {
         objc2::ffi::class_addMethod(winit_ptr, selector.as_ptr(), implementation, encoding)
     };
-    if !added {
+    // BOOL's underlying Rust type varies by arch (bool on aarch64, i8 elsewhere); normalize it.
+    if !objc2::runtime::Bool::from_raw(added).as_bool() {
         panic!("could not add Texcel's quit handler to winit's delegate");
     }
 
