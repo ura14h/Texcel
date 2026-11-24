@@ -453,7 +453,7 @@ Texcel本体のコードはMITライセンスとし、`vendor/` の2ライブラ
 | --- | --- | --- |
 | 自動テスト | egui_kittestによる本番 `TexcelApp` の操作回帰、形式アダプター、数式、保存失敗、Undo、翻訳キーの日英一致 | GPU描画を伴う画像比較（WGPUの使える環境でのみ実行） |
 | macOS | arm64とx86_64のrelease build、`lipo` によるUniversal Binaryの `.app` の作成とアドホック署名、arm64での起動・終了、複数ウィンドウ、最近使ったファイル、x86_64版がRosetta 2上で起動直後に異常終了しないこと | Intel Mac実機での起動・描画・操作、実機の日本語IMEによる連続入力、VoiceOver |
-| Windows・Linux | パッケージ用スクリプトとWindowsリソースの生成手順、macOS上の `package-windows.sh` による `x86_64-pc-windows-gnu` のrelease buildと `Texcel.exe` の生成 | Windows実機での起動、IME、DPI、Linuxのビルドとパッケージの実行 |
+| Windows・Linux | パッケージ用スクリプトとWindowsリソースの生成手順、macOS上の `package-windows.sh` による `x86_64-pc-windows-gnu` のrelease buildと `Texcel.exe` の生成、その `Texcel.exe` のWindows実機での起動と、ウィンドウへドロップしたMarkdown・XLSXの読み込みで異常終了しないこと、読み込みで開いた新しいウィンドウでのネイティブメニューとショートカットの操作 | Windows実機でのIME、DPI、Linuxのビルドとパッケージの実行 |
 | 互換性 | `samples/` の入力によるCSV・Markdownのバイト保持とXLSX・HTMLの取り込み | Excel実機で作成した多様なブック、XLSXの全仕様、全Excel関数 |
 
 ## 13. 参照資料
