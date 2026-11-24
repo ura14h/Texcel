@@ -74,7 +74,16 @@ impl GridViewportFrame<'_> {
                 let width = self.grid.layout.column_width_pixels(*column) as f32;
                 let height = self.row_layout.row_height(*row);
                 let rect = Rect::from_min_size(Pos2::new(x, y), Vec2::new(width, height));
-                let selected_edges = selected_range.map_or([false; 4], |(start, end)| {
+                // While the fill handle is dragged, outline the range it would fill.
+                let outline_range = match self.fill_preview {
+                    Some((start, end)) => (cell_address.row >= start.row
+                        && cell_address.row <= end.row
+                        && cell_address.column >= start.column
+                        && cell_address.column <= end.column)
+                        .then_some((start, end)),
+                    None => selected_range.copied(),
+                };
+                let selected_edges = outline_range.map_or([false; 4], |(start, end)| {
                     [
                         cell_address.row == start.row,
                         cell_address.row == end.row,

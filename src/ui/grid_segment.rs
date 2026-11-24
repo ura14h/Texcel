@@ -29,7 +29,8 @@ pub(super) struct CellSegment<'s> {
     /// True when the cell holds a number or text that calculations read as a number.
     pub(super) semantic_numeric_input: bool,
     pub(super) selected: bool,
-    /// Which sides of the selection outline pass along this cell: top, bottom, left, right.
+    /// Which sides of the selection outline, or of a fill-handle preview, pass along this
+    /// cell: top, bottom, left, right.
     pub(super) selected_edges: [bool; 4],
     /// Which frozen pane holds the cell, used in the cell's widget id.
     pub(super) index: usize,
@@ -399,7 +400,6 @@ pub(super) fn draw_grid_cell_segment(
     grid_segment_paint::paint_selection_overlay(
         painter,
         rect,
-        selected,
         selected_edges,
         fill_handle_rect,
         &palette,

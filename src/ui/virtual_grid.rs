@@ -305,9 +305,13 @@ pub(super) fn draw_virtual_grid(
                 render_cells,
                 pane_zones,
                 selected_ranges,
+                fill_preview: None,
                 visuals,
                 palette,
             };
+            frame.fill_preview = frame
+                .fill_handle_preview(grid_ui)
+                .map(CellRange::normalized);
             frame.draw_column_headers(grid_ui, &painter, &mut outcome);
             frame.draw_row_headers(grid_ui, &painter, &mut outcome);
             frame.draw_visible_cells(grid_ui, &painter, &mut outcome);

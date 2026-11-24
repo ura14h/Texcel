@@ -31,6 +31,8 @@ pub(super) struct GridViewportFrame<'a> {
     pub(super) render_cells: BTreeSet<(usize, usize)>,
     pub(super) pane_zones: [GridPaneZone; 4],
     pub(super) selected_ranges: Vec<(CellAddress, CellAddress)>,
+    /// Normalized target of an active fill-handle drag, outlined instead of the selection.
+    pub(super) fill_preview: Option<(CellAddress, CellAddress)>,
     pub(super) visuals: egui::Visuals,
     pub(super) palette: GridThemePalette,
 }

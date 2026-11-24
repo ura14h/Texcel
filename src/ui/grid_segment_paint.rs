@@ -28,15 +28,15 @@ pub(super) fn paint_cell_base(
 }
 
 /// Paints the selection outline and its small fill handle over one cell segment.
+/// The outline edges may belong to a fill-handle preview that extends past the selection.
 pub(super) fn paint_selection_overlay(
     painter: &egui::Painter,
     rect: Rect,
-    selected: bool,
     selected_edges: [bool; 4],
     fill_handle: Option<Rect>,
     palette: &GridThemePalette,
 ) {
-    if selected {
+    if selected_edges.contains(&true) {
         let rect = rect.shrink(0.75);
         let stroke = Stroke::new(2.0, palette.selection);
         let [top, bottom, left, right] = selected_edges;
