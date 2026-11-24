@@ -147,17 +147,10 @@ impl NativeMenu {
         take_events_for_document(&mut queue, document_id)
     }
 
-    /// Attaches this shared native menu to one additional Winit viewport.
+    /// Returns a shared handle to the menu so a window can be attached after app state is released.
     #[cfg(target_os = "windows")]
-    pub(crate) fn attach_windows_hwnd(&mut self, hwnd: isize) -> Option<isize> {
-        // SAFETY: the message hook verifies this is a live Winit HWND on the UI thread.
-        if !unsafe { self.menu.is_visible_on_hwnd(hwnd) } {
-            // SAFETY: the message hook verifies this is a live Winit HWND on the UI thread.
-            if unsafe { self.menu.init_for_hwnd(hwnd) }.is_err() {
-                return None;
-            }
-        }
-        Some(self.menu.haccel())
+    pub(crate) fn windows_menu(&self) -> Menu {
+        self.menu.clone()
     }
 
     /// Changes only menu labels and checks that differ from the last app state.
@@ -457,6 +450,21 @@ pub(crate) fn translate_windows_message(message: *const std::ffi::c_void) -> boo
     }
     // SAFETY: the live menu owns this accelerator and the MSG targets its attached HWND.
     unsafe { TranslateAcceleratorW(message.hwnd, accelerator as _, message) != 0 }
+}
+
+/// Attaches the shared native menu to one additional Winit window and returns its accelerators.
+/// The caller must not hold app state: `SetMenu` resizes the window, and eframe repaints it
+/// synchronously on Windows, which runs the app again inside this call.
+#[cfg(target_os = "windows")]
+pub(crate) fn attach_windows_hwnd(menu: &Menu, hwnd: isize) -> Option<isize> {
+    // SAFETY: the message hook verifies this is a live Winit HWND on the UI thread.
+    if !unsafe { menu.is_visible_on_hwnd(hwnd) } {
+        // SAFETY: the message hook verifies this is a live Winit HWND on the UI thread.
+        if unsafe { menu.init_for_hwnd(hwnd) }.is_err() {
+            return None;
+        }
+    }
+    Some(menu.haccel())
 }
 
 /// Filters message-hook windows to Winit's owned top-level class.

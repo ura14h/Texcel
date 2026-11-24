@@ -387,10 +387,15 @@ fn with_host<R>(id: u64, run: impl FnOnce(&mut HostRuntime) -> R) -> R {
 /// Attaches the shared menu to a Winit child window from the message hook.
 #[cfg(target_os = "windows")]
 pub(crate) fn attach_native_menu_to_window(hwnd: isize) -> Option<isize> {
-    HOSTS.with(|hosts| {
-        hosts
-            .borrow_mut()
-            .values_mut()
-            .find_map(|host| host.app.native_menu.as_mut()?.attach_windows_hwnd(hwnd))
-    })
+    // Release the registry before attaching: the synchronous repaint from `SetMenu`
+    // re-enters `with_host`, which would otherwise panic on a second borrow.
+    let menu = HOSTS.with(|hosts| {
+        hosts.try_borrow().ok()?.values().find_map(|host| {
+            host.app
+                .native_menu
+                .as_ref()
+                .map(crate::native_menu::NativeMenu::windows_menu)
+        })
+    })?;
+    crate::native_menu::attach_windows_hwnd(&menu, hwnd)
 }
