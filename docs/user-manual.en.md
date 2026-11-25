@@ -1,6 +1,6 @@
 # Texcel User Manual
 
-Version: 0.2.1
+Version: 0.3.0
 
 This manual covers starting Texcel from its release package, editing tables, and saving them. [日本語版](user-manual.ja.md)
 

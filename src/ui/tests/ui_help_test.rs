@@ -80,7 +80,7 @@ fn help_menu_opens_the_localized_guide_and_about_page() {
     );
     assert!(
         harness
-            .query_all(By::new().label_contains("Texcel 0.2.1"))
+            .query_all(By::new().label_contains("Texcel 0.3.0"))
             .next()
             .is_some(),
         "the guide shows the application version"
