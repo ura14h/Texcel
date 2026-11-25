@@ -1,4 +1,22 @@
 use super::*;
+use crate::markdown_adapter::MarkdownTableAlignment;
+
+#[cfg(test)]
+#[path = "headers_test.rs"]
+mod tests;
+
+/// Gap between a column header's edge and its alignment colon.
+const ALIGNMENT_MARK_INSET: f32 = 5.0;
+
+/// Says which header edges show a colon, matching the Markdown separator row.
+fn alignment_marks(alignment: Option<MarkdownTableAlignment>) -> (bool, bool) {
+    match alignment {
+        None => (false, false),
+        Some(MarkdownTableAlignment::Left) => (true, false),
+        Some(MarkdownTableAlignment::Center) => (true, true),
+        Some(MarkdownTableAlignment::Right) => (false, true),
+    }
+}
 
 impl GridViewportFrame<'_> {
     /// Draws the visible column headers and records their selection actions.
@@ -70,17 +88,47 @@ impl GridViewportFrame<'_> {
                 Stroke::new(0.75, self.palette.grid),
                 egui::StrokeKind::Inside,
             );
+            let header_text_color = if active_column || selected_column {
+                self.palette.foreground
+            } else {
+                self.visuals.weak_text_color()
+            };
             header_painter.text(
                 rect.center(),
                 Align2::CENTER_CENTER,
                 column_name(*column),
                 FontId::proportional(visual::BODY_SIZE),
-                if active_column || selected_column {
-                    self.palette.foreground
-                } else {
-                    self.visuals.weak_text_color()
-                },
+                header_text_color,
             );
+            // Show the Markdown column alignment with colons at the header's edges.
+            let alignment = self
+                .grid
+                .markdown_source
+                .zip(self.grid.markdown_table_index)
+                .and_then(|(source, table)| source.column_alignment(table, *column));
+            let (left_mark, right_mark) = alignment_marks(alignment);
+            for (shown, anchor, position) in [
+                (
+                    left_mark,
+                    Align2::LEFT_CENTER,
+                    rect.left_center() + Vec2::new(ALIGNMENT_MARK_INSET, 0.0),
+                ),
+                (
+                    right_mark,
+                    Align2::RIGHT_CENTER,
+                    rect.right_center() - Vec2::new(ALIGNMENT_MARK_INSET, 0.0),
+                ),
+            ] {
+                if shown {
+                    header_painter.text(
+                        position,
+                        anchor,
+                        ":",
+                        FontId::proportional(visual::BODY_SIZE),
+                        header_text_color,
+                    );
+                }
+            }
             let click_rect = Rect::from_min_max(
                 Pos2::new((rect.left() + 4.0).min(rect.right()), rect.top()),
                 Pos2::new((rect.right() - 4.0).max(rect.left()), rect.bottom()),

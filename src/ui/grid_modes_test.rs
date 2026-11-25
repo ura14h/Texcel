@@ -2306,7 +2306,7 @@ fn render_grid_input_mode_matrix() {
     let source = directory.0.join("appearance.md");
     fs::write(
         &source,
-        "| ID | Name | Value |\n| --- | --- | --- |\n| 00123 | **東京** | =1+2 |\n| 7 | Plain | 4 |\n",
+        "| ID | Name | Value |\n| :--- | :---: | ---: |\n| 00123 | **東京** | =1+2 |\n| 7 | Plain | 4 |\n",
     )
     .expect("write a table with an explicit header and source values");
     let images = PathBuf::from(env!("CARGO_MANIFEST_DIR"))

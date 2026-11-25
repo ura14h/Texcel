@@ -195,6 +195,8 @@ The Format menu and these shortcuts add or remove formatting on the selected cel
 | Link | Format > Links > Add or Edit Link… |
 | Align a column left, center, or right | Format > Alignment |
 
+A column's header shows its alignment with colons, as the Markdown separator row does: `:` on the left for left, on both sides for center, and on the right for right. Columns with no alignment show none.
+
 To open a link, Ctrl/Cmd+click it or choose Format > Links > Open Link.
 
 ### 5.7 Undo and redo
