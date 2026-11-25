@@ -86,8 +86,9 @@ pub(super) fn structure_axis_context_menu(
     action: &mut Option<StructureAction>,
 ) {
     visual::prepare_context_menu(ui);
-    let (insert, delete, duplicate, up, down) = match axis {
+    let (insert_label, insert, delete, duplicate, up, down) = match axis {
         StructureAxis::Rows => (
+            "structure-insert-above",
             StructureAction::InsertRows,
             StructureAction::DeleteRows,
             StructureAction::DuplicateRows,
@@ -95,6 +96,7 @@ pub(super) fn structure_axis_context_menu(
             StructureAction::MoveRowsDown,
         ),
         StructureAxis::Columns => (
+            "structure-insert-left",
             StructureAction::InsertColumns,
             StructureAction::DeleteColumns,
             StructureAction::DuplicateColumns,
@@ -106,10 +108,7 @@ pub(super) fn structure_axis_context_menu(
         ui.label(reason);
     }
     ui.add_enabled_ui(enabled, |ui| {
-        if ui
-            .button(context_text(ui.ctx(), "structure-insert-here"))
-            .clicked()
-        {
+        if ui.button(context_text(ui.ctx(), insert_label)).clicked() {
             *action = Some(insert);
             ui.close();
         }

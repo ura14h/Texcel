@@ -48,8 +48,11 @@ pub(super) fn show(
             || (selected_rows == 1 && selected_columns >= 3);
         menu.add_enabled_ui(block_reason.is_none(), |menu| {
             for (label, action) in [
-                ("insert-row", StructureAction::InsertRows),
-                ("insert-column", StructureAction::InsertColumns),
+                ("context-insert-rows-above", StructureAction::InsertRows),
+                (
+                    "context-insert-columns-left",
+                    StructureAction::InsertColumns,
+                ),
                 ("delete-row", StructureAction::DeleteRows),
                 ("delete-column", StructureAction::DeleteColumns),
             ] {
