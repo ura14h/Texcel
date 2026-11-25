@@ -121,6 +121,8 @@ pub struct TexcelApp {
     ui_font_size: f32,
     /// This window's sheet zoom; the UI text size never changes it.
     sheet_zoom: SheetZoom,
+    /// What to report when a user command's background job for a document succeeds.
+    completion_notices: BTreeMap<DocumentId, (JobToken, Message)>,
     show_invisibles: bool,
     settings_window_open: bool,
     help_window_open: bool,
@@ -317,6 +319,7 @@ mod cell_paint;
 mod clipboard;
 mod close_transactions;
 mod commands;
+mod completion_notice;
 mod copy_options_dialog;
 mod data_edit_actions;
 mod data_edit_dialog;

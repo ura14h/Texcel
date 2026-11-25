@@ -312,6 +312,7 @@ impl TexcelApp {
                     self.initialize_calculation_shared(token, snapshot);
                 }
                 self.data_edit_dialog = None;
+                self.status = Some(Message::new("status-done-data-edit-applied"));
             }
             Err(message) => {
                 if let Some(dialog) = self.data_edit_dialog.as_mut() {

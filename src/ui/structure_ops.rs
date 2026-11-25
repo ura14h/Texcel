@@ -368,6 +368,7 @@ impl TexcelApp {
                 }
             })
             .collect();
+        let completion = completion_notice::structure_completion_notice(&operation);
         let growth_selection = view.selection;
         let growth_active_cell = view.active_cell();
         let growth_additional_selections = view.additional_selections.clone();
@@ -393,6 +394,7 @@ impl TexcelApp {
         match self.file_worker.prepare_structure(token, request) {
             Ok(()) => {
                 self.pending_structures.insert(document_id, token);
+                self.expect_completion(document_id, token, completion);
                 if is_text_growth {
                     self.pending_text_growth_sessions.insert(
                         document_id,

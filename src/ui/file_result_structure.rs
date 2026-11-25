@@ -87,6 +87,7 @@ impl TexcelApp {
                     return true;
                 }
                 self.pending_structures.remove(&document_id);
+                let completion = self.take_completion(document_id, token);
                 let is_bulk_paste = self.pending_bulk_pastes.remove(&document_id);
                 let is_table_management = self.pending_table_management.remove(&document_id);
                 let csv_cell_promotion = self
@@ -283,14 +284,14 @@ impl TexcelApp {
                             .documents
                             .get(&document_id)
                             .and_then(Document::reached_text_source_limit);
-                        // Only warnings reach the status bar; a finished edit speaks for itself.
+                        // A warning outranks the notice that the user's command finished.
                         if let Some(limit) = reached_limit {
                             self.status =
                                 Some(Message::new("status-resource-limit-reached").with_message(
                                     "limit",
                                     crate::i18n::resource_limit_message(limit),
                                 ));
-                        } else if let Some(status) = operation_status {
+                        } else if let Some(status) = operation_status.or(completion) {
                             self.status = Some(status);
                         }
                         if growth_edit.is_some() {

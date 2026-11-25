@@ -155,7 +155,13 @@ impl TexcelApp {
                     } else {
                         self.mark_settings_write();
                     }
-                    self.status = None;
+                    let saved_name = self
+                        .user_file_paths
+                        .get(&document_id)
+                        .and_then(|path| path.file_name())
+                        .map(|name| name.to_string_lossy().into_owned());
+                    self.status = saved_name
+                        .map(|name| Message::new("status-done-saved").with_text("name", name));
                     if self.close_after_save.remove(&document_id) {
                         let has_uncommitted_edit = self.edit.is_editing()
                             && self.edit_document_id.or_else(|| {
@@ -179,8 +185,10 @@ impl TexcelApp {
             FileResultKind::ReportSaved => {
                 if self.pending_report_saves.get(&document_id) == Some(&job_token) {
                     self.pending_report_saves.remove(&document_id);
+                    self.status = Some(Message::new("status-done-report-saved"));
                 } else if self.pending_export_report_saves.get(&document_id) == Some(&job_token) {
                     self.pending_export_report_saves.remove(&document_id);
+                    self.status = Some(Message::new("status-done-report-saved"));
                 }
             }
             _ => unreachable!("file result was routed to the wrong handler"),

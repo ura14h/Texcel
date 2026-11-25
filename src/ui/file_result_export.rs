@@ -33,6 +33,11 @@ impl TexcelApp {
                     self.cancelling_exports.remove(&document_id);
                     if written.is_empty() && failed.is_none() {
                         self.status = Some(Message::new("status-export-file-not-created"));
+                    } else if failed.is_none() {
+                        self.status = Some(
+                            Message::new("status-done-exported")
+                                .with_number("count", written.len() as i64),
+                        );
                     } else if let Some((failed_path, message)) = failed {
                         let written_names = written
                             .iter()

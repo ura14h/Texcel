@@ -176,6 +176,11 @@ impl TexcelApp {
             ));
             return;
         }
+        let replaced = self
+            .search_dialog
+            .as_ref()
+            .and_then(|dialog| dialog.preview.as_ref())
+            .map_or(0, |preview| preview.total_matches);
         let applied = self.workspace.documents.get_mut(&document_id).map_or_else(
             || Err(Message::new("status-document-not-found")),
             |document| {
@@ -211,6 +216,9 @@ impl TexcelApp {
                     self.initialize_calculation_shared(token, snapshot);
                 }
                 self.search_dialog = None;
+                self.status = Some(
+                    Message::new("status-done-replaced").with_number("count", replaced as i64),
+                );
             }
             Err(message) => {
                 if let Some(dialog) = self.search_dialog.as_mut() {

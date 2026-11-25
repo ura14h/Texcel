@@ -89,6 +89,7 @@ impl TexcelApp {
             installed_font_preset,
             ui_font_size: crate::settings::default_ui_font_size(),
             sheet_zoom: SheetZoom::default(),
+            completion_notices: BTreeMap::new(),
             show_invisibles: false,
             settings_window_open: false,
             help_window_open: false,

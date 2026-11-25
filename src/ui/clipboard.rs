@@ -203,6 +203,11 @@ impl TexcelApp {
             Ok(()) => {
                 self.pending_structures.insert(document_id, token);
                 self.pending_bulk_pastes.insert(document_id);
+                self.expect_completion(
+                    document_id,
+                    token,
+                    Some(Message::new("status-done-pasted")),
+                );
                 self.status = None;
             }
             Err(error) => self.status = Some(submit_error_message(error)),

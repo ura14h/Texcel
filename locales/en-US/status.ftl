@@ -74,3 +74,53 @@ status-paste-clipboard-limit-exceeded = Clipboard content exceeds the paste limi
 status-selected-cell-link-unavailable = The selected cell has no link.
 status-selected-table-view-unavailable = The selected table view is unavailable.
 status-selection-count = { $count } cells selected
+status-done-saved = Saved “{ $name }”.
+status-done-exported = { $count ->
+    [one] Exported 1 file.
+   *[other] Exported { $count } files.
+}
+status-done-report-saved = Saved the report.
+status-done-data-edit-applied = Applied the data change.
+status-done-replaced = { $count ->
+    [one] Replaced 1 match.
+   *[other] Replaced { $count } matches.
+}
+status-done-pasted = Pasted.
+status-done-filled = Filled the cells.
+status-done-rows-inserted = { $count ->
+    [one] Inserted 1 row.
+   *[other] Inserted { $count } rows.
+}
+status-done-columns-inserted = { $count ->
+    [one] Inserted 1 column.
+   *[other] Inserted { $count } columns.
+}
+status-done-rows-deleted = { $count ->
+    [one] Deleted 1 row.
+   *[other] Deleted { $count } rows.
+}
+status-done-columns-deleted = { $count ->
+    [one] Deleted 1 column.
+   *[other] Deleted { $count } columns.
+}
+status-done-rows-duplicated = { $count ->
+    [one] Duplicated 1 row.
+   *[other] Duplicated { $count } rows.
+}
+status-done-columns-duplicated = { $count ->
+    [one] Duplicated 1 column.
+   *[other] Duplicated { $count } columns.
+}
+status-done-rows-moved = { $count ->
+    [one] Moved 1 row.
+   *[other] Moved { $count } rows.
+}
+status-done-columns-moved = { $count ->
+    [one] Moved 1 column.
+   *[other] Moved { $count } columns.
+}
+status-done-table-added = Added a table.
+status-done-table-duplicated = Duplicated the table.
+status-done-table-deleted = Deleted the table.
+status-done-table-renamed = Renamed the table.
+status-done-alignment-changed = Changed the column alignment.
