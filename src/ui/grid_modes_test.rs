@@ -1804,6 +1804,67 @@ fn formula_bar_switches_input_and_reference_modes_to_edit() {
     assert_eq!(harness.state().edit.session_id, formula_session);
 }
 
+#[test]
+/// Runs select-all, cut, and undo from the formula bar editor's context menu.
+fn formula_bar_context_menu_edits_the_draft() {
+    let directory = scenario::ScenarioDirectory::new();
+    let source = directory.0.join("formula-bar-menu.md");
+    fs::write(&source, "| Value |\n| --- |\n| abcd |\n").expect("write one editable cell value");
+    let mut harness = scenario_harness(directory.0.join("settings.json"));
+    scenario::queue_open_and_wait(&mut harness, source);
+    scenario::click_cell(&mut harness, "A2");
+    click_active_formula_bar_preview(&mut harness);
+    harness.step();
+    assert_eq!(
+        harness.state().edit.target,
+        Some(crate::document::EditTarget::FormulaBar)
+    );
+    let session = harness.state().edit.session_id;
+    for (label, expected) in [
+        ("action-select-all", "abcd"),
+        ("action-cut", ""),
+        ("top-undo", "abcd"),
+    ] {
+        choose_formula_bar_menu_item(&mut harness, label);
+        assert_eq!(harness.state().edit.buffer, expected, "after {label}");
+        assert_eq!(harness.state().edit.session_id, session);
+    }
+    assert_eq!(
+        harness.state().edit.target,
+        Some(crate::document::EditTarget::FormulaBar),
+        "the menu keeps the formula bar edit open"
+    );
+}
+
+/// Opens the formula bar editor's context menu and clicks one command in it.
+fn choose_formula_bar_menu_item(harness: &mut Harness<'_, TexcelApp>, label: &str) {
+    let editor = harness
+        .ctx
+        .interactive_rects_last_pass()
+        .into_iter()
+        .find(|rect| rect.width() > 300.0 && (rect.height() - CHROME_CONTROL_HEIGHT).abs() < 1.0)
+        .expect("the formula-bar editor has a wide hit area");
+    let point = Pos2::new(editor.right() - 20.0, editor.center().y);
+    scenario::send_event(harness, egui::Event::PointerMoved(point));
+    for pressed in [true, false] {
+        scenario::send_event(
+            harness,
+            egui::Event::PointerButton {
+                pos: point,
+                button: egui::PointerButton::Secondary,
+                pressed,
+                modifiers: egui::Modifiers::NONE,
+            },
+        );
+    }
+    harness.step();
+    let text = text(harness.state().language, label);
+    let item = harness.get_by_label(&text).rect().center();
+    scenario::click_point(harness, item);
+    harness.step();
+    harness.step();
+}
+
 /// Clicks the formula-bar preview while a cell editor still owns the draft.
 fn click_active_formula_bar_preview(harness: &mut Harness<'_, TexcelApp>) {
     let preview = harness

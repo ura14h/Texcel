@@ -1,3 +1,4 @@
+use super::commands::{AppCommand, InputOwner};
 use super::*;
 
 impl TexcelApp {
@@ -50,6 +51,7 @@ impl TexcelApp {
         let mut switch_to_formula_bar = false;
         let mut formula_click_cursor = None;
         let mut bar_action = None;
+        let mut text_menu_command = None;
         let name_box_id = name_box_id(document_id);
         let edit_ctx = ui.ctx().clone();
         let detail_label = if is_editing_detail {
@@ -169,6 +171,12 @@ impl TexcelApp {
                         .max(0.0);
                         let detail_button_width = detail_button_width.unwrap_or_default();
                         if is_editing_bar {
+                            // A right-click opens the edit menu without moving the caret or selection.
+                            let selection_before = (self.edit.anchor_byte, self.edit.cursor_byte);
+                            let secondary_press = ui.input(|input| {
+                                input.pointer.button_pressed(egui::PointerButton::Secondary)
+                                    && !input.pointer.primary_pressed()
+                            });
                             let output = ui
                                 .add_enabled_ui(!navigation_blocked, |ui| {
                                     show_bounded_edit_text(
@@ -184,11 +192,23 @@ impl TexcelApp {
                                 })
                                 .inner;
                             let response = output.response;
+                            let mut selection_bytes = output.selection_bytes;
+                            if secondary_press && response.hovered() {
+                                (self.edit.anchor_byte, self.edit.cursor_byte) = selection_before;
+                                self.sync_formula_editor_cursor(&edit_ctx);
+                                selection_bytes = Some(
+                                    selection_before.0.min(selection_before.1)
+                                        ..selection_before.0.max(selection_before.1),
+                                );
+                            }
+                            response.context_menu(|menu| {
+                                text_menu_command = formula_bar_text_menu(menu);
+                            });
                             self.capture_text_selection(
                                 document_id,
                                 table_id,
                                 address,
-                                output.selection_bytes,
+                                selection_bytes,
                             );
                             if self.request_editor_focus {
                                 // Requesting focus again would interrupt an IME composition.
@@ -280,6 +300,21 @@ impl TexcelApp {
             self.apply_formula_bar_action(action, &edit_ctx);
             return;
         }
+        if let Some(command) = text_menu_command {
+            // Give the editor its focus and the selection egui dropped while the menu had the
+            // pointer, so the next frame delivers the text command to the right text.
+            let focus = editor_id(document_id, self.edit.session_id);
+            edit_ctx.memory_mut(|memory| memory.request_focus(focus));
+            self.sync_formula_editor_cursor(&edit_ctx);
+            self.dispatch_command(
+                command,
+                InputOwner::CellEditor,
+                navigation_blocked,
+                Some(focus),
+                &edit_ctx,
+            );
+            return;
+        }
         if switch_to_formula_bar {
             self.edit
                 .switch_target(crate::document::EditTarget::FormulaBar);
@@ -369,4 +404,40 @@ impl TexcelApp {
         self.edit.cursor_byte = byte;
         self.sync_formula_editor_cursor(ctx);
     }
+}
+
+/// Shows the standard text editing commands for the formula bar editor; returns the clicked one.
+fn formula_bar_text_menu(menu: &mut egui::Ui) -> Option<AppCommand> {
+    visual::prepare_context_menu(menu);
+    let groups: [&[(&str, AppCommand)]; 3] = [
+        &[
+            ("top-undo", AppCommand::Undo),
+            ("top-redo", AppCommand::Redo),
+        ],
+        &[
+            ("action-cut", AppCommand::CutAs(CopyFormat::DisplayTsv)),
+            ("action-copy", AppCommand::CopyAs(CopyFormat::DisplayTsv)),
+            (
+                "action-paste",
+                AppCommand::PasteSystem(PasteOptions::default()),
+            ),
+        ],
+        &[("action-select-all", AppCommand::SelectAll)],
+    ];
+    let mut chosen = None;
+    for (index, group) in groups.into_iter().enumerate() {
+        if index > 0 {
+            menu.separator();
+        }
+        for (label, command) in group {
+            if menu
+                .button(crate::i18n::context_text(menu.ctx(), label))
+                .clicked()
+            {
+                chosen = Some(command.clone());
+                menu.close();
+            }
+        }
+    }
+    chosen
 }

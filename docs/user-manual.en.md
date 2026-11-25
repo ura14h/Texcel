@@ -148,6 +148,7 @@ Below, "Ctrl/Cmd" means Ctrl on Windows and Linux and Cmd on macOS.
 - To change the existing content, press F2 or double-click the cell. You can also click the formula bar.
 - Enter confirms and moves down; Tab confirms and moves right. Add Shift to move the other way. ✓ in the formula bar confirms without moving.
 - Esc or ✗ in the formula bar cancels the entry and restores the previous content.
+- While you edit in the formula bar, right-click the text to Undo, Redo, Cut, Copy, Paste, or Select All.
 - Alt+Enter starts a new line inside the cell (saved as `<br>`).
 - Delete or Backspace clears the selected cells.
 
