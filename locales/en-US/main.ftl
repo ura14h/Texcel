@@ -43,6 +43,7 @@ action-copy = Copy
 action-paste = Paste
 action-clear-cells = Clear Cells
 action-select-all = Select All
+grid-select-all-corner = Select All Cells
 action-apply = Apply
 action-apply-diff = Apply Changes
 action-save-as = Save As…

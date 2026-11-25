@@ -18,6 +18,8 @@ pub(super) struct GridOutcome {
     pub(super) fill_handle_started: Option<CellRange>,
     pub(super) fill_handle_finished: Option<CellAddress>,
     pub(super) fill_handle_cancelled: bool,
+    /// Range the active fill-handle drag would fill if released now.
+    pub(super) fill_handle_preview: Option<CellRange>,
     pub(super) focused: bool,
     pub(super) scroll: Option<crate::document::ScrollPosition>,
     pub(super) page_extent: Option<Vec2>,
@@ -54,6 +56,8 @@ pub(super) struct FillHandleDrag {
     pub(super) document_id: DocumentId,
     pub(super) table_id: u64,
     pub(super) source: CellRange,
+    /// Last range the drag would fill, shown in the status line's cell count.
+    pub(super) preview: Option<CellRange>,
 }
 
 #[derive(Clone, Copy)]

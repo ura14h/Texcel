@@ -43,6 +43,7 @@ action-copy = コピー
 action-paste = 貼り付け
 action-clear-cells = セルを消去
 action-select-all = すべて選択
+grid-select-all-corner = すべてのセルを選択
 action-apply = 適用
 action-apply-diff = 差分を適用
 action-save-as = 名前を付けて保存…

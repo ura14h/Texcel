@@ -6,6 +6,14 @@ use std::collections::BTreeMap;
 pub(super) fn active_selection_count(app: &TexcelApp) -> Option<u64> {
     let document = app.workspace.active_document()?;
     let table = document.active_table()?;
+    // While the fill handle is dragged, count the range it would fill.
+    if let Some(preview) = app
+        .fill_handle_drag
+        .filter(|drag| drag.document_id == document.id && drag.table_id == table.id)
+        .and_then(|drag| drag.preview)
+    {
+        return Some(count_selected_cells(&[preview]));
+    }
     let view = document.view(table.id)?;
     let ranges = view.selected_ranges().collect::<Vec<_>>();
     Some(count_selected_cells(&ranges))

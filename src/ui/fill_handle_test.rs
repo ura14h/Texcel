@@ -108,6 +108,24 @@ fn dragging_the_fill_handle_outlines_the_target_before_release() {
 }
 
 #[test]
+/// Counts the cells the fill handle would fill in the status line before release.
+fn dragging_the_fill_handle_updates_the_selected_cell_count() {
+    let directory = ScenarioDirectory::new();
+    let mut harness = scenario_harness(directory.0.join("settings.json"));
+    harness.state_mut().language = Language::English;
+    crate::i18n::set_context_language(&harness.ctx, Language::English);
+    let (start, end) = press_fill_handle_of_a1_a2(&mut harness);
+    drag_pointer(&mut harness, start, end);
+    assert!(
+        harness
+            .query_all(By::new().label_contains("4 cells selected"))
+            .next()
+            .is_some(),
+        "the status line counts A1:A4 while the button is still down"
+    );
+}
+
+#[test]
 /// Drags the fill handle of 1 and 2 down two rows and gets the next numbers.
 fn dragging_the_fill_handle_continues_a_number_sequence() {
     let directory = ScenarioDirectory::new();

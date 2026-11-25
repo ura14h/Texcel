@@ -143,6 +143,10 @@ impl TexcelApp {
             } else if let Some(document) = self.workspace.documents.get_mut(&drag.document_id)
                 && let Some(view) = document.view_mut(drag.table_id)
             {
+                if view.selection.head != address {
+                    // The status line was drawn before this change; show the new cell count too.
+                    ctx.request_repaint();
+                }
                 view.selection.head = address;
                 view.active_cell = Some(drag.anchor);
                 self.request_grid_focus = true;
@@ -172,7 +176,16 @@ impl TexcelApp {
                     .map_or(0, |document| document.id),
                 table_id: outcome.table_id,
                 source,
+                preview: None,
             });
+        }
+        if let Some(drag) = self.fill_handle_drag.as_mut()
+            && drag.table_id == outcome.table_id
+            && drag.preview != outcome.fill_handle_preview
+        {
+            // The status line is drawn before the grid, so draw once more to show the new count.
+            drag.preview = outcome.fill_handle_preview;
+            ctx.request_repaint();
         }
         let fill_handle_finished = outcome.fill_handle_finished;
         if fill_handle_finished.is_some() {

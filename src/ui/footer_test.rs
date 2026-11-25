@@ -198,6 +198,43 @@ fn selection_count_tracks_shift_click_ranges() {
     );
 }
 
+/// Selects every cell from the corner above the row numbers.
+#[test]
+fn header_corner_click_selects_every_cell() {
+    let directory = scenario::ScenarioDirectory::new();
+    let mut harness = scenario::scenario_harness(directory.0.join("settings.json"));
+    scenario::click_cell(&mut harness, "B2");
+    let label = text(harness.state().language, "grid-select-all-corner");
+    let corner = harness
+        .query_all(By::new().role(egui::Role::Button).label(label.as_str()))
+        .next()
+        .expect("the header corner is a button")
+        .rect()
+        .center();
+    scenario::click_point(&mut harness, corner);
+    harness.step();
+    let view = harness
+        .state()
+        .workspace
+        .active_document()
+        .and_then(|document| {
+            document
+                .active_table()
+                .and_then(|table| document.view(table.id))
+        })
+        .expect("the active table view remains available");
+    assert_eq!(
+        view.selection.normalized(),
+        (
+            CellAddress::default(),
+            CellAddress {
+                row: MAX_ROWS - 1,
+                column: MAX_COLUMNS - 1,
+            }
+        )
+    );
+}
+
 /// Cancels a real worker-backed row insertion and confirms cell editing can resume.
 #[test]
 fn cancel_preparation_stays_enabled_and_restores_editing() {

@@ -138,7 +138,7 @@ Below, "Ctrl/Cmd" means Ctrl on Windows and Linux and Cmd on macOS.
 
 - Click a cell or use the arrow keys.
 - Select a range with Shift+arrow keys, by dragging, or with Shift+click. Ctrl/Cmd+click adds another range.
-- Click a column letter or row number to select the whole column or row.
+- Click a column letter or row number to select the whole column or row. Click the blank corner where the row numbers and column letters meet to select every cell.
 - Ctrl/Cmd+arrow key moves to the edge of the block of filled cells.
 - Type an address or range in the name box to go there.
 

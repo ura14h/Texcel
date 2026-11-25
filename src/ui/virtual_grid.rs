@@ -270,6 +270,31 @@ pub(super) fn draw_virtual_grid(
                 Stroke::new(0.75, palette.grid),
                 egui::StrokeKind::Inside,
             );
+            // The corner above the row numbers selects every cell, as Ctrl/Cmd+A does.
+            let corner = grid_ui.interact(
+                row_corner,
+                Id::unique(egui::IdSalt::new((
+                    "grid_select_all_corner",
+                    document_id,
+                    table_id,
+                ))),
+                Sense::click(),
+            );
+            let corner_label = crate::i18n::context_text(grid_ui.ctx(), "grid-select-all-corner");
+            corner
+                .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &corner_label));
+            if corner.clicked() {
+                outcome.selected_range = Some(CellRange {
+                    anchor: CellAddress::default(),
+                    head: CellAddress {
+                        row: row_count - 1,
+                        column: column_count - 1,
+                    },
+                });
+                corner.request_focus();
+            }
+            outcome.focused |= corner.has_focus();
+            grid_focus::lock_grid_navigation(grid_ui, &corner);
             let selected_ranges = std::iter::once(selection)
                 .chain(additional_selections.iter().copied())
                 .map(CellRange::normalized)
@@ -309,9 +334,8 @@ pub(super) fn draw_virtual_grid(
                 visuals,
                 palette,
             };
-            frame.fill_preview = frame
-                .fill_handle_preview(grid_ui)
-                .map(CellRange::normalized);
+            outcome.fill_handle_preview = frame.fill_handle_preview(grid_ui);
+            frame.fill_preview = outcome.fill_handle_preview.map(CellRange::normalized);
             frame.draw_column_headers(grid_ui, &painter, &mut outcome);
             frame.draw_row_headers(grid_ui, &painter, &mut outcome);
             frame.draw_visible_cells(grid_ui, &painter, &mut outcome);
