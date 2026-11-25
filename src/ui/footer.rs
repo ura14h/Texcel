@@ -162,13 +162,6 @@ fn draw_fixed_status_line(
         status_parts.push(status.clone());
         hover_parts.push(status);
     }
-    if let Some(document) = app.workspace.active_document()
-        && (app.pending_calculations.contains_key(&document.id)
-            || app.pending_initial_calculations.contains_key(&document.id))
-    {
-        status_parts.push(text(app.language, "status-recalculating"));
-        hover_parts.push(text(app.language, "status-recalculating"));
-    }
     let visible_status = status_parts.join(" · ");
     let full_status = hover_parts.join(" · ");
 

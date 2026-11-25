@@ -76,7 +76,7 @@ impl TexcelApp {
         {
             growth.deferred_save_path = Some(path);
             growth.app_close_save |= self.app_close_dialog_open;
-            self.status = Some(Message::new("status-row-column-structure-preparing"));
+            self.status = None;
             return;
         }
         if self.edit.is_editing() && self.edit_document_id == Some(document_id) {

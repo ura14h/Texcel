@@ -203,7 +203,7 @@ impl TexcelApp {
             Ok(()) => {
                 self.pending_structures.insert(document_id, token);
                 self.pending_bulk_pastes.insert(document_id);
-                self.status = Some(Message::new("status-paste-preparing"));
+                self.status = None;
             }
             Err(error) => self.status = Some(submit_error_message(error)),
         }

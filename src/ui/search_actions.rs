@@ -95,7 +95,7 @@ impl TexcelApp {
                     dialog.preview_key = None;
                     dialog.message = Some(Message::new("dialog-search-preparing"));
                 }
-                self.status = Some(Message::new("status-search-in-progress"));
+                self.status = None;
             }
             Err(error) => {
                 if let Some(dialog) = self.search_dialog.as_mut() {

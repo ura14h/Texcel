@@ -80,7 +80,7 @@ impl TexcelApp {
                 self.pending_exports.insert(document_id, token);
                 self.export_configs
                     .insert(document_id, (options, destination));
-                self.status = Some(Message::new("status-export-content-checking"));
+                self.status = None;
             }
             Err(error) => {
                 self.status = Some(
@@ -201,7 +201,7 @@ impl TexcelApp {
                 self.pending_export_writes.insert(export.document_id, token);
                 self.save_as_export_documents.remove(&export.document_id);
                 self.active_export_confirmation = None;
-                self.status = Some(Message::new("status-export-writing"));
+                self.status = None;
             }
             Err((error, artifacts)) => {
                 export.prepared.artifacts = artifacts;
@@ -284,7 +284,7 @@ impl TexcelApp {
         {
             Ok(()) => {
                 self.pending_export_report_saves.insert(document_id, token);
-                self.status = Some(Message::new("status-export-report-saving"));
+                self.status = None;
             }
             Err(error) => {
                 self.status = Some(
@@ -359,7 +359,7 @@ impl TexcelApp {
         {
             Ok(()) => {
                 self.pending_report_saves.insert(document_id, token);
-                self.status = Some(Message::new("status-import-report-saving"));
+                self.status = None;
             }
             Err(error) => self.status = Some(submit_error_message(error)),
         }

@@ -133,11 +133,7 @@ impl TexcelApp {
             match self.file_worker.restore_structure_history(token, request) {
                 Ok(()) => {
                     self.pending_history_restores.insert(document_id, token);
-                    self.status = Some(if redo {
-                        Message::new("status-structure-redo-loading")
-                    } else {
-                        Message::new("status-structure-undo-loading")
-                    });
+                    self.status = None;
                 }
                 Err(error) => {
                     self.status = Some(

@@ -272,6 +272,11 @@ fn cancel_preparation_stays_enabled_and_restores_editing() {
         !cancel.accesskit_node().is_disabled(),
         "pending structure work does not disable its own cancel action"
     );
+    assert_eq!(
+        harness.state().status,
+        None,
+        "background preparation is not announced in the status line"
+    );
     let cancel_point = cancel.rect().center();
     scenario::send_batch(
         &mut harness,

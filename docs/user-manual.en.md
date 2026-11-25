@@ -119,7 +119,7 @@ Texcel starts with an empty sheet (Table1). You can type into any cell right awa
 | Table tabs | Switch between the tables in the document. **+** adds a table |
 | List | Picks a table from a list. Each entry shows the table name and the content of the filled cell nearest to A1 |
 | Live Editing / Source Editing | Switches the display mode. The button shows the current mode |
-| Status bar | Problems and warnings you need to act on, progress with a Cancel button, and how many cells are selected |
+| Status bar | Problems and warnings you need to act on, a Cancel button while work is in progress, and how many cells are selected |
 
 Each window holds one document. New Document and Open… open a new window. If the file is already open, Texcel brings its window to the front instead. A document with unsaved changes is marked in the window title (on macOS, a dot in the close button).
 

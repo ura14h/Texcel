@@ -224,7 +224,7 @@ impl TexcelApp {
                     dialog.preview_key = None;
                     dialog.message = Some(Message::new("dialog-preparing"));
                 }
-                self.status = Some(Message::new("status-data-changes-preparing"));
+                self.status = None;
             }
             Err(error) => {
                 if let Some(dialog) = self.data_edit_dialog.as_mut() {

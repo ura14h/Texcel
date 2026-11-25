@@ -415,8 +415,8 @@ impl TexcelApp {
                     self.edit_document_id = None;
                     self.request_editor_focus = false;
                 }
-                self.status = (!is_text_growth)
-                    .then(|| Message::new("status-row-column-structure-preparing"));
+                // Background preparation is not reported; only its failure or result is.
+                self.status = None;
             }
             Err(error) => self.status = Some(submit_error_message(error)),
         }

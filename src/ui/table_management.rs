@@ -293,7 +293,7 @@ impl TexcelApp {
             Ok(()) => {
                 self.pending_structures.insert(document_id, token);
                 self.pending_table_management.insert(document_id);
-                self.status = Some(Message::new("status-table-structure-preparing"));
+                self.status = None;
             }
             Err(error) => self.status = Some(submit_error_message(error)),
         }

@@ -197,7 +197,6 @@ impl TexcelApp {
             if viewport_close_requested {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             }
-            self.status = Some(Message::new("status-settings-save-before-exit"));
             if native_terminate_requested || was_hidden {
                 Self::show_window_for_close_prompt(ctx);
             }
