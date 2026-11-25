@@ -115,7 +115,7 @@ pub(super) fn parse_name_box_range(
     row_count: usize,
     column_count: usize,
 ) -> Option<CellRange> {
-    let value = value.trim().replace('$', "");
+    let value = value.trim();
     if value.is_empty() {
         return None;
     }
@@ -135,7 +135,7 @@ pub(super) fn parse_name_box_range(
             }
             return None;
         }
-        if let (Some(start), Some(end)) = (parse_column_index(start), parse_column_index(end))
+        if let (Some(start), Some(end)) = (parse_absolute_column(start), parse_absolute_column(end))
             && start < column_count
             && end < column_count
             && row_count > 0
@@ -151,7 +151,7 @@ pub(super) fn parse_name_box_range(
                 },
             });
         }
-        if let (Some(start), Some(end)) = (parse_row_index(start), parse_row_index(end))
+        if let (Some(start), Some(end)) = (parse_absolute_row(start), parse_absolute_row(end))
             && start < row_count
             && end < row_count
             && column_count > 0
@@ -169,19 +169,36 @@ pub(super) fn parse_name_box_range(
         }
         return None;
     }
-    let address = parse_cell_address(&value)?;
+    let address = parse_cell_address(value)?;
     (address.row < row_count && address.column < column_count).then_some(CellRange::single(address))
 }
 
-/// Parses one A1-style cell address.
+/// Parses one A1-style cell address, with an optional `$` before the column and the row.
 pub(super) fn parse_cell_address(value: &str) -> Option<CellAddress> {
     let value = value.trim();
     let boundary = value
         .char_indices()
-        .find_map(|(index, character)| character.is_ascii_digit().then_some(index))?;
-    let column = parse_column_index(&value[..boundary])?;
-    let row = value[boundary..].parse::<usize>().ok()?.checked_sub(1)?;
-    (row < MAX_ROWS).then_some(CellAddress { row, column })
+        .skip(1)
+        .find_map(|(index, character)| {
+            (character.is_ascii_digit() || character == '$').then_some(index)
+        })?;
+    let column = parse_absolute_column(&value[..boundary])?;
+    let row = parse_absolute_row(&value[boundary..])?;
+    Some(CellAddress { row, column })
+}
+
+/// Parses a column label that may carry one leading `$`, as in `$C`.
+fn parse_absolute_column(value: &str) -> Option<usize> {
+    parse_column_index(value.strip_prefix('$').unwrap_or(value))
+}
+
+/// Parses a row number that may carry one leading `$`, as in `$3`.
+fn parse_absolute_row(value: &str) -> Option<usize> {
+    let digits = value.strip_prefix('$').unwrap_or(value);
+    if digits.is_empty() || !digits.bytes().all(|byte| byte.is_ascii_digit()) {
+        return None;
+    }
+    parse_row_index(digits)
 }
 
 /// Parses a column label into a zero-based index.

@@ -142,6 +142,42 @@ fn name_box_parses_cells_rectangles_and_whole_axes() {
 }
 
 #[test]
+// Accepts absolute and mixed references with one `$` before the column or the row only.
+fn name_box_accepts_absolute_and_mixed_references() {
+    let c3 = Some(CellRange::single(CellAddress { row: 2, column: 2 }));
+    for text in ["C3", "$C3", "C$3", "$C$3", "$c$3"] {
+        assert_eq!(
+            parse_name_box_range(text, MAX_ROWS, MAX_COLUMNS),
+            c3,
+            "{text}"
+        );
+    }
+    assert_eq!(
+        parse_name_box_range("$A$1:B$2", MAX_ROWS, MAX_COLUMNS),
+        Some(CellRange {
+            anchor: CellAddress { row: 0, column: 0 },
+            head: CellAddress { row: 1, column: 1 },
+        })
+    );
+    assert_eq!(
+        parse_name_box_range("$2:$4", MAX_ROWS, MAX_COLUMNS),
+        Some(CellRange {
+            anchor: CellAddress { row: 1, column: 0 },
+            head: CellAddress {
+                row: 3,
+                column: MAX_COLUMNS - 1,
+            },
+        })
+    );
+    for text in ["C3$", "$$C3", "C$$3", "$", "C$", "$3", "A+1", "A$+1"] {
+        assert!(
+            parse_name_box_range(text, MAX_ROWS, MAX_COLUMNS).is_none(),
+            "{text} is not a cell reference"
+        );
+    }
+}
+
+#[test]
 // Verify that a long-cell editor can replace its full selection using a bounded widget.
 fn long_cell_editor_replaces_the_full_selection_with_a_bounded_text_widget() {
     let ctx = egui::Context::default();
