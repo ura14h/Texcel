@@ -49,19 +49,19 @@ impl GridViewportFrame<'_> {
             };
             let rect = Rect::from_min_size(
                 Pos2::new(x, self.viewport_origin.y),
-                Vec2::new(width, HEADER_HEIGHT),
+                Vec2::new(width, self.header_height),
             );
             let header_clip = if *column < self.frozen_column_count {
                 Rect::from_min_max(
                     Pos2::new(self.body_min.x, self.viewport_rect.min.y),
-                    Pos2::new(self.frozen_x, self.viewport_rect.min.y + HEADER_HEIGHT),
+                    Pos2::new(self.frozen_x, self.viewport_rect.min.y + self.header_height),
                 )
             } else {
                 Rect::from_min_max(
                     Pos2::new(self.frozen_x, self.viewport_rect.min.y),
                     Pos2::new(
                         self.viewport_rect.max.x,
-                        self.viewport_rect.min.y + HEADER_HEIGHT,
+                        self.viewport_rect.min.y + self.header_height,
                     ),
                 )
             };
@@ -97,7 +97,7 @@ impl GridViewportFrame<'_> {
                 rect.center(),
                 Align2::CENTER_CENTER,
                 column_name(*column),
-                FontId::proportional(visual::BODY_SIZE),
+                FontId::proportional(grid_font_size(self.grid.layout.scale())),
                 header_text_color,
             );
             // Show the Markdown column alignment with colons at the header's edges.
@@ -111,12 +111,14 @@ impl GridViewportFrame<'_> {
                 (
                     left_mark,
                     Align2::LEFT_CENTER,
-                    rect.left_center() + Vec2::new(ALIGNMENT_MARK_INSET, 0.0),
+                    rect.left_center()
+                        + Vec2::new(ALIGNMENT_MARK_INSET * self.grid.layout.scale(), 0.0),
                 ),
                 (
                     right_mark,
                     Align2::RIGHT_CENTER,
-                    rect.right_center() - Vec2::new(ALIGNMENT_MARK_INSET, 0.0),
+                    rect.right_center()
+                        - Vec2::new(ALIGNMENT_MARK_INSET * self.grid.layout.scale(), 0.0),
                 ),
             ] {
                 if shown {
@@ -124,7 +126,7 @@ impl GridViewportFrame<'_> {
                         position,
                         anchor,
                         ":",
-                        FontId::proportional(visual::BODY_SIZE),
+                        FontId::proportional(grid_font_size(self.grid.layout.scale())),
                         header_text_color,
                     );
                 }
@@ -185,7 +187,7 @@ impl GridViewportFrame<'_> {
             });
             let resize_rect = Rect::from_center_size(
                 Pos2::new(rect.right(), rect.center().y),
-                Vec2::new(8.0, HEADER_HEIGHT),
+                Vec2::new(8.0, self.header_height),
             );
             let resize_clip = if Some(*column) == last_visible_frozen_column {
                 Rect::from_min_max(
@@ -216,6 +218,7 @@ impl GridViewportFrame<'_> {
                     table_id: self.table_id,
                     column: *column,
                     start_width: self.grid.layout.column_width_pixels(*column) as f32,
+                    scale: self.grid.layout.scale(),
                 },
                 outcome,
             );
@@ -232,9 +235,9 @@ impl GridViewportFrame<'_> {
         for row in &self.visible_rows {
             let row_height = self.row_layout.row_height(*row);
             let y = if *row < self.frozen_row_count {
-                self.viewport_origin.y + HEADER_HEIGHT + self.row_layout.prefix_height(*row)
+                self.viewport_origin.y + self.header_height + self.row_layout.prefix_height(*row)
             } else {
-                self.viewport_origin.y + HEADER_HEIGHT + self.row_layout.prefix_height(*row)
+                self.viewport_origin.y + self.header_height + self.row_layout.prefix_height(*row)
                     - self.effective_scroll_y
             };
             let row_header = Rect::from_min_size(
@@ -282,10 +285,10 @@ impl GridViewportFrame<'_> {
                 egui::StrokeKind::Inside,
             );
             header_painter.text(
-                row_header.right_center() - Vec2::new(8.0, 0.0),
+                row_header.right_center() - Vec2::new(8.0 * self.grid.layout.scale(), 0.0),
                 Align2::RIGHT_CENTER,
                 (*row + 1).to_string(),
-                FontId::proportional(visual::BODY_SIZE),
+                FontId::proportional(grid_font_size(self.grid.layout.scale())),
                 if active_row || selected_row {
                     self.palette.foreground
                 } else {
@@ -344,6 +347,8 @@ struct HeaderResizeTarget {
     table_id: u64,
     column: usize,
     start_width: f32,
+    /// Sheet zoom of the drag, so the stored width stays at 100%.
+    scale: f32,
 }
 
 // Applies one column header drag as a local display layout value.
@@ -359,6 +364,7 @@ fn update_header_resize(
         table_id,
         column,
         start_width,
+        scale,
     } = header;
     if response.hovered() || response.dragged() {
         ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeHorizontal);
@@ -387,7 +393,7 @@ fn update_header_resize(
             ui.input(|input| input.pointer.interact_pos().or(input.pointer.latest_pos())),
         )
     {
-        let pixels = (drag.width_start + pointer.x - drag.pointer_start).max(1.0);
+        let pixels = (drag.width_start + pointer.x - drag.pointer_start).max(1.0) / scale;
         // Convert pixels to Excel-style character units, as stored in the layout.
         let width =
             ((pixels as f64 - 5.0) / 7.0).clamp(0.1, crate::document::MAX_COLUMN_WIDTH_UNITS);

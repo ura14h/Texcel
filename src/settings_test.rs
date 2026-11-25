@@ -81,14 +81,14 @@ fn settings_roundtrip_preserves_app_and_document_preferences() {
     let mut settings = SettingsFile::default();
     settings.app.language = LanguageChoice::Japanese;
     settings.app.font_preset = FontPreset::NotoSansJp;
-    settings.app.zoom_factor = 1.2;
+    settings.app.ui_font_size = 16.0;
     settings.upsert_document(preferences);
     save_settings(&path, settings).expect("save settings");
 
     let loaded = load_settings(&path).expect("load settings");
     assert_eq!(loaded.app.language, LanguageChoice::Japanese);
     assert_eq!(loaded.app.font_preset, FontPreset::NotoSansJp);
-    assert_eq!(loaded.app.zoom_factor, 1.2);
+    assert_eq!(loaded.app.ui_font_size, 16.0);
     let saved_document = loaded.document(&key).expect("matching identity");
     assert_eq!(
         saved_document.display_mode,

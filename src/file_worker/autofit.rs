@@ -143,6 +143,7 @@ fn measure_auto_fit(
                                 color: eframe::egui::Color32::BLACK,
                                 width,
                                 show_invisibles: request.show_invisibles,
+                                scale: 1.0,
                             },
                             Some(source),
                             request.language,
@@ -155,6 +156,7 @@ fn measure_auto_fit(
                                 color: eframe::egui::Color32::BLACK,
                                 width,
                                 show_invisibles: request.show_invisibles,
+                                scale: 1.0,
                             },
                         )
                     };

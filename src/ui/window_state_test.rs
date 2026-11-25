@@ -18,6 +18,7 @@ fn each_viewport_keeps_its_document_and_name_box_state() {
         assert_eq!(app.workspace.active_document, Some(root_document));
         app.name_box = "A1".to_owned();
         app.status = Some(Message::new("status-save-conflict"));
+        app.set_sheet_zoom(2.0);
     });
     app.with_window_state(child_viewport, Some(child_document), |app| {
         assert_eq!(app.workspace.active_document, Some(child_document));
@@ -33,6 +34,11 @@ fn each_viewport_keeps_its_document_and_name_box_state() {
     assert_eq!(app.window_document(child_viewport), Some(child_document));
     assert_eq!(app.window_states[&egui::ViewportId::ROOT].name_box, "A1");
     assert_eq!(app.window_states[&child_viewport].name_box, "B2");
+    assert_eq!(app.window_states[&egui::ViewportId::ROOT].sheet_zoom.0, 2.0);
+    assert_eq!(
+        app.window_states[&child_viewport].sheet_zoom.0, 1.0,
+        "another window keeps its own sheet zoom"
+    );
     assert_eq!(
         app.window_states[&egui::ViewportId::ROOT]
             .status

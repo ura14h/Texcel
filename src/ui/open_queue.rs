@@ -115,6 +115,7 @@ impl TexcelApp {
             || self.export_dialog.is_some()
             || self.cell_link_dialog.is_some()
             || self.layout_dialog.is_some()
+            || self.sheet_zoom_dialog.is_some()
             || self.search_dialog.is_some()
             || self.paste_special_dialog.is_some()
             || self.data_edit_dialog.is_some()

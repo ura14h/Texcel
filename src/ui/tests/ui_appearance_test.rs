@@ -21,7 +21,7 @@ fn settings_page_renders_in_light_and_dark() {
     {
         let ctx = harness.ctx.clone();
         let app = harness.state_mut();
-        app.zoom_factor = 1.0;
+        app.ui_font_size = visual::BODY_SIZE;
         app.theme = ThemeChoice::Light;
         app.settings_window_open = true;
         app.apply_appearance(&ctx);
@@ -207,7 +207,7 @@ fn settings_remain_reachable_at_max_zoom_in_a_small_window() {
     {
         let ctx = harness.ctx.clone();
         let app = harness.state_mut();
-        app.zoom_factor = 1.5;
+        app.ui_font_size = 21.0;
         app.theme = ThemeChoice::Light;
         app.settings_window_open = true;
         app.apply_appearance(&ctx);
@@ -255,7 +255,7 @@ fn settings_language_is_applied_without_clipping_at_small_size() {
         app.language_choice = crate::settings::LanguageChoice::Japanese;
         app.language = crate::i18n::Language::Japanese;
         crate::i18n::set_context_language(&ctx, app.language);
-        app.zoom_factor = 1.5;
+        app.ui_font_size = 21.0;
         app.settings_window_open = true;
         app.apply_appearance(&ctx);
     }

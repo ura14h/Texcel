@@ -23,8 +23,8 @@ impl TexcelApp {
                     }),
             );
         if !navigation_blocked {
-            if let Some(zoom_factor) = state.zoom_action {
-                self.set_zoom_factor(ctx, zoom_factor);
+            if let Some(zoom) = state.zoom_action {
+                self.set_sheet_zoom(zoom);
             }
             if state.minimize_window {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));

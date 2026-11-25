@@ -12,6 +12,7 @@ impl TexcelApp {
         let ctx = root.ctx().clone();
         let show_invisibles = self.show_invisibles;
         let font_layout_generation = self.font_layout_generation;
+        let grid_scale = self.grid_scale();
         let active_grid = self
             .workspace
             .active_document()
@@ -139,11 +140,12 @@ impl TexcelApp {
                         show_invisibles,
                         wrap_text: document.view(table.id).is_some_and(|view| view.wrap_text),
                         font_layout_generation,
+                        scale: grid_scale,
                     };
                     let row_layout = grid_row_layouts.entry((document.id, table.id)).or_default();
                     outcome = draw_virtual_grid(
                         ui,
-                        GridTable::new(document, table),
+                        GridTable::new(document, table, grid_scale),
                         display,
                         row_layout,
                         GridInput {

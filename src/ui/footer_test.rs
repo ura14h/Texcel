@@ -542,3 +542,50 @@ fn status_label_rect(harness: &Harness<'_, TexcelApp>) -> egui::Rect {
         .expect("the status notice is visible")
         .rect()
 }
+
+/// Opens the zoom dialog from the status band and applies a preset to this window only.
+#[test]
+fn zoom_button_applies_a_preset_from_the_dialog() {
+    let directory = scenario::ScenarioDirectory::new();
+    let mut harness = scenario::scenario_harness(directory.0.join("settings.json"));
+    harness.state_mut().language = Language::English;
+    crate::i18n::set_context_language(&harness.ctx, Language::English);
+    harness.step();
+    let zoom_button = harness
+        .query_all(By::new().label_contains("Sheet zoom 100%"))
+        .next()
+        .expect("the status band shows the sheet zoom")
+        .rect()
+        .center();
+    scenario::click_point(&mut harness, zoom_button);
+    harness.step();
+    assert!(harness.state().sheet_zoom_dialog.is_some());
+    let preset = harness
+        .query_all(By::new().label("50%"))
+        .next()
+        .expect("the dialog offers 50%")
+        .rect()
+        .center();
+    scenario::click_point(&mut harness, preset);
+    let apply = harness
+        .query_all(By::new().role(egui::Role::Button).label("Apply"))
+        .next()
+        .expect("the dialog has Apply")
+        .rect()
+        .center();
+    scenario::click_point(&mut harness, apply);
+    harness.step();
+    assert!(harness.state().sheet_zoom_dialog.is_none());
+    assert_eq!(harness.state().sheet_zoom.0, 0.5);
+    assert_eq!(
+        harness.state().snapshot_settings().app.ui_font_size,
+        crate::settings::default_ui_font_size(),
+        "the sheet zoom is not an app setting"
+    );
+    assert!(
+        harness
+            .query_all(By::new().label_contains("Sheet zoom 50%"))
+            .next()
+            .is_some()
+    );
+}

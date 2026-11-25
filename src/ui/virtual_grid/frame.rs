@@ -35,4 +35,6 @@ pub(super) struct GridViewportFrame<'a> {
     pub(super) fill_preview: Option<(CellAddress, CellAddress)>,
     pub(super) visuals: egui::Visuals,
     pub(super) palette: GridThemePalette,
+    /// Height of the column-letter band at the current sheet zoom.
+    pub(super) header_height: f32,
 }

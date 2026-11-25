@@ -14,7 +14,7 @@ fn long_cell_text_keeps_its_value_and_draws_an_overflow_mark() {
     let bounds = Rect::from_min_size(Pos2::ZERO, Vec2::new(48.0, 24.0));
     let mut galley = None;
     let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
-        constrain_cell_text_layout(ui.ctx(), bounds, &style, false, &mut job);
+        constrain_cell_text_layout(ui.ctx(), bounds, &style, false, 1.0, &mut job);
         galley = Some(ui.ctx().fonts_mut(|fonts| fonts.layout_job(job.clone())));
     });
     output.textures_delta.clear();
@@ -50,6 +50,7 @@ fn nowrap_multiline_text_marks_width_overflow_without_dropping_lines() {
             color: Color32::BLACK,
             width: bounds.width(),
             show_invisibles: false,
+            scale: 1.0,
         },
         None,
         crate::i18n::Language::English,
@@ -58,7 +59,14 @@ fn nowrap_multiline_text_marks_width_overflow_without_dropping_lines() {
     job.wrap.max_rows = 256;
     let mut galley = None;
     let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
-        constrain_cell_text_layout(ui.ctx(), bounds, &style, job.text.contains('\n'), &mut job);
+        constrain_cell_text_layout(
+            ui.ctx(),
+            bounds,
+            &style,
+            job.text.contains('\n'),
+            1.0,
+            &mut job,
+        );
         galley = Some(ui.ctx().fonts_mut(|fonts| fonts.layout_job(job.clone())));
     });
     output.textures_delta.clear();
@@ -75,7 +83,7 @@ fn nowrap_multiline_text_marks_width_overflow_without_dropping_lines() {
             .collect::<String>(),
         "x"
     );
-    let position = cell_text_position(bounds, galley.rect, &style);
+    let position = cell_text_position(bounds, galley.rect, &style, 1.0);
     assert!(galley.rows[0].row.size.x > bounds.shrink(3.0).width());
     assert_eq!(
         clipped_row_edges(bounds.shrink(3.0), position, &galley),
@@ -119,6 +127,7 @@ fn markdown_galley_uses_the_single_cell_paint_alignment() {
             color: Color32::BLACK,
             width: 112.0,
             show_invisibles: false,
+            scale: 1.0,
         },
         None,
         crate::i18n::Language::English,
@@ -127,7 +136,7 @@ fn markdown_galley_uses_the_single_cell_paint_alignment() {
 
     let cell = Rect::from_min_size(Pos2::ZERO, Vec2::new(112.0, 40.0));
     let right_galley = Rect::from_min_max(Pos2::new(-42.0, 0.0), Pos2::new(0.0, 16.0));
-    let right = cell_text_position(cell, right_galley, &style);
+    let right = cell_text_position(cell, right_galley, &style, 1.0);
     assert_eq!(right.x, cell.right() - 6.0);
     assert_eq!(right.y, cell.center().y - right_galley.center().y);
 
@@ -136,6 +145,6 @@ fn markdown_galley_uses_the_single_cell_paint_alignment() {
         ..CellTextStyle::default()
     };
     let center_galley = Rect::from_min_max(Pos2::new(-21.0, 0.0), Pos2::new(21.0, 16.0));
-    let center = cell_text_position(cell, center_galley, &center_style);
+    let center = cell_text_position(cell, center_galley, &center_style, 1.0);
     assert_eq!(center.x, cell.center().x - center_galley.center().x);
 }

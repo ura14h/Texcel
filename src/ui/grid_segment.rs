@@ -127,6 +127,11 @@ pub(super) fn draw_grid_cell_segment(
             .scope_builder(egui::UiBuilder::new().max_rect(editor_rect), |editor_ui| {
                 editor_ui.set_clip_rect(visible_rect);
                 editor_ui.style_mut().visuals.override_text_color = Some(palette.foreground);
+                // The in-cell editor follows the sheet zoom like the text it replaces.
+                let font_size = grid_font_size(display.scale);
+                let styles = &mut editor_ui.style_mut().text_styles;
+                styles.insert(egui::TextStyle::Body, FontId::proportional(font_size));
+                styles.insert(egui::TextStyle::Monospace, FontId::monospace(font_size));
                 let editor_ctx = editor_ui.ctx().clone();
                 // Focus the new editor before it reads this frame's first IME event.
                 // A repeated request would interrupt the platform IME, so skip a focused editor.
@@ -276,10 +281,10 @@ pub(super) fn draw_grid_cell_segment(
         };
         if let Some((indicator, hint)) = indicator {
             painter.text(
-                visible_rect.right_top() - Vec2::new(7.0, -7.0),
+                visible_rect.right_top() - Vec2::new(7.0, -7.0) * display.scale,
                 Align2::RIGHT_TOP,
                 indicator,
-                FontId::monospace(10.0),
+                FontId::monospace(10.0 * display.scale),
                 palette.error,
             );
             response = response.on_hover_text(context_text(grid_ui.ctx(), hint));
@@ -304,9 +309,11 @@ pub(super) fn draw_grid_cell_segment(
             && !navigation_blocked
             && structure_block_reason.is_none()
         {
-            let handle =
-                Rect::from_min_size(rect.right_bottom() - Vec2::splat(8.0), Vec2::splat(8.0))
-                    .intersect(visible_rect);
+            let handle = Rect::from_min_size(
+                rect.right_bottom() - Vec2::splat(8.0 * display.scale),
+                Vec2::splat(8.0 * display.scale),
+            )
+            .intersect(visible_rect);
             if handle.width() > 0.0 && handle.height() > 0.0 {
                 // Keep the fill handle draggable without adding it to keyboard focus order.
                 let handle_response = grid_ui.interact(

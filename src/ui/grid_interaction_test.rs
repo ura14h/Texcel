@@ -1297,3 +1297,45 @@ fn pointer_drag_selects_cells_and_rejects_an_outside_start() {
     );
     assert_eq!(view.active_cell(), CellAddress { row: 0, column: 0 });
 }
+
+/// Returns one visible cell's width in physical pixels.
+fn cell_physical_width(harness: &Harness<'_, TexcelApp>, label: &str) -> f32 {
+    let rect = harness
+        .query_all(By::new().role(egui::Role::GridCell).label_contains(label))
+        .next()
+        .unwrap_or_else(|| panic!("{label} is visible"))
+        .rect();
+    rect.width() * harness.ctx.pixels_per_point()
+}
+
+/// Sheet zoom resizes the grid, while the UI text size leaves the sheet at the same size.
+#[test]
+fn sheet_zoom_and_ui_text_size_are_independent() {
+    let mut harness = grid_harness(3, 3);
+    let base = cell_physical_width(&harness, "B2");
+
+    harness.state_mut().set_sheet_zoom(2.0);
+    harness.run_steps(3);
+    let zoomed = cell_physical_width(&harness, "B2");
+    assert!(
+        (zoomed / base - 2.0).abs() < 0.05,
+        "200% doubles the cell: {base} -> {zoomed}"
+    );
+    let stored = {
+        let document = harness.state().workspace.active_document().unwrap();
+        let table = document.active_table().unwrap();
+        document.view(table.id).unwrap().layout.column(1)
+    };
+    assert_eq!(stored, None, "zooming stores no column width");
+
+    harness.state_mut().set_sheet_zoom(1.0);
+    let ctx = harness.ctx.clone();
+    harness.state_mut().set_ui_font_size(&ctx, 20.0);
+    harness.run_steps(3);
+    assert!((harness.ctx.zoom_factor() - 20.0 / visual::BODY_SIZE).abs() < 0.001);
+    let after_ui_size = cell_physical_width(&harness, "B2");
+    assert!(
+        (after_ui_size - base).abs() < 1.0,
+        "the UI text size keeps the sheet size: {base} -> {after_ui_size}"
+    );
+}

@@ -87,8 +87,12 @@ impl TexcelApp {
                     });
                 }
             }
-            AppShortcut::ZoomIn => state.zoom_action = Some((self.zoom_factor + 0.05).min(1.5)),
-            AppShortcut::ZoomOut => state.zoom_action = Some((self.zoom_factor - 0.05).max(0.75)),
+            AppShortcut::ZoomIn => {
+                state.zoom_action = Some(step_sheet_zoom(self.sheet_zoom.0, true))
+            }
+            AppShortcut::ZoomOut => {
+                state.zoom_action = Some(step_sheet_zoom(self.sheet_zoom.0, false))
+            }
             AppShortcut::ZoomReset => state.zoom_action = Some(1.0),
             AppShortcut::Format(action) => {
                 let can_format = self.workspace.active_document().is_some_and(|document| {

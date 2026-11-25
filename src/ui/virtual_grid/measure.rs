@@ -7,13 +7,15 @@ pub(super) fn row_header_width(
     scroll_y: f32,
     viewport_height: f32,
     frozen_rows: usize,
+    scale: f32,
 ) -> f32 {
+    let header_height = grid_header_height(scale);
     let frozen_height = row_layout.prefix_height(frozen_rows);
     let pinned_rows = visible_rows_in_pixels(row_layout, 0.0, frozen_height, frozen_rows);
     let scrolling_rows = visible_rows_in_pixels(
         row_layout,
         frozen_height + scroll_y,
-        frozen_height + scroll_y + (viewport_height - HEADER_HEIGHT - frozen_height).max(0.0),
+        frozen_height + scroll_y + (viewport_height - header_height - frozen_height).max(0.0),
         MAX_ROWS,
     );
     let max_row = pinned_rows
@@ -22,14 +24,14 @@ pub(super) fn row_header_width(
         .max()
         .unwrap_or_default();
     let label = (max_row + 1).to_string();
-    let font_id = FontId::proportional(visual::BODY_SIZE);
+    let font_id = FontId::proportional(grid_font_size(scale));
     let label_width = ctx.fonts_mut(|fonts| {
         fonts
             .layout_no_wrap(label, font_id, Color32::WHITE)
             .size()
             .x
     });
-    ROW_HEADER_WIDTH.max(label_width.ceil() + 16.0)
+    (ROW_HEADER_WIDTH * scale).max(label_width.ceil() + 16.0 * scale)
 }
 
 /// Measures visible rows and adjusts the scroll offset after wrapped heights change.
@@ -61,7 +63,9 @@ pub(super) fn adjust_visible_row_heights(
         scroll.y,
         viewport_size.y,
         frozen_row_count,
+        display.scale,
     );
+    let header_height = grid_header_height(display.scale);
     let body_width = (viewport_size.x - header_width).max(0.0);
     let pinned_measure_columns =
         visible_columns_in_pixels(layout, column_count, 0.0, frozen_width.min(body_width))
@@ -88,7 +92,7 @@ pub(super) fn adjust_visible_row_heights(
     }
 
     let measure_start = scroll.y + frozen_height;
-    let measure_end = scroll.y + viewport_size.y - HEADER_HEIGHT;
+    let measure_end = scroll.y + viewport_size.y - header_height;
     let first_visible_row = row_layout.row_at_position(measure_start);
     let mut measure_rows =
         visible_rows_in_pixels(row_layout, measure_start, measure_end, row_count);
@@ -96,7 +100,7 @@ pub(super) fn adjust_visible_row_heights(
         visible_rows_in_pixels(
             row_layout,
             0.0,
-            frozen_height.min((viewport_size.y - HEADER_HEIGHT).max(0.0)),
+            frozen_height.min((viewport_size.y - header_height).max(0.0)),
             frozen_row_count,
         )
         .into_iter()
@@ -135,6 +139,7 @@ pub(super) fn adjust_visible_row_heights(
                     display.wrap_text,
                     display.show_invisibles,
                     display.mode == CellDisplayMode::Source,
+                    display.scale,
                 )
                 .max(display_height)
             });

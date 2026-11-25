@@ -253,7 +253,7 @@ Notes:
 
 The View menu has these commands. None of them change the file.
 
-- Zoom: Ctrl/Cmd++ and Ctrl/Cmd+−, and Ctrl/Cmd+0 for 100%.
+- Zoom: Ctrl/Cmd++ and Ctrl/Cmd+− change the sheet zoom in steps of 10%, and Ctrl/Cmd+0 returns to 100%. Click the percentage to the right of Live Editing at the bottom of the window to choose 200%, 100%, 75%, 50%, 25%, or a custom zoom from 10% to 400%. Each window has its own sheet zoom; menus, the formula bar, and dialogs keep their size.
 - Text Wrapping: wrap long content or not.
 - Freeze Panes: keep rows or columns up to the selection in view while scrolling.
 - Column Width…: set a column's width as a number (up to two decimal places).
@@ -277,7 +277,7 @@ Settings… is in the Texcel menu on macOS (Cmd+,) and in the File menu on Windo
 | App language | System, English, 日本語 |
 | Theme | System, Light, Dark |
 | Font | Automatic (match language), Default, Noto Sans JP |
-| Zoom | Overall zoom of the interface |
+| Interface text size | Text size in pixels for everything but the sheet: menus, formula bar, sheet tabs, status bar, and dialogs. The default follows the operating system |
 | Show invisible characters | Show spaces, tabs, and line breaks as marks |
 
 ## 12. Closing, quitting, and recovered work

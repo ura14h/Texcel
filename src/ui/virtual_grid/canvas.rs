@@ -13,11 +13,12 @@ pub(super) struct CanvasScroll {
 pub(super) fn canvas_size(
     extent_end: CellAddress,
     row_layout: &GridRowLayout,
-    layout: &TableLayout,
+    layout: ScaledLayout<'_>,
     viewport: Vec2,
     row_header_width: f32,
     scroll: CanvasScroll,
 ) -> Vec2 {
+    let header_height = grid_header_height(layout.scale());
     let CanvasScroll {
         offset: scroll,
         pending_ahead: pending_scroll_ahead,
@@ -25,16 +26,16 @@ pub(super) fn canvas_size(
     } = scroll;
     let used_size = Vec2::new(
         row_header_width + layout.prefix_column_width_pixels(extent_end.column + 1) as f32,
-        HEADER_HEIGHT + row_layout.prefix_height(extent_end.row + 1),
+        header_height + row_layout.prefix_height(extent_end.row + 1),
     );
     let sheet_size = Vec2::new(
         row_header_width + layout.prefix_column_width_pixels(MAX_COLUMNS) as f32,
-        HEADER_HEIGHT + row_layout.prefix_height(MAX_ROWS),
+        header_height + row_layout.prefix_height(MAX_ROWS),
     );
     let target_size = scroll_target.map_or(Vec2::ZERO, |address| {
         Vec2::new(
             row_header_width + layout.prefix_column_width_pixels(address.column + 1) as f32,
-            HEADER_HEIGHT + row_layout.prefix_height(address.row + 1),
+            header_height + row_layout.prefix_height(address.row + 1),
         )
     });
     let dynamic_size = Vec2::new(

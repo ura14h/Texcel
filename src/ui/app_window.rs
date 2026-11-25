@@ -1,20 +1,56 @@
 use super::*;
 
 impl TexcelApp {
-    // Update the app zoom and apply it to the current window.
-    pub(super) fn set_zoom_factor(&mut self, ctx: &egui::Context, zoom_factor: f32) {
-        let next = zoom_factor.clamp(0.75, 1.5);
-        if (next - self.zoom_factor).abs() < f32::EPSILON {
+    /// Converts the UI text size into egui's scale for every widget outside the sheet.
+    pub(super) fn ui_zoom(&self) -> f32 {
+        self.ui_font_size / visual::BODY_SIZE
+    }
+
+    /// Returns the factor the grid applies on top of the UI scale to show this window's zoom.
+    pub(super) fn grid_scale(&self) -> f32 {
+        self.sheet_zoom.0 / self.ui_zoom()
+    }
+
+    /// Updates the app-wide UI text size and applies it to every window.
+    pub(super) fn set_ui_font_size(&mut self, ctx: &egui::Context, size: f32) {
+        let next = size.round().clamp(
+            crate::settings::MIN_UI_FONT_SIZE,
+            crate::settings::MAX_UI_FONT_SIZE,
+        );
+        if (next - self.ui_font_size).abs() < f32::EPSILON {
             return;
         }
-        self.zoom_factor = next;
+        self.ui_font_size = next;
         self.font_layout_generation = self.font_layout_generation.saturating_add(1);
-        self.mark_app_preference_change(AppPreferenceField::ZoomFactor);
+        self.mark_app_preference_change(AppPreferenceField::UiFontSize);
         self.apply_appearance(ctx);
         self.invalidate_shared_window_appearance(ctx);
     }
 
-    // Handle keyboard shortcuts that change the app zoom.
+    /// Changes this window's sheet zoom and keeps the same cells at the top left.
+    pub(super) fn set_sheet_zoom(&mut self, zoom: f32) {
+        let next = clamp_sheet_zoom(zoom);
+        let previous = self.sheet_zoom.0;
+        if (next - previous).abs() < f32::EPSILON {
+            return;
+        }
+        let ratio = next / previous;
+        let shown_here = self.workspace.active_document;
+        let multi_window = self.multi_window_mode;
+        for (document_id, document) in &mut self.workspace.documents {
+            if multi_window && Some(*document_id) != shown_here {
+                continue;
+            }
+            for view in document.views.values_mut() {
+                view.scroll.x *= ratio;
+                view.scroll.y *= ratio;
+            }
+        }
+        self.sheet_zoom = SheetZoom(next);
+        self.request_scroll_to_selection = false;
+    }
+
+    // Handle keyboard shortcuts that change this window's sheet zoom.
     pub(super) fn handle_zoom_shortcuts(&mut self, ctx: &egui::Context) {
         let focused_id = ctx.memory(|memory| memory.focused());
         let grid_owns_keyboard = self.grid_focused
@@ -27,6 +63,7 @@ impl TexcelApp {
         {
             return;
         }
+        let zoom = self.sheet_zoom.0;
         let action = ctx.input_mut(|input| {
             use egui::gui_zoom::kb_shortcuts;
             if input.consume_shortcut(&kb_shortcuts::ZOOM_RESET) {
@@ -34,15 +71,15 @@ impl TexcelApp {
             } else if input.consume_shortcut(&kb_shortcuts::ZOOM_IN)
                 || input.consume_shortcut(&kb_shortcuts::ZOOM_IN_SECONDARY)
             {
-                Some((self.zoom_factor + 0.05).min(1.5))
+                Some(step_sheet_zoom(zoom, true))
             } else if input.consume_shortcut(&kb_shortcuts::ZOOM_OUT) {
-                Some((self.zoom_factor - 0.05).max(0.75))
+                Some(step_sheet_zoom(zoom, false))
             } else {
                 None
             }
         });
-        if let Some(zoom_factor) = action {
-            self.set_zoom_factor(ctx, zoom_factor);
+        if let Some(zoom) = action {
+            self.set_sheet_zoom(zoom);
         }
     }
 

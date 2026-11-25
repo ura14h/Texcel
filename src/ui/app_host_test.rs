@@ -190,9 +190,10 @@ fn host_cell_center(
     let node = find_host_grid_cell(tree.root(), table_token, address)
         .expect("the requested grid cell is visible");
     let bounds = node.raw_bounds().expect("the cell has visible bounds");
+    // Node bounds are in points; only the root node carries the pixels-per-point transform.
     egui::pos2(
-        (bounds.x0 + bounds.x1) as f32 / (2.0 * output.pixels_per_point),
-        (bounds.y0 + bounds.y1) as f32 / (2.0 * output.pixels_per_point),
+        (bounds.x0 + bounds.x1) as f32 / 2.0,
+        (bounds.y0 + bounds.y1) as f32 / 2.0,
     )
 }
 
@@ -223,9 +224,10 @@ fn host_button_center(output: &egui::FullOutput, label: &str) -> egui::Pos2 {
     let node = find_host_button(tree.root(), label)
         .unwrap_or_else(|| panic!("the requested child button {label:?} is visible"));
     let bounds = node.raw_bounds().expect("the button has visible bounds");
+    // Node bounds are in points; only the root node carries the pixels-per-point transform.
     egui::pos2(
-        (bounds.x0 + bounds.x1) as f32 / (2.0 * output.pixels_per_point),
-        (bounds.y0 + bounds.y1) as f32 / (2.0 * output.pixels_per_point),
+        (bounds.x0 + bounds.x1) as f32 / 2.0,
+        (bounds.y0 + bounds.y1) as f32 / 2.0,
     )
 }
 

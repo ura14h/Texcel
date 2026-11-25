@@ -111,7 +111,7 @@ impl TexcelApp {
             language: self.language_choice,
             theme: self.theme,
             font_preset: self.font_preset,
-            zoom_factor: self.zoom_factor,
+            ui_font_size: self.ui_font_size,
             show_invisibles: self.show_invisibles,
         }
     }

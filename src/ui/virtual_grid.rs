@@ -44,6 +44,8 @@ pub(super) fn draw_virtual_grid(
     let column_count = MAX_COLUMNS;
     row_layout.sync_layout_revision(layout.revision());
     row_layout.sync_display_generation(display.font_layout_generation);
+    row_layout.sync_scale(display.scale);
+    let header_height = grid_header_height(display.scale);
     row_layout.ensure_row_count(row_count);
     let viewport_size = ui.available_size();
     let frozen = layout.frozen();
@@ -94,7 +96,7 @@ pub(super) fn draw_virtual_grid(
             let pinned_rows = visible_rows_in_pixels(
                 row_layout,
                 0.0,
-                (viewport.height() - HEADER_HEIGHT)
+                (viewport.height() - header_height)
                     .max(0.0)
                     .min(frozen_height),
                 frozen_row_count,
@@ -104,7 +106,7 @@ pub(super) fn draw_virtual_grid(
                 frozen_height + effective_scroll_y,
                 frozen_height
                     + effective_scroll_y
-                    + (viewport.height() - HEADER_HEIGHT - frozen_height).max(0.0),
+                    + (viewport.height() - header_height - frozen_height).max(0.0),
                 row_count,
             )
             .into_iter()
@@ -133,7 +135,7 @@ pub(super) fn draw_virtual_grid(
             let viewport_rect = Rect::from_min_size(viewport_origin, viewport.size());
             let body_min = Pos2::new(
                 (viewport_origin.x + row_header_width).min(viewport_rect.max.x),
-                (viewport_origin.y + HEADER_HEIGHT).min(viewport_rect.max.y),
+                (viewport_origin.y + header_height).min(viewport_rect.max.y),
             );
             let frozen_x = (body_min.x + frozen_width).clamp(body_min.x, viewport_rect.max.x);
             let frozen_y = (body_min.y + frozen_height).clamp(body_min.y, viewport_rect.max.y);
@@ -207,9 +209,9 @@ pub(super) fn draw_virtual_grid(
                             - effective_scroll_x
                     };
                     let y = if selected_cell.row < frozen.rows {
-                        viewport.min.y + HEADER_HEIGHT + row_layout.prefix_height(selected_cell.row)
+                        viewport.min.y + header_height + row_layout.prefix_height(selected_cell.row)
                     } else {
-                        viewport.min.y + HEADER_HEIGHT + row_layout.prefix_height(selected_cell.row)
+                        viewport.min.y + header_height + row_layout.prefix_height(selected_cell.row)
                             - effective_scroll_y
                     };
                     let selected_rect = Rect::from_min_size(
@@ -241,9 +243,9 @@ pub(super) fn draw_virtual_grid(
                         - effective_scroll_x
                 };
                 let y = if target.row < frozen.rows {
-                    viewport.min.y + HEADER_HEIGHT + row_layout.prefix_height(target.row)
+                    viewport.min.y + header_height + row_layout.prefix_height(target.row)
                 } else {
-                    viewport.min.y + HEADER_HEIGHT + row_layout.prefix_height(target.row)
+                    viewport.min.y + header_height + row_layout.prefix_height(target.row)
                         - effective_scroll_y
                 };
                 let target_rect = Rect::from_min_size(
@@ -262,7 +264,7 @@ pub(super) fn draw_virtual_grid(
                 ..GridOutcome::default()
             };
             let row_corner =
-                Rect::from_min_size(viewport_origin, Vec2::new(row_header_width, HEADER_HEIGHT));
+                Rect::from_min_size(viewport_origin, Vec2::new(row_header_width, header_height));
             painter.rect_filled(row_corner, 0.0, palette.header_background);
             painter.rect_stroke(
                 row_corner,
@@ -333,6 +335,7 @@ pub(super) fn draw_virtual_grid(
                 fill_preview: None,
                 visuals,
                 palette,
+                header_height,
             };
             outcome.fill_handle_preview = frame.fill_handle_preview(grid_ui);
             frame.fill_preview = outcome.fill_handle_preview.map(CellRange::normalized);
@@ -342,7 +345,7 @@ pub(super) fn draw_virtual_grid(
             frame.draw_frozen_guides_and_fill(grid_ui, &painter, &mut outcome);
             let body_page = Vec2::new(
                 (viewport.width() - row_header_width - frozen_width).max(0.0),
-                (viewport.height() - HEADER_HEIGHT - frozen_height).max(0.0),
+                (viewport.height() - header_height - frozen_height).max(0.0),
             );
             outcome.page_extent = Some(body_page);
             update_selection_drag(

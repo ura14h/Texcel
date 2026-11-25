@@ -19,7 +19,14 @@ fn wrapped_row_cells(
     row: usize,
     visible_columns: std::ops::Range<usize>,
 ) -> (u64, Vec<(CellAddress, String, f32)>) {
-    wrapped_row_cells_for_ranges(document, table, layout, row, &[visible_columns], true)
+    wrapped_row_cells_for_ranges(
+        document,
+        table,
+        ScaledLayout::new(layout, 1.0),
+        row,
+        &[visible_columns],
+        true,
+    )
 }
 
 static NEXT_TEST_DIRECTORY: AtomicU64 = AtomicU64::new(1);
@@ -344,7 +351,7 @@ fn both_mode_and_markdown_breaks_expand_automatic_row_height() {
         GridTable {
             document: &formula_document,
             table: &formula_document.tables[0],
-            layout: &formula_document.tables[0].layout,
+            layout: ScaledLayout::new(&formula_document.tables[0].layout, 1.0),
             is_markdown: false,
             markdown_source: None,
             markdown_table_index: None,
@@ -354,6 +361,7 @@ fn both_mode_and_markdown_breaks_expand_automatic_row_height() {
             show_invisibles: false,
             wrap_text: false,
             font_layout_generation: 0,
+            scale: 1.0,
         },
         0,
         &visible_columns,
@@ -399,7 +407,7 @@ fn both_mode_and_markdown_breaks_expand_automatic_row_height() {
         GridTable {
             document: &markdown_document,
             table: &markdown_document.tables[0],
-            layout: &markdown_document.tables[0].layout,
+            layout: ScaledLayout::new(&markdown_document.tables[0].layout, 1.0),
             is_markdown: true,
             markdown_source: Some(&markdown),
             markdown_table_index: Some(0),
@@ -409,6 +417,7 @@ fn both_mode_and_markdown_breaks_expand_automatic_row_height() {
             show_invisibles: false,
             wrap_text: false,
             font_layout_generation: 0,
+            scale: 1.0,
         },
         address.row,
         &visible_columns,
@@ -485,7 +494,7 @@ fn appearance_changes_keep_the_active_edit_session_and_selection_state() {
     app.edit.buffer = "編集中の下書き".to_owned();
     let session_id = app.edit.session_id;
     app.font_preset = FontPreset::NotoSansJp;
-    app.zoom_factor = 1.25;
+    app.ui_font_size = 17.0;
     app.theme = ThemeChoice::Dark;
     app.apply_appearance(&ctx);
     let mut output = ctx.run_ui(
@@ -520,8 +529,8 @@ fn appearance_changes_keep_the_active_edit_session_and_selection_state() {
 }
 
 #[test]
-// Verify that zoom shortcuts save their value without changing cell edits.
-fn zoom_shortcuts_share_the_saved_zoom_and_leave_cell_edits_untouched() {
+// Verify that zoom shortcuts change only this window's sheet zoom and leave cell edits alone.
+fn zoom_shortcuts_change_the_sheet_zoom_and_leave_cell_edits_untouched() {
     let ctx = egui::Context::default();
     let mut app = new_app(&ctx);
     app.settings_loaded = true;
@@ -534,7 +543,8 @@ fn zoom_shortcuts_share_the_saved_zoom_and_leave_cell_edits_untouched() {
     row_layout.update_row(0, 0, 1, 80.0);
     app.grid_row_layouts
         .insert((document_id, table_id), row_layout);
-    let initial_generation = app.font_layout_generation;
+    let ui_zoom = app.ui_zoom();
+    let saved_font_size = app.snapshot_settings().app.ui_font_size;
     let mut frame = eframe::Frame::_new_kittest();
     let mut time = 0.0;
     run_frame(
@@ -546,13 +556,18 @@ fn zoom_shortcuts_share_the_saved_zoom_and_leave_cell_edits_untouched() {
     );
     run_frame(&mut app, &ctx, &mut frame, &mut time, Vec::new());
 
-    assert!((app.zoom_factor - 1.05).abs() < 0.01);
-    assert!((ctx.zoom_factor() - 1.05).abs() < 0.01);
-    assert!((app.snapshot_settings().app.zoom_factor - 1.05).abs() < 0.01);
-    assert!(app.font_layout_generation > initial_generation);
-    assert_eq!(
-        app.grid_row_layouts[&(document_id, table_id)].display_generation,
-        app.font_layout_generation
+    assert!((app.sheet_zoom.0 - 1.1).abs() < 0.001);
+    assert!(
+        (ctx.zoom_factor() - ui_zoom).abs() < 0.001,
+        "the UI scale stays"
+    );
+    assert_eq!(app.snapshot_settings().app.ui_font_size, saved_font_size);
+    let row_layout = &app.grid_row_layouts[&(document_id, table_id)];
+    assert_eq!(row_layout.scale, app.grid_scale());
+    assert_ne!(
+        row_layout.row_height(0),
+        80.0,
+        "rows measured at the old zoom are measured again"
     );
 
     app.edit.begin(
@@ -570,7 +585,7 @@ fn zoom_shortcuts_share_the_saved_zoom_and_leave_cell_edits_untouched() {
         &mut time,
         vec![key(Key::Plus, Modifiers::COMMAND)],
     );
-    assert!((app.zoom_factor - 1.05).abs() < 0.01);
+    assert!((app.sheet_zoom.0 - 1.1).abs() < 0.001);
     assert_eq!(app.edit.session_id, session_id);
     assert_eq!(app.edit.buffer, "draft");
 }
@@ -1739,7 +1754,7 @@ fn kittest_checks_appearance_and_saves_pngs_when_wgpu_is_available() {
         let session_id = app.edit.session_id;
         app.font_preset = FontPreset::NotoSansJp;
         app.theme = ThemeChoice::Dark;
-        app.zoom_factor = 1.15;
+        app.ui_font_size = 16.0;
         let document = &app.workspace.documents[&document_id];
         let view = document.view(table_id).unwrap();
         (
@@ -1795,7 +1810,7 @@ fn kittest_checks_appearance_and_saves_pngs_when_wgpu_is_available() {
         .memory(|memory| memory.area_rect(Id::unique("texcel_appearance_settings")));
     assert!(appearance_rect.is_some_and(|rect| rect.width() > 300.0 && rect.height() > 400.0));
     assert!(harness.ctx.style_of(harness.ctx.theme()).visuals.dark_mode);
-    assert!((harness.ctx.zoom_factor() - 1.15).abs() < 0.01);
+    assert!((harness.ctx.zoom_factor() - 16.0 / visual::BODY_SIZE).abs() < 0.01);
     {
         let app = harness.state();
         let document = &app.workspace.documents[&document_id];
@@ -3426,7 +3441,7 @@ fn wrapped_rows_keep_the_view_anchor_and_selected_row_position() {
     let mut layout = GridRowLayout::default();
     layout.ensure_row_count(table.row_count());
     let (fingerprint, wrapped_cells) = wrapped_row_cells(&document, table, &table.layout, 2, 0..1);
-    let measured_height = measure_wrapped_cells(&ctx, &wrapped_cells, true, false, false);
+    let measured_height = measure_wrapped_cells(&ctx, &wrapped_cells, true, false, false, 1.0);
     assert!(measured_height > ROW_HEIGHT);
 
     let selected_row = 4;

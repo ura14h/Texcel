@@ -16,11 +16,11 @@ impl TexcelApp {
             return;
         }
         let before_font = self.font_preset;
-        let before_zoom = self.zoom_factor;
+        let before_font_size = self.ui_font_size;
         let before_theme = self.theme;
         let before_language = self.language_choice;
         let before_invisibles = self.show_invisibles;
-        let mut next_zoom = self.zoom_factor;
+        let mut next_font_size = self.ui_font_size;
         let language = self.language;
         let content = ctx.content_rect();
         let max_width = (content.width() - 56.0).clamp(180.0, SETTINGS_MAX_WIDTH);
@@ -62,7 +62,7 @@ impl TexcelApp {
                             &mut self.font_preset,
                             &mut self.font_preview_details_open,
                             &mut self.theme,
-                            &mut next_zoom,
+                            &mut next_font_size,
                             &mut self.show_invisibles,
                         );
                     });
@@ -79,8 +79,8 @@ impl TexcelApp {
 
         close_requested |= close_key;
         self.settings_window_open = !close_requested;
-        if (next_zoom - before_zoom).abs() > 0.001 {
-            self.set_zoom_factor(ctx, next_zoom);
+        if (next_font_size - before_font_size).abs() > 0.001 {
+            self.set_ui_font_size(ctx, next_font_size);
         }
         if self.font_preset != before_font {
             self.mark_app_preference_change(AppPreferenceField::FontPreset);
@@ -97,11 +97,11 @@ impl TexcelApp {
             self.mark_app_preference_change(AppPreferenceField::ShowInvisibles);
         }
         self.apply_appearance(ctx);
-        let non_zoom_appearance_changed = self.font_preset != before_font
+        let other_appearance_changed = self.font_preset != before_font
             || self.theme != before_theme
             || self.language_choice != before_language
             || self.show_invisibles != before_invisibles;
-        if non_zoom_appearance_changed && (next_zoom - before_zoom).abs() <= 0.001 {
+        if other_appearance_changed && (next_font_size - before_font_size).abs() <= 0.001 {
             self.invalidate_shared_window_appearance(ctx);
         }
     }

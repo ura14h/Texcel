@@ -58,8 +58,8 @@ impl TexcelApp {
             "view.source" => {
                 state.table_display_mode = Some(crate::document::DocumentDisplayMode::Source)
             }
-            "view.zoom_in" => state.zoom_action = Some((self.zoom_factor + 0.05).min(1.5)),
-            "view.zoom_out" => state.zoom_action = Some((self.zoom_factor - 0.05).max(0.75)),
+            "view.zoom_in" => state.zoom_action = Some(step_sheet_zoom(self.sheet_zoom.0, true)),
+            "view.zoom_out" => state.zoom_action = Some(step_sheet_zoom(self.sheet_zoom.0, false)),
             "view.zoom_reset" => state.zoom_action = Some(1.0),
             "view.wrap_on" => state.table_wrap_mode = Some(WrapMode::On),
             "view.wrap_off" => state.table_wrap_mode = Some(WrapMode::Off),

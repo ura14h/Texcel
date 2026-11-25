@@ -4,6 +4,7 @@ pub(super) enum SheetBandAction {
     Select(TableId),
     Manage(StructureAction, Option<TableId>),
     ToggleMode(DocumentId, TableId, crate::document::DocumentDisplayMode),
+    OpenZoom,
 }
 
 /// Draws the sheet strip with tabs and Add inside the scroller.
@@ -65,8 +66,14 @@ pub(super) fn draw_sheet_band(
                     };
                     chrome::mode_tab_width(ui, &label)
                 });
+                let zoom_label = format!(
+                    "{}%",
+                    super::super::sheet_zoom_dialog::zoom_percent(app.sheet_zoom.0)
+                );
+                let zoom_width = chrome::mode_tab_width(ui, &zoom_label);
                 let list_visible = context_text(ui.ctx(), "dialog-table-list-button");
-                let fixed_width = chrome::command_width(ui, &list_visible) + mode_width + 8.0;
+                let fixed_width =
+                    chrome::command_width(ui, &list_visible) + mode_width + zoom_width + 8.0;
                 let scroll_width = (ui.available_width() - fixed_width).max(0.0);
                 egui::ScrollArea::horizontal()
                     .id_salt("table_tab_scroll")
@@ -214,6 +221,21 @@ pub(super) fn draw_sheet_band(
                             next_mode,
                         ));
                     }
+                }
+                // The sheet zoom of this window sits right of the display mode.
+                let zoom_name = context_message(
+                    ui.ctx(),
+                    &Message::new("view-sheet-zoom").with_text("zoom", zoom_label.clone()),
+                );
+                if ui
+                    .add_enabled_ui(!navigation_blocked, |ui| {
+                        chrome::mode_tab_button(ui, false, &zoom_label, &zoom_name)
+                    })
+                    .inner
+                    .on_hover_text(zoom_name.clone())
+                    .clicked()
+                {
+                    action = Some(SheetBandAction::OpenZoom);
                 }
             });
         });

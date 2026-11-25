@@ -35,7 +35,7 @@ pub(super) fn grid_address_at_pointer(
 
 // Find the columns whose bounds overlap the visible viewport.
 pub(super) fn visible_columns_in_pixels(
-    layout: &TableLayout,
+    layout: ScaledLayout<'_>,
     columns: usize,
     start: f32,
     end: f32,
@@ -95,8 +95,9 @@ pub(super) fn measure_wrapped_cells(
     wrap_text: bool,
     show_invisibles: bool,
     monospace: bool,
+    scale: f32,
 ) -> f32 {
-    let mut height = ROW_HEIGHT;
+    let mut height = ROW_HEIGHT * scale;
     for (_, text, width) in wrapped_cells {
         if text.is_empty() {
             continue;
@@ -112,6 +113,7 @@ pub(super) fn measure_wrapped_cells(
                 color: Color32::BLACK,
                 width: *width,
                 show_invisibles,
+                scale,
             },
         )
         .0;
@@ -121,8 +123,9 @@ pub(super) fn measure_wrapped_cells(
         let line_height = super::cell_paint::cell_text_line_height(ctx, &job);
         let galley = ctx.fonts_mut(|fonts| fonts.layout_job(job));
         height = height.max(
-            (measured_galley_height(&galley, line_height) + GRID_CELL_TEXT_VERTICAL_PADDING)
-                .min(MAX_WRAPPED_ROW_HEIGHT),
+            (measured_galley_height(&galley, line_height)
+                + GRID_CELL_TEXT_VERTICAL_PADDING * scale)
+                .min(MAX_WRAPPED_ROW_HEIGHT * scale),
         );
     }
     height
@@ -150,6 +153,7 @@ pub(super) fn measure_display_row_height(
         show_invisibles,
         wrap_text,
         font_layout_generation,
+        scale,
     } = display;
     let mut hasher = DefaultHasher::new();
     row.hash(&mut hasher);
@@ -161,7 +165,8 @@ pub(super) fn measure_display_row_height(
     wrap_text.hash(&mut hasher);
     font_layout_generation.hash(&mut hasher);
     show_invisibles.hash(&mut hasher);
-    let mut height = ROW_HEIGHT;
+    scale.to_bits().hash(&mut hasher);
+    let mut height = ROW_HEIGHT * scale;
     for columns in visible_column_ranges {
         columns.start.hash(&mut hasher);
         columns.end.hash(&mut hasher);
@@ -246,6 +251,7 @@ pub(super) fn measure_display_row_height(
                             color: Color32::BLACK,
                             width,
                             show_invisibles,
+                            scale,
                         },
                         markdown_source,
                         crate::i18n::context_language(ctx),
@@ -258,6 +264,7 @@ pub(super) fn measure_display_row_height(
                             color: Color32::BLACK,
                             width,
                             show_invisibles,
+                            scale,
                         },
                     )
                 }
@@ -269,6 +276,7 @@ pub(super) fn measure_display_row_height(
                         color: Color32::BLACK,
                         width,
                         show_invisibles,
+                        scale,
                     },
                 )
             };
@@ -279,8 +287,9 @@ pub(super) fn measure_display_row_height(
             let line_height = super::cell_paint::cell_text_line_height(ctx, &job);
             let galley = ctx.fonts_mut(|fonts| fonts.layout_job(job));
             height = height.max(
-                (measured_galley_height(&galley, line_height) + GRID_CELL_TEXT_VERTICAL_PADDING)
-                    .min(MAX_WRAPPED_ROW_HEIGHT),
+                (measured_galley_height(&galley, line_height)
+                    + GRID_CELL_TEXT_VERTICAL_PADDING * scale)
+                    .min(MAX_WRAPPED_ROW_HEIGHT * scale),
             );
         }
     }

@@ -23,7 +23,7 @@ fn zoom_shortcuts_follow_grid_focus_and_leave_text_inputs_untouched() {
     assert_eq!(harness.state().grid_keyboard_owner, grid_owner);
     harness.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::Plus);
     harness.step();
-    assert!((harness.state().zoom_factor - 1.05).abs() < 0.01);
+    assert!((harness.state().sheet_zoom.0 - 1.1).abs() < 0.001);
 
     let document_id = harness.state().workspace.active_document.unwrap();
     let name_box_id = Id::unique(egui::IdSalt::new(("name_box", document_id)));
@@ -31,10 +31,10 @@ fn zoom_shortcuts_follow_grid_focus_and_leave_text_inputs_untouched() {
         .ctx
         .memory_mut(|memory| memory.request_focus(name_box_id));
     harness.step();
-    let zoom_before_text_shortcut = harness.state().zoom_factor;
+    let zoom_before_text_shortcut = harness.state().sheet_zoom;
     harness.key_press_modifiers(egui::Modifiers::COMMAND, egui::Key::Plus);
     harness.step();
-    assert_eq!(harness.state().zoom_factor, zoom_before_text_shortcut);
+    assert_eq!(harness.state().sheet_zoom, zoom_before_text_shortcut);
 }
 
 // Verify that ScrollIntoView preserves selection and Focus waits through IME composition.

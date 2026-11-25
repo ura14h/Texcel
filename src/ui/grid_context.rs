@@ -5,8 +5,8 @@ use super::*;
 pub(super) struct GridTable<'a> {
     pub(super) document: &'a Document,
     pub(super) table: &'a crate::document::Table,
-    /// The view's layout, which may differ from the layout saved with the table.
-    pub(super) layout: &'a TableLayout,
+    /// The view's layout at the sheet zoom; it may differ from the layout saved with the table.
+    pub(super) layout: ScaledLayout<'a>,
     /// True when the document is Markdown, so cell text is Markdown to format.
     pub(super) is_markdown: bool,
     pub(super) markdown_source: Option<&'a crate::markdown_adapter::MarkdownDocument>,
@@ -15,8 +15,12 @@ pub(super) struct GridTable<'a> {
 }
 
 impl<'a> GridTable<'a> {
-    /// Collects the view layout and Markdown source of one table in a document.
-    pub(super) fn new(document: &'a Document, table: &'a crate::document::Table) -> Self {
+    /// Collects the view layout at a grid scale and the Markdown source of one table.
+    pub(super) fn new(
+        document: &'a Document,
+        table: &'a crate::document::Table,
+        scale: f32,
+    ) -> Self {
         let markdown_source = match document.source.as_deref() {
             Some(SourceDocument::Markdown(markdown)) => Some(markdown.as_ref()),
             Some(SourceDocument::Csv(_)) | None => None,
@@ -24,9 +28,12 @@ impl<'a> GridTable<'a> {
         Self {
             document,
             table,
-            layout: document
-                .view(table.id)
-                .map_or(&table.layout, |view| view.layout.as_ref()),
+            layout: ScaledLayout::new(
+                document
+                    .view(table.id)
+                    .map_or(&table.layout, |view| view.layout.as_ref()),
+                scale,
+            ),
             is_markdown: markdown_source.is_some(),
             markdown_source,
             markdown_table_index: markdown_source.and_then(|_| {
@@ -49,6 +56,8 @@ pub(super) struct GridDisplay {
     pub(super) wrap_text: bool,
     /// Changes whenever the fonts change, so cached text measurements are redone.
     pub(super) font_layout_generation: u64,
+    /// Sheet zoom relative to the app's own scale; every grid size is multiplied by it.
+    pub(super) scale: f32,
 }
 
 /// What the user may do in the grid this frame, and drags or jumps already under way.

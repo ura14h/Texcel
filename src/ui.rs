@@ -118,7 +118,9 @@ pub struct TexcelApp {
     language: Language,
     font_preset: FontPreset,
     installed_font_preset: FontPreset,
-    zoom_factor: f32,
+    ui_font_size: f32,
+    /// This window's sheet zoom; the UI text size never changes it.
+    sheet_zoom: SheetZoom,
     show_invisibles: bool,
     settings_window_open: bool,
     help_window_open: bool,
@@ -256,6 +258,7 @@ pub struct TexcelApp {
     pending_app_close_save_targets: BTreeMap<DocumentId, (PathBuf, ExportOptions, bool)>,
     cell_link_dialog: Option<CellLinkDialog>,
     layout_dialog: Option<LayoutDialogState>,
+    sheet_zoom_dialog: Option<sheet_zoom_dialog::SheetZoomDialogState>,
     search_dialog: Option<SearchDialogState>,
     paste_special_dialog: Option<PasteOptions>,
     copy_options_dialog: Option<CopyOptionsDialog>,
@@ -343,6 +346,7 @@ mod grid_context;
 mod grid_events;
 mod grid_geometry;
 mod grid_layout;
+mod grid_scale;
 mod grid_segment;
 mod grid_selection;
 mod ime;
@@ -369,6 +373,7 @@ mod save_conflict;
 mod search_actions;
 mod search_dialog;
 mod selection;
+mod sheet_zoom_dialog;
 mod structure_ops;
 mod table_management;
 mod top;
@@ -384,6 +389,7 @@ use self::grid_accessibility::*;
 use self::grid_context::*;
 use self::grid_geometry::*;
 use self::grid_layout::*;
+use self::grid_scale::*;
 use self::grid_segment::*;
 use self::grid_selection::*;
 use self::markdown_alignment::*;

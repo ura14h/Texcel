@@ -54,7 +54,7 @@ impl GridViewportFrame<'_> {
         }
         if self.grid.layout.frozen().rows > 0 {
             let y = self.viewport_origin.y
-                + HEADER_HEIGHT
+                + self.header_height
                 + self
                     .row_layout
                     .prefix_height(self.grid.layout.frozen().rows);

@@ -18,7 +18,6 @@ pub(super) struct PendingAutoFit {
     language: Language,
     show_invisibles: bool,
     wrap_text: bool,
-    zoom_factor: f32,
     pixels_per_point: f32,
 }
 
@@ -169,7 +168,6 @@ impl TexcelApp {
                 language: self.language,
                 show_invisibles: self.show_invisibles,
                 wrap_text,
-                zoom_factor: self.zoom_factor,
                 pixels_per_point,
             },
         );
@@ -292,7 +290,6 @@ impl TexcelApp {
             || self.font_layout_generation != pending.font_layout_generation
             || self.language != pending.language
             || self.show_invisibles != pending.show_invisibles
-            || (self.zoom_factor - pending.zoom_factor).abs() > f32::EPSILON
             || (self.last_pixels_per_point - pending.pixels_per_point).abs() > f32::EPSILON
         {
             return;

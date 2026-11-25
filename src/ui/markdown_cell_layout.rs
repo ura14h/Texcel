@@ -12,9 +12,10 @@ pub(crate) fn markdown_cell_layout_job(
         color: fallback_color,
         width,
         show_invisibles,
+        scale,
     } = format;
     let base_color = fallback_color;
-    let font_size = GRID_TEXT_SIZE;
+    let font_size = GRID_TEXT_SIZE * scale;
     let mut job = egui::text::LayoutJob {
         halign: match style.alignment {
             Some(HorizontalAlignment::Center) => egui::Align::Center,
@@ -24,7 +25,7 @@ pub(crate) fn markdown_cell_layout_job(
         ..Default::default()
     };
     job.wrap.max_width = if style.wrap_text {
-        (width - 10.0).max(1.0)
+        (width - 10.0 * scale).max(1.0)
     } else {
         f32::INFINITY
     };

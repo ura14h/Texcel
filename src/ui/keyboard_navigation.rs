@@ -6,7 +6,7 @@ impl TexcelApp {
         let target = self.workspace.active_document().and_then(|document| {
             let table = document.active_table()?;
             let view = document.view(table.id)?;
-            let layout = view.layout.as_ref();
+            let layout = ScaledLayout::new(view.layout.as_ref(), self.grid_scale());
             let active = view.active_cell();
             let current = if extend && view.selection.anchor == active {
                 view.selection.head

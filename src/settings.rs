@@ -67,9 +67,25 @@ pub struct AppPreferences {
     pub language: LanguageChoice,
     pub theme: ThemeChoice,
     pub font_preset: FontPreset,
-    /// egui zoom factor, separate from native DPI scaling.
-    pub zoom_factor: f32,
+    /// Text size in points for everything but the sheet: menus, bars, tabs, status, dialogs.
+    pub ui_font_size: f32,
     pub show_invisibles: bool,
+}
+
+/// The smallest UI text size the settings accept.
+pub const MIN_UI_FONT_SIZE: f32 = 10.0;
+/// The largest UI text size the settings accept.
+pub const MAX_UI_FONT_SIZE: f32 = 24.0;
+
+/// Follows the platform's standard UI text size: 13 on macOS, 12 on Windows, 14 elsewhere.
+pub fn default_ui_font_size() -> f32 {
+    if cfg!(target_os = "macos") {
+        13.0
+    } else if cfg!(target_os = "windows") {
+        12.0
+    } else {
+        14.0
+    }
 }
 
 impl Default for AppPreferences {
@@ -79,7 +95,7 @@ impl Default for AppPreferences {
             language: LanguageChoice::System,
             theme: ThemeChoice::System,
             font_preset: FontPreset::Auto,
-            zoom_factor: 1.0,
+            ui_font_size: default_ui_font_size(),
             show_invisibles: false,
         }
     }
@@ -289,9 +305,9 @@ fn validate_settings(settings: &SettingsFile) -> Result<(), crate::i18n::Message
                 .with_number("version", settings.schema_version as i64),
         );
     }
-    if !settings.app.zoom_factor.is_finite() || !(0.75..=1.5).contains(&settings.app.zoom_factor) {
+    if !(MIN_UI_FONT_SIZE..=MAX_UI_FONT_SIZE).contains(&settings.app.ui_font_size) {
         return Err(crate::i18n::Message::new(
-            "status-settings-zoom-out-of-range",
+            "status-settings-ui-font-size-out-of-range",
         ));
     }
     let mut keys = BTreeSet::new();

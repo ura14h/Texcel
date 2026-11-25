@@ -97,6 +97,9 @@ impl TexcelApp {
                         root.ctx().request_repaint();
                     }
                 }
+                sheet_tabs::SheetBandAction::OpenZoom if !navigation_blocked => {
+                    self.open_sheet_zoom_dialog();
+                }
                 _ => (),
             }
         }

@@ -217,6 +217,7 @@ impl TexcelApp {
         self.draw_import_report(&ctx);
         self.draw_cell_link_dialog(&ctx);
         self.draw_layout_dialog(&ctx);
+        self.draw_sheet_zoom_dialog(&ctx);
         if self.active_import_report.is_none() {
             self.draw_export_settings(&ctx);
             self.draw_export_confirmation(&ctx);
@@ -248,6 +249,7 @@ impl TexcelApp {
             || self.save_conflict_dialog.is_some()
             || self.cell_link_dialog.is_some()
             || self.layout_dialog.is_some()
+            || self.sheet_zoom_dialog.is_some()
             || self.search_dialog.is_some()
             || self.paste_special_dialog.is_some()
             || self.copy_options_dialog.is_some()
@@ -362,6 +364,7 @@ impl TexcelApp {
             || self.export_dialog.is_some()
             || self.cell_link_dialog.is_some()
             || self.layout_dialog.is_some()
+            || self.sheet_zoom_dialog.is_some()
             || self.search_dialog.is_some()
             || self.paste_special_dialog.is_some()
             || self.copy_options_dialog.is_some()

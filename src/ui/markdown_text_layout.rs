@@ -252,6 +252,8 @@ pub(crate) struct CellTextFormat<'a> {
     pub(crate) color: Color32,
     pub(crate) width: f32,
     pub(crate) show_invisibles: bool,
+    /// Grid scale applied to the font size and the text inset; 1.0 outside the grid.
+    pub(crate) scale: f32,
 }
 
 /// Size of grid text in points. Edited cells carry no font size of their own.
@@ -267,6 +269,7 @@ pub(crate) fn cell_layout_job(
         color,
         width,
         show_invisibles,
+        scale,
     } = format;
     let mut job = egui::text::LayoutJob {
         halign: match style.alignment {
@@ -277,13 +280,13 @@ pub(crate) fn cell_layout_job(
         ..Default::default()
     };
     job.wrap.max_width = if style.wrap_text {
-        (width - 10.0).max(1.0)
+        (width - 10.0 * scale).max(1.0)
     } else {
         f32::INFINITY
     };
     job.wrap.max_rows = if style.wrap_text { 256 } else { 1 };
     let text_format = egui::TextFormat {
-        font_id: FontId::new(GRID_TEXT_SIZE, grid_font_family(false)),
+        font_id: FontId::new(GRID_TEXT_SIZE * scale, grid_font_family(false)),
         color,
         ..Default::default()
     };

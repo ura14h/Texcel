@@ -61,6 +61,7 @@ pub(super) fn paint_cell_text(
     } = paint;
     let display_mode = display.mode;
     let show_invisibles = display.show_invisibles;
+    let scale = display.scale;
     let is_markdown = markdown.is_some();
     let markdown_display = markdown.and_then(|markdown| markdown.display);
     let markdown_source = markdown.and_then(|markdown| markdown.source);
@@ -93,6 +94,7 @@ pub(super) fn paint_cell_text(
                         color: fallback_color,
                         width: rect.width(),
                         show_invisibles,
+                        scale,
                     },
                 )
             },
@@ -104,6 +106,7 @@ pub(super) fn paint_cell_text(
                         color: fallback_color,
                         width: rect.width(),
                         show_invisibles,
+                        scale,
                     },
                     markdown_source,
                     crate::i18n::context_language(painter.ctx()),
@@ -118,6 +121,7 @@ pub(super) fn paint_cell_text(
                 color: fallback_color,
                 width: rect.width(),
                 show_invisibles,
+                scale,
             },
         )
     };
@@ -131,15 +135,22 @@ pub(super) fn paint_cell_text(
     if bold {
         apply_grid_bold(&mut job);
     }
-    constrain_cell_text_layout(painter.ctx(), rect, style, has_explicit_lines, &mut job);
+    constrain_cell_text_layout(
+        painter.ctx(),
+        rect,
+        style,
+        has_explicit_lines,
+        scale,
+        &mut job,
+    );
     let galley = painter.ctx().fonts_mut(|fonts| fonts.layout_job(job));
-    let position = cell_text_position(rect, galley.rect, style);
-    let painter = painter.with_clip_rect(rect.shrink(3.0));
+    let position = cell_text_position(rect, galley.rect, style, scale);
+    let painter = painter.with_clip_rect(rect.shrink(3.0 * scale));
     painter.galley(position, galley.clone(), base_color);
     if !style.wrap_text && has_explicit_lines {
         paint_horizontal_overflow_markers(
             &painter,
-            rect.shrink(3.0),
+            rect.shrink(3.0 * scale),
             position,
             &galley,
             cell_background,
@@ -166,16 +177,19 @@ fn constrain_cell_text_layout(
     rect: Rect,
     style: &CellTextStyle,
     has_explicit_lines: bool,
+    scale: f32,
     job: &mut egui::text::LayoutJob,
 ) {
     if !style.wrap_text && !has_explicit_lines {
-        job.wrap = egui::text::TextWrapping::truncate_at_width((rect.width() - 12.0).max(1.0));
+        job.wrap =
+            egui::text::TextWrapping::truncate_at_width((rect.width() - 12.0 * scale).max(1.0));
         return;
     }
 
     let line_height = cell_text_line_height(ctx, job);
     if line_height > 0.0 {
-        let inner_height = (rect.height() - super::grid_geometry::GRID_CELL_TEXT_VERTICAL_PADDING)
+        let inner_height = (rect.height()
+            - super::grid_geometry::GRID_CELL_TEXT_VERTICAL_PADDING * scale)
             .max(line_height);
         let visible_rows = (inner_height / line_height).floor() as usize;
         job.wrap.max_rows = if style.wrap_text {
@@ -324,11 +338,11 @@ fn row_edge_format(
 }
 
 /// Places a measured cell galley using the column's horizontal alignment, centred vertically.
-fn cell_text_position(rect: Rect, galley_rect: Rect, style: &CellTextStyle) -> Pos2 {
+fn cell_text_position(rect: Rect, galley_rect: Rect, style: &CellTextStyle, scale: f32) -> Pos2 {
     let x = match style.alignment {
         Some(HorizontalAlignment::Center) => rect.center().x - galley_rect.center().x,
-        Some(HorizontalAlignment::Right) => rect.right() - 6.0 - galley_rect.right(),
-        _ => rect.left() + 6.0 - galley_rect.left(),
+        Some(HorizontalAlignment::Right) => rect.right() - 6.0 * scale - galley_rect.right(),
+        _ => rect.left() + 6.0 * scale - galley_rect.left(),
     };
     let y = rect.center().y - galley_rect.center().y;
     Pos2::new(x, y)

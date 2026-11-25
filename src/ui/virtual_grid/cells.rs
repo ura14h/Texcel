@@ -64,13 +64,14 @@ impl GridViewportFrame<'_> {
                     } else {
                         self.effective_scroll_x
                     };
-                let y =
-                    self.viewport_origin.y + HEADER_HEIGHT + self.row_layout.prefix_height(*row)
-                        - if zone.frozen_rows {
-                            0.0
-                        } else {
-                            self.effective_scroll_y
-                        };
+                let y = self.viewport_origin.y
+                    + self.header_height
+                    + self.row_layout.prefix_height(*row)
+                    - if zone.frozen_rows {
+                        0.0
+                    } else {
+                        self.effective_scroll_y
+                    };
                 let width = self.grid.layout.column_width_pixels(*column) as f32;
                 let height = self.row_layout.row_height(*row);
                 let rect = Rect::from_min_size(Pos2::new(x, y), Vec2::new(width, height));

@@ -7,6 +7,8 @@ pub(super) struct GridRowLayout {
     pub(super) display_generation: u64,
     pub(super) measured_rows: HashMap<usize, (u64, u64, f32)>,
     pub(super) height_deltas: HashMap<usize, f32>,
+    /// Grid scale the stored heights were measured at; zero means 100%.
+    pub(super) scale: f32,
 }
 
 impl GridRowLayout {
@@ -30,6 +32,31 @@ impl GridRowLayout {
         self.height_deltas.clear();
     }
 
+    /// Resets cached row measurements when the sheet zoom changes.
+    pub(super) fn sync_scale(&mut self, scale: f32) {
+        if self.scale == scale {
+            return;
+        }
+        self.scale = scale;
+        self.measured_rows.clear();
+        self.height_deltas.clear();
+    }
+
+    /// Returns the zoomed height of a row with no measured content.
+    pub(super) fn base_height(&self) -> f32 {
+        ROW_HEIGHT * self.scale_or_one()
+    }
+
+    /// Returns the zoomed upper limit for one wrapped row.
+    pub(super) fn max_height(&self) -> f32 {
+        MAX_WRAPPED_ROW_HEIGHT * self.scale_or_one()
+    }
+
+    /// Treats a layout that was never scaled as 100%.
+    fn scale_or_one(&self) -> f32 {
+        if self.scale > 0.0 { self.scale } else { 1.0 }
+    }
+
     /// Keeps the row-height tree sized for the current table.
     pub(super) fn ensure_row_count(&mut self, row_count: usize) {
         if self.row_count == row_count {
@@ -44,7 +71,7 @@ impl GridRowLayout {
             .map(|(row, (_, _, height))| (*row, *height))
             .collect::<Vec<_>>();
         for (row, height) in measured {
-            self.add_height_delta(row, height - ROW_HEIGHT);
+            self.add_height_delta(row, height - self.base_height());
         }
     }
 
@@ -52,12 +79,12 @@ impl GridRowLayout {
     pub(super) fn row_height(&self, row: usize) -> f32 {
         self.measured_rows
             .get(&row)
-            .map_or(ROW_HEIGHT, |(_, _, height)| *height)
+            .map_or(self.base_height(), |(_, _, height)| *height)
     }
 
     /// Returns the total height of the rows before a row index.
     pub(super) fn prefix_height(&self, rows: usize) -> f32 {
-        rows.min(MAX_ROWS) as f32 * ROW_HEIGHT + self.prefix_delta(rows)
+        rows.min(MAX_ROWS) as f32 * self.base_height() + self.prefix_delta(rows)
     }
 
     /// Returns accumulated measured-height changes before an index.
@@ -98,7 +125,13 @@ impl GridRowLayout {
         fingerprint: u64,
         height: f32,
     ) -> f32 {
-        self.update_row_with_base(row, document_revision, fingerprint, height, ROW_HEIGHT)
+        self.update_row_with_base(
+            row,
+            document_revision,
+            fingerprint,
+            height,
+            self.base_height(),
+        )
     }
 
     /// Stores a measured row height using the current base height.
@@ -110,7 +143,7 @@ impl GridRowLayout {
         mut height: f32,
         base_height: f32,
     ) -> f32 {
-        height = height.clamp(base_height, MAX_WRAPPED_ROW_HEIGHT);
+        height = height.clamp(base_height, self.max_height().max(base_height));
         if let Some((known_revision, known_fingerprint, known_height)) =
             self.measured_rows.get(&row)
         {
@@ -164,7 +197,7 @@ impl GridRowLayout {
 pub(super) fn wrapped_row_cells_for_ranges(
     document: &Document,
     table: &crate::document::Table,
-    layout: &TableLayout,
+    layout: ScaledLayout<'_>,
     row: usize,
     visible_column_ranges: &[std::ops::Range<usize>],
     wrap_text: bool,
@@ -192,7 +225,7 @@ pub(super) fn wrapped_row_cells_for_ranges(
 }
 
 /// Finds the column at a horizontal position.
-pub(super) fn column_at_position(layout: &TableLayout, columns: usize, position: f32) -> usize {
+pub(super) fn column_at_position(layout: ScaledLayout<'_>, columns: usize, position: f32) -> usize {
     if columns == 0 {
         return 0;
     }
@@ -217,7 +250,7 @@ pub(super) struct GridPointerGeometry<'a> {
     pub(super) scroll_y: f32,
     pub(super) frozen_width: f32,
     pub(super) frozen_height: f32,
-    pub(super) layout: &'a TableLayout,
+    pub(super) layout: ScaledLayout<'a>,
     pub(super) row_layout: &'a GridRowLayout,
     pub(super) rows: usize,
     pub(super) columns: usize,

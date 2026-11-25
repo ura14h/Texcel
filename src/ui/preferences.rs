@@ -19,7 +19,7 @@ pub(super) enum AppPreferenceField {
     Language,
     Theme,
     FontPreset,
-    ZoomFactor,
+    UiFontSize,
     ShowInvisibles,
 }
 
@@ -28,7 +28,7 @@ pub(super) struct AppPreferenceChanges {
     pub(super) language: bool,
     pub(super) theme: bool,
     pub(super) font_preset: bool,
-    pub(super) zoom_factor: bool,
+    pub(super) ui_font_size: bool,
     pub(super) show_invisibles: bool,
 }
 

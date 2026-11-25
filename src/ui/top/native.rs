@@ -145,9 +145,9 @@ impl TexcelApp {
             "view.live" | "view.source" | "view.wrap_on" | "view.wrap_off" => {
                 state.has_table && !blocked && !state.document_edit_locked
             }
-            "view.zoom_in" => !blocked && self.zoom_factor < 1.5,
-            "view.zoom_out" => !blocked && self.zoom_factor > 0.75,
-            "view.zoom_reset" => !blocked && (self.zoom_factor - 1.0).abs() > f32::EPSILON,
+            "view.zoom_in" => !blocked && self.sheet_zoom.0 < MAX_SHEET_ZOOM,
+            "view.zoom_out" => !blocked && self.sheet_zoom.0 > MIN_SHEET_ZOOM,
+            "view.zoom_reset" => !blocked && (self.sheet_zoom.0 - 1.0).abs() > f32::EPSILON,
             "view.column_width"
             | "view.autofit_columns"
             | "view.freeze_rows"
