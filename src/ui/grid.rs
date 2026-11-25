@@ -120,10 +120,9 @@ impl TexcelApp {
                     }),
                 )
                 .show(root, |ui| {
+                    // A window without a document is closing, hiding, or waiting for a file
+                    // to open, so it stays blank instead of showing a passing notice.
                     let Some(document) = workspace.active_document() else {
-                        ui.centered_and_justified(|ui| {
-                            ui.label(context_text(ui.ctx(), "grid-no-document"))
-                        });
                         return;
                     };
                     let Some(table) = document.active_table() else {

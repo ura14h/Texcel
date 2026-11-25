@@ -154,7 +154,6 @@ top-undo = Undo
 top-redo = Redo
 grid-structure-preparing = Preparing row and column changes.
 grid-history-restoring = Restoring a structure change for Undo or Redo.
-grid-no-document = No document is open.
 grid-no-table = No table is open.
 grid-calc-pending-hint = The value shown is from an earlier result while recalculation is in progress.
 grid-calc-imported-hint = This result came from the file and has not been recalculated.

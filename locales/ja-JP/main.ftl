@@ -154,7 +154,6 @@ top-undo = 元に戻す
 top-redo = やり直す
 grid-structure-preparing = 行列構造を準備しています。
 grid-history-restoring = 構造変更のUndo／Redoを復元しています。
-grid-no-document = 文書がありません。
 grid-no-table = 表がありません。
 grid-calc-pending-hint = 再計算中です。表示値は以前の結果です。
 grid-calc-imported-hint = ファイルに保存された結果です。再計算済みではありません。
