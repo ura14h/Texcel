@@ -2,14 +2,14 @@ use super::*;
 
 pub(super) struct DeferredAutoFit {
     table_id: TableId,
-    column: usize,
+    columns: Vec<usize>,
     layout_revision: u64,
 }
 
 pub(super) struct PendingAutoFit {
     pub(super) token: JobToken,
     table_id: TableId,
-    column: usize,
+    columns: Vec<usize>,
     calculation_revision: u64,
     calculation_snapshot: Option<FormulaResultSnapshot>,
     layout_revision: u64,
@@ -39,6 +39,36 @@ impl TexcelApp {
         table_id: TableId,
         column: usize,
     ) {
+        self.request_columns_auto_fit(ctx, document_id, table_id, vec![column]);
+    }
+
+    /// Submits every column up to the table's used extent for one background measurement.
+    pub(super) fn request_all_columns_auto_fit(
+        &mut self,
+        ctx: &egui::Context,
+        document_id: DocumentId,
+        table_id: TableId,
+    ) {
+        let Some(last_column) = self
+            .workspace
+            .documents
+            .get(&document_id)
+            .and_then(|document| document.tables.iter().find(|table| table.id == table_id))
+            .map(|table| table.extent_end().column)
+        else {
+            return;
+        };
+        self.request_columns_auto_fit(ctx, document_id, table_id, (0..=last_column).collect());
+    }
+
+    /// Submits the given columns for one background width measurement.
+    fn request_columns_auto_fit(
+        &mut self,
+        ctx: &egui::Context,
+        document_id: DocumentId,
+        table_id: TableId,
+        columns: Vec<usize>,
+    ) {
         let Some(document) = self.workspace.documents.get(&document_id) else {
             return;
         };
@@ -60,7 +90,7 @@ impl TexcelApp {
                 document_id,
                 DeferredAutoFit {
                     table_id,
-                    column,
+                    columns,
                     layout_revision,
                 },
             );
@@ -105,9 +135,9 @@ impl TexcelApp {
                     .get(&document_id)
                     .expect("auto-fit document remains open"),
                 table_id,
-                column,
+                &columns,
             ),
-            column,
+            columns: columns.clone(),
             layout,
             display_mode,
             language: self.language,
@@ -130,7 +160,7 @@ impl TexcelApp {
             PendingAutoFit {
                 token,
                 table_id,
-                column,
+                columns,
                 calculation_revision,
                 calculation_snapshot,
                 layout_revision,
@@ -173,7 +203,7 @@ impl TexcelApp {
                 .is_some_and(|(revision, _)| *revision == document.calculation_revision);
             if !calculation_is_pending {
                 if has_current_root {
-                    ready.push((*document_id, deferred.table_id, deferred.column));
+                    ready.push((*document_id, deferred.table_id, deferred.columns.clone()));
                 } else {
                     discard.push(*document_id);
                 }
@@ -182,9 +212,9 @@ impl TexcelApp {
         for document_id in discard {
             self.deferred_auto_fits.remove(&document_id);
         }
-        for (document_id, table_id, column) in ready {
+        for (document_id, table_id, columns) in ready {
             self.deferred_auto_fits.remove(&document_id);
-            self.request_column_auto_fit(ctx, document_id, table_id, column);
+            self.request_columns_auto_fit(ctx, document_id, table_id, columns);
         }
     }
 
@@ -215,8 +245,7 @@ impl TexcelApp {
         &mut self,
         document_id: DocumentId,
         token: JobToken,
-        column: usize,
-        width: f64,
+        widths: Vec<(usize, f64)>,
     ) {
         let Some(pending) = self.pending_auto_fits.get(&document_id) else {
             return;
@@ -256,7 +285,10 @@ impl TexcelApp {
             });
         if !current
             || !calculation_matches
-            || column != pending.column
+            || widths
+                .iter()
+                .map(|(column, _)| *column)
+                .ne(pending.columns.iter().copied())
             || self.font_layout_generation != pending.font_layout_generation
             || self.language != pending.language
             || self.show_invisibles != pending.show_invisibles
@@ -271,12 +303,14 @@ impl TexcelApp {
         let Some(view) = document.view_mut(pending.table_id) else {
             return;
         };
-        let mut layout = view.layout.column(column).unwrap_or_default();
-        layout.width = Some(width);
-        view.set_layout_value(
-            LayoutTarget::Column(column),
-            LayoutValue::Column(Some(layout)),
-        );
+        for (column, width) in widths {
+            let mut layout = view.layout.column(column).unwrap_or_default();
+            layout.width = Some(width);
+            view.set_layout_value(
+                LayoutTarget::Column(column),
+                LayoutValue::Column(Some(layout)),
+            );
+        }
         self.mark_document_preference_change(
             document_id,
             pending.table_id,

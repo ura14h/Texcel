@@ -22,7 +22,7 @@ impl FileWorker {
     }
 }
 
-/// Measures one column with the same grid layout jobs used for painting.
+/// Measures the requested columns with the same grid layout jobs used for painting.
 pub(crate) fn run_auto_fit(
     token: JobToken,
     request: AutoFitRequest,
@@ -38,10 +38,7 @@ pub(crate) fn run_auto_fit(
         FileResultKind::Cancelled
     } else {
         match result {
-            Ok(width) => FileResultKind::AutoFitPrepared {
-                column: request.column,
-                width,
-            },
+            Ok(widths) => FileResultKind::AutoFitPrepared { widths },
             Err(error) => FileResultKind::Failed(error),
         }
     };
@@ -54,7 +51,10 @@ pub(crate) fn run_auto_fit(
 }
 
 /// Rebuilds the current sparse table state on the worker before measuring it.
-fn measure_auto_fit(request: &AutoFitRequest, cancelled: &AtomicBool) -> Result<f64, Message> {
+fn measure_auto_fit(
+    request: &AutoFitRequest,
+    cancelled: &AtomicBool,
+) -> Result<Vec<(usize, f64)>, Message> {
     let mut document = materialize_autofit_document(request, cancelled)?;
     let table_id = request.structure.view_table_id;
     let source = document.source.clone();
@@ -96,79 +96,83 @@ fn measure_auto_fit(request: &AutoFitRequest, cancelled: &AtomicBool) -> Result<
         }
         let fonts = &mut cache.as_mut().expect("autofit fonts were initialized").2;
         let mut fonts = fonts.with_pixels_per_point(request.pixels_per_point);
-        let mut measured = request.minimum_column_width_pixels;
-        let cells = table.stored_cells_in_column(request.column);
-        for (address, cell) in cells {
-            if cancelled.load(Ordering::Acquire) {
-                return Err(Message::new("status-autofit-cancelled"));
-            }
-            let calculation = request
-                .calculation
-                .as_ref()
-                .filter(|snapshot| snapshot.revision == request.structure.calculation_revision)
-                .and_then(|snapshot| snapshot.get(table_id, address))
-                .map(|(status, value)| crate::document::CalcResult {
-                    revision: request.structure.calculation_revision,
-                    status,
-                    value: value.cloned(),
-                });
-            let is_formula = crate::structure::is_formula_cell(table, address, cell);
-            let style = crate::ui::CellTextStyle {
-                wrap_text: request.wrap_text,
-                alignment: None,
-            };
-            // Measure the unwrapped text width without a column limit.
-            let width = f32::INFINITY;
-            let text = if request.display_mode == crate::document::CellDisplayMode::Source {
-                cell.input.source_text()
-            } else {
-                crate::ui::auto_fit_cell_view_text(cell, calculation.as_ref()).into_owned()
-            };
-            let (mut job, _) =
-                if let (Some(source), Some(index), crate::document::CellInput::Text(raw)) =
-                    (markdown, markdown_index, &cell.input)
-                    && !is_formula
-                    && request.display_mode != crate::document::CellDisplayMode::Source
-                {
-                    let display = source
-                        .cell_display_for_source(index, address.row, address.column, raw)
-                        .cloned()
-                        .unwrap_or_else(|| MarkdownCellDisplay::parse_fragment(raw));
-                    crate::ui::auto_fit_markdown_cell_layout_job(
-                        &display,
-                        crate::ui::CellTextFormat {
-                            style: &style,
-                            color: eframe::egui::Color32::BLACK,
-                            width,
-                            show_invisibles: request.show_invisibles,
-                        },
-                        Some(source),
-                        request.language,
-                    )
-                } else {
-                    crate::ui::auto_fit_cell_layout_job(
-                        &text,
-                        crate::ui::CellTextFormat {
-                            style: &style,
-                            color: eframe::egui::Color32::BLACK,
-                            width,
-                            show_invisibles: request.show_invisibles,
-                        },
-                    )
+        let mut widths = Vec::with_capacity(request.columns.len());
+        for &column in &request.columns {
+            let mut measured = request.minimum_column_width_pixels;
+            let cells = table.stored_cells_in_column(column);
+            for (address, cell) in cells {
+                if cancelled.load(Ordering::Acquire) {
+                    return Err(Message::new("status-autofit-cancelled"));
+                }
+                let calculation = request
+                    .calculation
+                    .as_ref()
+                    .filter(|snapshot| snapshot.revision == request.structure.calculation_revision)
+                    .and_then(|snapshot| snapshot.get(table_id, address))
+                    .map(|(status, value)| crate::document::CalcResult {
+                        revision: request.structure.calculation_revision,
+                        status,
+                        value: value.cloned(),
+                    });
+                let is_formula = crate::structure::is_formula_cell(table, address, cell);
+                let style = crate::ui::CellTextStyle {
+                    wrap_text: request.wrap_text,
+                    alignment: None,
                 };
-            if request.display_mode == crate::document::CellDisplayMode::Source {
-                crate::ui::auto_fit_apply_grid_monospace(&mut job);
+                // Measure the unwrapped text width without a column limit.
+                let width = f32::INFINITY;
+                let text = if request.display_mode == crate::document::CellDisplayMode::Source {
+                    cell.input.source_text()
+                } else {
+                    crate::ui::auto_fit_cell_view_text(cell, calculation.as_ref()).into_owned()
+                };
+                let (mut job, _) =
+                    if let (Some(source), Some(index), crate::document::CellInput::Text(raw)) =
+                        (markdown, markdown_index, &cell.input)
+                        && !is_formula
+                        && request.display_mode != crate::document::CellDisplayMode::Source
+                    {
+                        let display = source
+                            .cell_display_for_source(index, address.row, address.column, raw)
+                            .cloned()
+                            .unwrap_or_else(|| MarkdownCellDisplay::parse_fragment(raw));
+                        crate::ui::auto_fit_markdown_cell_layout_job(
+                            &display,
+                            crate::ui::CellTextFormat {
+                                style: &style,
+                                color: eframe::egui::Color32::BLACK,
+                                width,
+                                show_invisibles: request.show_invisibles,
+                            },
+                            Some(source),
+                            request.language,
+                        )
+                    } else {
+                        crate::ui::auto_fit_cell_layout_job(
+                            &text,
+                            crate::ui::CellTextFormat {
+                                style: &style,
+                                color: eframe::egui::Color32::BLACK,
+                                width,
+                                show_invisibles: request.show_invisibles,
+                            },
+                        )
+                    };
+                if request.display_mode == crate::document::CellDisplayMode::Source {
+                    crate::ui::auto_fit_apply_grid_monospace(&mut job);
+                }
+                if text.contains('\n') {
+                    job.wrap.max_rows = 256;
+                }
+                let size = fonts.layout_job(job).size();
+                measured = measured.max((size.x + 12.0).min(request.maximum_column_width_pixels));
             }
-            if text.contains('\n') {
-                job.wrap.max_rows = 256;
-            }
-            let size = fonts.layout_job(job).size();
-            measured = measured.max((size.x + 12.0).min(request.maximum_column_width_pixels));
+            // Convert pixels to Excel-style character units, as stored in the layout.
+            let width =
+                ((measured as f64 - 5.0) / 7.0).clamp(0.1, crate::document::MAX_COLUMN_WIDTH_UNITS);
+            widths.push((column, width));
         }
-        // Convert pixels to Excel-style character units, as stored in the layout.
-        let width =
-            ((measured as f64 - 5.0) / 7.0).clamp(0.1, crate::document::MAX_COLUMN_WIDTH_UNITS);
-        Ok(width)
+        Ok(widths)
     });
     if cancelled.load(Ordering::Acquire) {
         Err(Message::new("status-autofit-cancelled"))

@@ -119,7 +119,7 @@ impl TexcelApp {
     }
 
     // Apply a row or column visibility, size, or freeze action.
-    pub(super) fn apply_layout_action(&mut self, action: LayoutAction) {
+    pub(super) fn apply_layout_action(&mut self, action: LayoutAction, ctx: &egui::Context) {
         if self.edit.is_editing() {
             self.commit_edit(None);
         }
@@ -137,7 +137,12 @@ impl TexcelApp {
         else {
             return;
         };
-        if has_disjoint_ranges && !matches!(action, LayoutAction::Unfreeze) {
+        if has_disjoint_ranges
+            && !matches!(
+                action,
+                LayoutAction::Unfreeze | LayoutAction::AutoFitAllColumns
+            )
+        {
             self.status = Some(Message::new("status-single-range-required"));
             return;
         }
@@ -149,9 +154,16 @@ impl TexcelApp {
             ));
             return;
         }
-        if matches!(action, LayoutAction::EditColumnWidth) {
-            self.begin_layout_dialog(document_id, table_id, active_cell);
-            return;
+        match action {
+            LayoutAction::EditColumnWidth => {
+                self.begin_layout_dialog(document_id, table_id, active_cell);
+                return;
+            }
+            LayoutAction::AutoFitAllColumns => {
+                self.request_all_columns_auto_fit(ctx, document_id, table_id);
+                return;
+            }
+            LayoutAction::FreezeRows | LayoutAction::FreezeColumns | LayoutAction::Unfreeze => {}
         }
         let address = active_cell;
         let values = self
@@ -185,7 +197,7 @@ impl TexcelApp {
                         LayoutTarget::Freeze,
                         LayoutValue::Freeze(FrozenPanes::default()),
                     )],
-                    LayoutAction::EditColumnWidth => Vec::new(),
+                    LayoutAction::EditColumnWidth | LayoutAction::AutoFitAllColumns => Vec::new(),
                 };
                 Some(values)
             })
@@ -217,11 +229,12 @@ impl TexcelApp {
         else {
             return;
         };
-        let value = layout
-            .column(address.column)
-            .and_then(|column| column.width)
-            .unwrap_or(DEFAULT_COLUMN_WIDTH_UNITS)
-            .to_string();
+        let value = super::layout_dialog::format_column_width(
+            layout
+                .column(address.column)
+                .and_then(|column| column.width)
+                .unwrap_or(DEFAULT_COLUMN_WIDTH_UNITS),
+        );
         self.layout_dialog = Some(LayoutDialogState {
             document_id,
             table_id,

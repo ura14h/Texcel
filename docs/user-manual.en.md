@@ -256,7 +256,8 @@ The View menu has these commands. None of them change the file.
 - Zoom: Ctrl/Cmd++ and Ctrl/Cmd+−, and Ctrl/Cmd+0 for 100%.
 - Text Wrapping: wrap long content or not.
 - Freeze Panes: keep rows or columns up to the selection in view while scrolling.
-- Column Width…: set a column's width as a number.
+- Column Width…: set a column's width as a number (up to two decimal places).
+- AutoFit Column Widths: fit every column of the table to its contents.
 
 ## 10. Search and data tools
 

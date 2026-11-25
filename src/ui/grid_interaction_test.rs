@@ -457,6 +457,35 @@ fn formula_autofit_waits_for_the_visible_calculation_root() {
     );
 }
 
+/// Fits every column of the table in one background measurement and leaves later columns alone.
+#[test]
+fn autofit_all_columns_sets_each_table_column_width() {
+    let mut harness = grid_harness(3, 3);
+    let (document_id, table_id) = {
+        let document = harness.state().workspace.active_document().unwrap();
+        (document.id, document.active_table().unwrap().id)
+    };
+    wait_for_worker_requests(&mut harness, document_id);
+    let ctx = harness.ctx.clone();
+    harness
+        .state_mut()
+        .apply_layout_action(LayoutAction::AutoFitAllColumns, &ctx);
+    assert!(harness.state().pending_auto_fits.contains_key(&document_id));
+    wait_for_worker_requests(&mut harness, document_id);
+    let layout = &harness.state().workspace.documents[&document_id]
+        .view(table_id)
+        .unwrap()
+        .layout;
+    for column in 0..3 {
+        let width = layout.column(column).and_then(|column| column.width);
+        assert!(
+            width.is_some_and(|width| width < DEFAULT_COLUMN_WIDTH_UNITS),
+            "column {column} fits its short values: {width:?}"
+        );
+    }
+    assert_eq!(layout.column(3).and_then(|column| column.width), None);
+}
+
 /// Drops a deferred measurement when the user changes the same local dimension.
 #[test]
 fn deferred_autofit_does_not_overwrite_a_manual_layout_change() {

@@ -349,8 +349,8 @@ impl TexcelApp {
             kind @ (FileResultKind::SearchPrepared(_) | FileResultKind::DataEditPrepared(_)) => {
                 self.handle_analysis_result(document_id, token, kind)
             }
-            FileResultKind::AutoFitPrepared { column, width } => {
-                self.handle_auto_fit_result(document_id, token, column, width);
+            FileResultKind::AutoFitPrepared { widths } => {
+                self.handle_auto_fit_result(document_id, token, widths);
                 true
             }
             kind @ (FileResultKind::ExportPrepared(_) | FileResultKind::Exported { .. }) => {

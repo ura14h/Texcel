@@ -136,7 +136,7 @@ impl TexcelApp {
                 self.apply_markdown_modifier(action, ctx);
             }
             if let Some(action) = state.layout_action {
-                self.apply_layout_action(action);
+                self.apply_layout_action(action, ctx);
             }
             if state.edit_link {
                 self.start_cell_link_dialog();

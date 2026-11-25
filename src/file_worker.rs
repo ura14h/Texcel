@@ -174,7 +174,8 @@ pub struct TextOverlaySaveRequest {
 #[derive(Clone, Debug)]
 pub struct AutoFitRequest {
     pub structure: crate::structure::StructureRequest,
-    pub column: usize,
+    /// Columns measured in one pass over the rebuilt table.
+    pub columns: Vec<usize>,
     pub layout: crate::document::TableLayout,
     pub display_mode: crate::document::CellDisplayMode,
     pub language: crate::i18n::Language,
@@ -252,9 +253,9 @@ pub enum FileResultKind {
     SearchPrepared(crate::structure::PreparedSearch),
     DataEditPrepared(crate::structure::PreparedDataEdit),
     StructurePrepared(crate::document::PreparedStructure),
+    /// Measured widths, one per requested column, in Excel-style character units.
     AutoFitPrepared {
-        column: usize,
-        width: f64,
+        widths: Vec<(usize, f64)>,
     },
     MarkdownCellDisplayPrepared {
         table_id: u64,

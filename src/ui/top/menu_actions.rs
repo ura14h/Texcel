@@ -64,6 +64,7 @@ impl TexcelApp {
             "view.wrap_on" => state.table_wrap_mode = Some(WrapMode::On),
             "view.wrap_off" => state.table_wrap_mode = Some(WrapMode::Off),
             "view.column_width" => state.layout_action = Some(LayoutAction::EditColumnWidth),
+            "view.autofit_columns" => state.layout_action = Some(LayoutAction::AutoFitAllColumns),
             "view.freeze_rows" => state.layout_action = Some(LayoutAction::FreezeRows),
             "view.freeze_columns" => state.layout_action = Some(LayoutAction::FreezeColumns),
             "view.unfreeze" => state.layout_action = Some(LayoutAction::Unfreeze),

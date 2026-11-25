@@ -27,6 +27,12 @@ const VIEW_COLUMN_WIDTH: MenuAction = action(
     NoKey,
     MenuCheck::None,
 );
+const VIEW_AUTOFIT_COLUMNS: MenuAction = action(
+    "view.autofit_columns",
+    "view-autofit-columns",
+    NoKey,
+    MenuCheck::None,
+);
 const VIEW_FREEZE_ROWS: MenuAction = action(
     "view.freeze_rows",
     "view-freeze-rows",
@@ -69,5 +75,6 @@ pub(super) const VIEW: &[MenuEntry] = &[
     S(&WRAP),
     Sep,
     A(&VIEW_COLUMN_WIDTH),
+    A(&VIEW_AUTOFIT_COLUMNS),
     S(&FREEZE),
 ];

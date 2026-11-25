@@ -174,6 +174,7 @@ pub(super) enum CellFormatAction {
 #[derive(Clone, Copy, Debug)]
 pub(super) enum LayoutAction {
     EditColumnWidth,
+    AutoFitAllColumns,
     FreezeRows,
     FreezeColumns,
     Unfreeze,

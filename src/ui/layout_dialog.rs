@@ -1,5 +1,9 @@
 use super::*;
 
+#[cfg(test)]
+#[path = "layout_dialog_test.rs"]
+mod tests;
+
 impl TexcelApp {
     /// Draws the column width dialog.
     pub(super) fn draw_layout_dialog(&mut self, ctx: &egui::Context) {
@@ -107,7 +111,7 @@ impl TexcelApp {
     /// Applies a submitted column width.
     pub(super) fn apply_dimension_dialog(&mut self, dialog: &LayoutDialogState) -> bool {
         let value = match dialog.value.trim().parse::<f64>() {
-            Ok(value) if value.is_finite() && value >= 0.0 => value,
+            Ok(value) if value.is_finite() && value >= 0.0 => round_column_width(value),
             _ => {
                 self.status = Some(Message::new("status-value-nonnegative-required"));
                 return false;
@@ -272,6 +276,17 @@ impl TexcelApp {
                 }
             });
     }
+}
+
+/// Rounds an entered column width to the two decimal places the dialog offers.
+pub(super) fn round_column_width(value: f64) -> f64 {
+    (value * 100.0).round() / 100.0
+}
+
+/// Shows a column width with at most two decimal places and no trailing zeros.
+pub(super) fn format_column_width(value: f64) -> String {
+    let text = format!("{:.2}", round_column_width(value));
+    text.trim_end_matches('0').trim_end_matches('.').to_owned()
 }
 
 /// Keeps the size dialog's fixed footer aligned with other modal actions.

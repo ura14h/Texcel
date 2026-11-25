@@ -148,7 +148,11 @@ impl TexcelApp {
             "view.zoom_in" => !blocked && self.zoom_factor < 1.5,
             "view.zoom_out" => !blocked && self.zoom_factor > 0.75,
             "view.zoom_reset" => !blocked && (self.zoom_factor - 1.0).abs() > f32::EPSILON,
-            "view.column_width" | "view.freeze_rows" | "view.freeze_columns" | "view.unfreeze" => {
+            "view.column_width"
+            | "view.autofit_columns"
+            | "view.freeze_rows"
+            | "view.freeze_columns"
+            | "view.unfreeze" => {
                 state.has_table && !blocked && !state.document_edit_locked && !state.structure_busy
             }
             id if id.starts_with("edit.table_") => {
