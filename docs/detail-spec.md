@@ -462,7 +462,7 @@ Texcel本体のコードはMITライセンスとし、`vendor/` の2ライブラ
 | 対象 | 確認済み | 未確認 |
 | --- | --- | --- |
 | 自動テスト | egui_kittestによる本番 `TexcelApp` の操作回帰、形式アダプター、数式、保存失敗、Undo、翻訳キーの日英一致 | GPU描画を伴う画像比較（WGPUの使える環境でのみ実行） |
-| macOS | arm64とx86_64のrelease build、`lipo` によるUniversal Binaryの `.app` の作成とアドホック署名、arm64での起動・終了、複数ウィンドウ、最近使ったファイル、x86_64版がRosetta 2上で起動直後に異常終了しないこと | Intel Mac実機での起動・描画・操作、実機の日本語IMEによる連続入力、VoiceOver |
+| macOS | arm64とx86_64のrelease build、`lipo` によるUniversal Binaryの `.app` の作成とアドホック署名、arm64での起動・終了、複数ウィンドウ、最近使ったファイル、x86_64版がRosetta 2上で起動直後に異常終了しないこと | Intel Mac実機での起動・描画・操作、実機の日本語IMEによる連続入力、VoiceOver、DockのアイコンへのドロップでFinderの「このアプリケーションで開く」と同じ経路（`application:openFiles:`）が呼ばれること |
 | Windows・Linux | パッケージ用スクリプトとWindowsリソースの生成手順、macOS上の `package-windows.sh` による `x86_64-pc-windows-gnu` のrelease buildと `Texcel.exe` の生成、その `Texcel.exe` のWindows実機での起動と、ウィンドウへドロップしたMarkdown・XLSXの読み込みで異常終了しないこと、読み込みで開いた新しいウィンドウでのネイティブメニューとショートカットの操作 | Windows実機でのIME、DPI、Linuxのビルドとパッケージの実行 |
 | 互換性 | `samples/` の入力によるCSV・Markdownのバイト保持とXLSX・ODS・HTMLの取り込み | Excel実機で作成した多様なブック、LibreOffice・Google Sheetsなどが書き出した多様なODS、XLSXの全仕様、全Excel関数 |
 | クリップボード | macOSのシステムクリップボードを通したTexcel内のコピーと貼り付け（数式の相対参照の移動）、切り取りの移動と他セルの参照の追従、そのUndo、テキストとして・文字列として貼り付け（egui_kittestで本番 `TexcelApp` を操作） | Excel・Google Sheets・ブラウザとの相互の貼り付け、別に起動したTexcel間の貼り付け、WindowsのCRLFとCF_HTML、LinuxのX11・Wayland、点線表示の実画面での見え方 |

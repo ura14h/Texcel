@@ -105,6 +105,7 @@ Each of these opens a file the same way as Open…:
 - Choose File > Open Recent.
 - Pass the file on the command line, as in `texcel file.md` (`Texcel.exe file.md` on Windows).
 - Choose Texcel from the system's Open With menu.
+- On macOS, drop a file on Texcel's icon in the Dock. Windows does not accept files dropped on taskbar icons; drop them on `Texcel.exe` or its shortcut instead.
 
 ## 4. The window
 
