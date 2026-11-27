@@ -6,6 +6,8 @@ mod canvas;
 mod cells;
 #[path = "virtual_grid/frame.rs"]
 mod frame;
+#[path = "virtual_grid/header_selection.rs"]
+mod header_selection;
 #[path = "virtual_grid/headers.rs"]
 mod headers;
 #[path = "virtual_grid/measure.rs"]

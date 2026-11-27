@@ -23,7 +23,7 @@ pub(super) fn promote_csv_and_apply_operation(
                 return Err(Message::new("status-markdown-alignment-no-columns"));
             }
             markdown
-                .set_column_alignment(index, columns.clone(), *alignment)
+                .set_column_alignment_ranges(index, columns, *alignment)
                 .map_err(crate::i18n::markdown_error_message)?
         }
     };

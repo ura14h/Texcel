@@ -200,7 +200,6 @@ impl TexcelApp {
                     self.status = Some(Message::new("status-markdown-column-alignment-available"));
                     return;
                 }
-                let (start, end) = view.selection.normalized();
                 let source_column_count = match source.as_ref() {
                     SourceDocument::Markdown(markdown) => document
                         .tables
@@ -214,17 +213,27 @@ impl TexcelApp {
                     self.status = Some(Message::new("status-markdown-alignment-no-columns"));
                     return;
                 }
-                let whole_axis = start.column == 0 && end.column == MAX_COLUMNS - 1
-                    || start.row == 0 && end.row == MAX_ROWS - 1;
-                if whole_axis && start.column >= source_column_count {
+                // Every selected range sets its own columns; whole rows and whole columns
+                // stop at the table's last source column.
+                let mut columns = Vec::new();
+                for range in view.selected_ranges() {
+                    let (start, end) = range.normalized();
+                    let whole_axis = start.column == 0 && end.column == MAX_COLUMNS - 1
+                        || start.row == 0 && end.row == MAX_ROWS - 1;
+                    if whole_axis && start.column >= source_column_count {
+                        continue;
+                    }
+                    let end_column = if whole_axis {
+                        end.column.min(source_column_count - 1)
+                    } else {
+                        end.column
+                    };
+                    columns.push(start.column..=end_column);
+                }
+                if columns.is_empty() {
                     self.status = Some(Message::new("status-markdown-alignment-no-columns"));
                     return;
                 }
-                let end_column = if whole_axis {
-                    end.column.min(source_column_count - 1)
-                } else {
-                    end.column
-                };
                 let alignment = match action {
                     StructureAction::MarkdownAlignLeft => {
                         crate::markdown_adapter::MarkdownTableAlignment::Left
@@ -240,7 +249,7 @@ impl TexcelApp {
                 crate::structure::TableAction::MarkdownFormat {
                     table_id: target_table_id,
                     operation: crate::structure::MarkdownTableOperation::SetColumnAlignment {
-                        columns: start.column..=end_column,
+                        columns,
                         alignment,
                     },
                 }

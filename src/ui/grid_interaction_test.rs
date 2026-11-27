@@ -1245,6 +1245,7 @@ fn pointer_drag_selects_cells_and_rejects_an_outside_start() {
     send_event(&mut harness, egui::Event::PointerGone);
     assert!(harness.state().grid_selection_drag.is_none());
 
+    // A press on the row numbers is a header drag: it selects whole rows, not a cell range.
     let outside = Pos2::new(16.0, target.y);
     send_event(&mut harness, egui::Event::PointerMoved(outside));
     send_event(
@@ -1268,7 +1269,13 @@ fn pointer_drag_selects_cells_and_rejects_an_outside_start() {
     );
     let document = harness.state().workspace.active_document().unwrap();
     let view = document.view(document.active_table().unwrap().id).unwrap();
-    assert_eq!(view.selection, initial);
+    let (start, end) = view.selection.normalized();
+    assert_eq!(
+        (start.column, end.column),
+        (0, MAX_COLUMNS - 1),
+        "the header drag selects whole rows"
+    );
+    assert!(harness.state().grid_selection_drag.is_none());
 
     send_event(&mut harness, egui::Event::PointerMoved(first));
     send_event(

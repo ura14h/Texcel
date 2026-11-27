@@ -63,7 +63,7 @@ pub(super) fn apply_source_table_action(
                 source_index.ok_or_else(|| Message::new("status-markdown-table-target-missing"))?;
             let updated = match operation {
                 MarkdownTableOperation::SetColumnAlignment { columns, alignment } => {
-                    markdown.set_column_alignment(index, columns.clone(), *alignment)
+                    markdown.set_column_alignment_ranges(index, columns, *alignment)
                 }
             }
             .map_err(crate::i18n::markdown_error_message)?;

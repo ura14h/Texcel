@@ -301,3 +301,18 @@ fn apply_column_structure(
         .apply_structure(0, table.id, &plan, &Default::default())
         .expect("the source table follows the column mapping")
 }
+
+// Aligns separate column ranges in one edit and leaves the columns between them alone.
+#[test]
+fn separate_column_ranges_align_together() {
+    let source =
+        MarkdownDocument::parse(b"| a | b | c | d |\n| --- | --- | --- | --- |\n".to_vec())
+            .expect("the table parses");
+    let aligned = source
+        .set_column_alignment_ranges(0, &[0..=0, 2..=3], MarkdownTableAlignment::Right)
+        .expect("separate ranges align");
+    assert_eq!(
+        std::str::from_utf8(aligned.source_bytes()).expect("UTF-8"),
+        "| a | b | c | d |\n| ---: | --- | ---: | ---: |\n"
+    );
+}

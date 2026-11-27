@@ -499,3 +499,7 @@ mod header_extent_tests;
 #[cfg(test)]
 #[path = "ui/formula_structure_test.rs"]
 mod formula_structure_tests;
+
+#[cfg(test)]
+#[path = "ui/header_selection_test.rs"]
+mod header_selection_tests;

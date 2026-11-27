@@ -158,26 +158,15 @@ impl GridViewportFrame<'_> {
                     self.table_id,
                     *column,
                 ))),
-                Sense::click(),
+                Sense::click_and_drag(),
             );
-            if response.clicked() || response.secondary_clicked() {
-                let range = CellRange {
-                    anchor: CellAddress {
-                        row: 0,
-                        column: *column,
-                    },
-                    head: CellAddress {
-                        row: self.row_count.saturating_sub(1),
-                        column: *column,
-                    },
-                };
-                if response.clicked() && grid_ui.input(|input| input.modifiers.command) {
-                    outcome.add_selection_range = Some(range);
-                } else {
-                    outcome.selected_range = Some(range);
-                }
-                response.request_focus();
-            }
+            self.update_header_selection(
+                grid_ui,
+                &response,
+                StructureAxis::Columns,
+                *column,
+                outcome,
+            );
             outcome.focused |= response.has_focus();
             super::super::grid_focus::lock_grid_navigation(grid_ui, &response);
             response.context_menu(|menu| {
@@ -312,26 +301,9 @@ impl GridViewportFrame<'_> {
                     self.table_id,
                     *row,
                 ))),
-                Sense::click(),
+                Sense::click_and_drag(),
             );
-            if response.clicked() || response.secondary_clicked() {
-                let range = CellRange {
-                    anchor: CellAddress {
-                        row: *row,
-                        column: 0,
-                    },
-                    head: CellAddress {
-                        row: *row,
-                        column: self.column_count.saturating_sub(1),
-                    },
-                };
-                if response.clicked() && grid_ui.input(|input| input.modifiers.command) {
-                    outcome.add_selection_range = Some(range);
-                } else {
-                    outcome.selected_range = Some(range);
-                }
-                response.request_focus();
-            }
+            self.update_header_selection(grid_ui, &response, StructureAxis::Rows, *row, outcome);
             outcome.focused |= response.has_focus();
             super::super::grid_focus::lock_grid_navigation(grid_ui, &response);
             response.context_menu(|menu| {

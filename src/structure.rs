@@ -103,7 +103,8 @@ pub enum TableAction {
 #[derive(Clone, Debug)]
 pub enum MarkdownTableOperation {
     SetColumnAlignment {
-        columns: std::ops::RangeInclusive<usize>,
+        /// Selected column ranges, in order; separate selections give several ranges.
+        columns: Vec<std::ops::RangeInclusive<usize>>,
         alignment: crate::markdown_adapter::MarkdownTableAlignment,
     },
 }

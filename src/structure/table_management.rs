@@ -91,7 +91,7 @@ pub(crate) fn prepare_table_structure(
                     source_extent(&source_before, *table_id, &request.tables).1
                 }
             };
-            *columns.end() >= source_columns
+            columns.iter().any(|range| *range.end() >= source_columns)
         }
         _ => false,
     };

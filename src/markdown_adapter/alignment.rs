@@ -6,22 +6,36 @@ mod tests;
 
 impl MarkdownDocument {
     /// Changes selected separator cells while leaving the rest of the source bytes untouched.
+    #[cfg(test)]
     pub fn set_column_alignment(
         &self,
         table_index: usize,
         columns: std::ops::RangeInclusive<usize>,
         alignment: MarkdownTableAlignment,
     ) -> Result<Self, MarkdownError> {
-        let start_column = *columns.start();
-        let end_column = *columns.end();
-        if start_column > end_column || end_column >= MAX_MARKDOWN_COLUMNS {
-            return Err(MarkdownError::ResourceLimit(
-                crate::i18n::ResourceLimit::ColumnCount,
-            ));
+        self.set_column_alignment_ranges(table_index, &[columns], alignment)
+    }
+
+    /// Changes the separator cells of several column ranges in one edit.
+    pub fn set_column_alignment_ranges(
+        &self,
+        table_index: usize,
+        ranges: &[std::ops::RangeInclusive<usize>],
+        alignment: MarkdownTableAlignment,
+    ) -> Result<Self, MarkdownError> {
+        let mut columns = std::collections::BTreeSet::new();
+        for range in ranges {
+            if range.start() > range.end() || *range.end() >= MAX_MARKDOWN_COLUMNS {
+                return Err(MarkdownError::ResourceLimit(
+                    crate::i18n::ResourceLimit::ColumnCount,
+                ));
+            }
+            columns.extend(range.clone());
         }
         self.set_column_alignments(
             table_index,
-            (start_column..=end_column)
+            columns
+                .into_iter()
                 .map(|column| (column, alignment))
                 .collect(),
         )
