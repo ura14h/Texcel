@@ -127,9 +127,8 @@ fn show_block(
         Block::Table { alignments, rows } => {
             // Long cells wrap at an even share of the width so the table stays in view.
             let columns = rows.iter().map(Vec::len).max().unwrap_or(1).max(1);
-            let cell_width = ((ui.available_width() - size * (columns as f32 + 1.0))
-                / columns as f32)
-                .max(size * 4.0);
+            let cell_width =
+                ((ui.available_width() - size * (columns as f32 + 1.0)) / columns as f32).max(size);
             let response = egui::Frame::new()
                 .stroke(Stroke::new(
                     0.5,
@@ -139,6 +138,7 @@ fn show_block(
                 .show(ui, |ui| {
                     egui::Grid::new(("texcel_markdown_table", index))
                         .striped(true)
+                        .min_col_width(0.0)
                         .spacing(Vec2::new(size, size * 0.3))
                         .show(ui, |ui| {
                             for (row_index, row) in rows.iter().enumerate() {
@@ -154,7 +154,10 @@ fn show_block(
                                         }
                                         _ => egui::Align::LEFT,
                                     };
-                                    ui.label(job);
+                                    // A laid-out galley keeps its width; a label would
+                                    // rewrap at the grid's wider available width.
+                                    let galley = ui.painter().layout_job(job);
+                                    ui.add(egui::Label::new(galley));
                                 }
                                 ui.end_row();
                             }

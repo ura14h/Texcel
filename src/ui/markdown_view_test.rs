@@ -44,3 +44,23 @@ fn parse_markdown_builds_blocks_for_the_supported_syntax() {
     );
     assert_eq!(blocks[5], Block::Rule);
 }
+
+#[test]
+// Wraps long table cells so the table stays within the width it is drawn at.
+fn long_table_cells_wrap_within_the_available_width() {
+    let ctx = egui::Context::default();
+    install_texcel_grid_fonts(&ctx, crate::settings::FontPreset::Auto);
+    let sentence = "a long sentence that keeps going ".repeat(12);
+    let blocks = parse_markdown(&format!(
+        "| File | Notes |\n| --- | --- |\n| `tables.md` | {sentence} |\n"
+    ));
+    let mut table = None;
+    let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+        ui.set_max_width(200.0);
+        let drawn = show_markdown(ui, &blocks, MarkdownViewStyle { body_size: 6.0 });
+        table = drawn.table_rects.first().copied();
+    });
+    output.textures_delta.clear();
+    let table = table.expect("the table is drawn");
+    assert!(table.width() <= 200.5, "the table fits: {table:?}");
+}
