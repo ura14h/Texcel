@@ -133,7 +133,7 @@ fn selection_count_tracks_shift_click_ranges() {
     scenario::send_batch(&mut harness, []);
     assert!(
         harness
-            .query_all(By::new().label_contains("4 cells selected"))
+            .query_all(By::new().label_contains("4 cells selected (2R × 2C)"))
             .next()
             .is_some(),
         "the status row displays the range area"

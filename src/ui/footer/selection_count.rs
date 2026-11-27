@@ -2,8 +2,39 @@ use super::super::*;
 
 use std::collections::BTreeMap;
 
-/// Counts cells in the active table's selected ranges without visiting each cell.
-pub(super) fn active_selection_count(app: &TexcelApp) -> Option<u64> {
+/// Cells, rows, and columns covered by the active table's selection.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) struct SelectionCount {
+    pub(super) cells: u64,
+    pub(super) rows: u64,
+    pub(super) columns: u64,
+}
+
+impl SelectionCount {
+    // Count one set of rectangles without visiting each cell.
+    pub(super) fn of(ranges: &[CellRange]) -> Self {
+        let (rows, columns): (Vec<_>, Vec<_>) = ranges
+            .iter()
+            .filter_map(|range| {
+                let (start, end) = range.normalized();
+                (start.row < MAX_ROWS && start.column < MAX_COLUMNS).then(|| {
+                    (
+                        (start.row, end.row.min(MAX_ROWS - 1) + 1),
+                        (start.column, end.column.min(MAX_COLUMNS - 1) + 1),
+                    )
+                })
+            })
+            .unzip();
+        Self {
+            cells: count_selected_cells(ranges),
+            rows: union_length(rows),
+            columns: union_length(columns),
+        }
+    }
+}
+
+/// Counts cells, rows, and columns in the active table's selection.
+pub(super) fn active_selection_count(app: &TexcelApp) -> Option<SelectionCount> {
     let document = app.workspace.active_document()?;
     let table = document.active_table()?;
     // While the fill handle is dragged, count the range it would fill.
@@ -12,11 +43,11 @@ pub(super) fn active_selection_count(app: &TexcelApp) -> Option<u64> {
         .filter(|drag| drag.document_id == document.id && drag.table_id == table.id)
         .and_then(|drag| drag.preview)
     {
-        return Some(count_selected_cells(&[preview]));
+        return Some(SelectionCount::of(&[preview]));
     }
     let view = document.view(table.id)?;
     let ranges = view.selected_ranges().collect::<Vec<_>>();
-    Some(count_selected_cells(&ranges))
+    Some(SelectionCount::of(&ranges))
 }
 
 /// Counts the union of rectangles by row bands and column intervals.
@@ -62,7 +93,11 @@ pub(super) fn count_selected_cells(ranges: &[CellRange]) -> u64 {
 
 /// Counts the columns covered by the union of the active column intervals.
 fn union_column_count(active: &BTreeMap<usize, (usize, usize)>) -> u64 {
-    let mut intervals = active.values().copied().collect::<Vec<_>>();
+    union_length(active.values().copied().collect())
+}
+
+/// Counts the positions covered by the union of half-open intervals.
+fn union_length(mut intervals: Vec<(usize, usize)>) -> u64 {
     intervals.sort_unstable();
     let mut total = 0_u64;
     let mut current = None;

@@ -73,7 +73,7 @@ status-paste-target-single-rectangle-required = Select one rectangular range as 
 status-paste-clipboard-limit-exceeded = Clipboard content exceeds the paste limit.
 status-selected-cell-link-unavailable = The selected cell has no link.
 status-selected-table-view-unavailable = The selected table view is unavailable.
-status-selection-count = { $count } cells selected
+status-selection-count = { $count } cells selected ({ $rows }R × { $columns }C)
 status-done-saved = Saved “{ $name }”.
 status-done-exported = { $count ->
     [one] Exported 1 file.

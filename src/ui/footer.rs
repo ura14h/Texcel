@@ -135,10 +135,12 @@ fn draw_fixed_status_line(
     let row_height = CHROME_STATUS_HEIGHT - 8.0;
     let (_, row_rect) = ui.allocate_space(Vec2::new(total_width, row_height));
     let selection_label = selection_count::active_selection_count(app)
-        .filter(|count| *count > 1)
+        .filter(|count| count.cells > 1)
         .map(|count| {
             Message::new("status-selection-count")
-                .with_text("count", selection_count::grouped_number(count))
+                .with_text("count", selection_count::grouped_number(count.cells))
+                .with_text("rows", selection_count::grouped_number(count.rows))
+                .with_text("columns", selection_count::grouped_number(count.columns))
                 .resolve(app.language)
         });
 
