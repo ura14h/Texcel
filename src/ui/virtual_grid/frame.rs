@@ -17,6 +17,8 @@ pub(super) struct GridViewportFrame<'a> {
     pub(super) frozen_column_count: usize,
     pub(super) row_count: usize,
     pub(super) column_count: usize,
+    /// Bottom-right cell of the range that saving writes.
+    pub(super) extent_end: CellAddress,
     pub(super) effective_scroll_x: f32,
     pub(super) effective_scroll_y: f32,
     pub(super) viewport_rect: Rect,

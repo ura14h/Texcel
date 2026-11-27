@@ -115,7 +115,7 @@ Texcel starts with an empty sheet (Table1). You can type into any cell right awa
 | Name box | The address of the selected cell, such as `B2`. Type `C12` or `A1:D20` and press Enter to go to that cell or range. Absolute and mixed forms such as `$C$12`, `$C12`, and `C$12` also work |
 | ✗ ✓ fx | ✗ cancels the entry, ✓ confirms it, and fx inserts a function. ✗ and ✓ work only while you are entering text |
 | Formula bar | The selected cell's source, including formulas and Markdown marks. Click it to edit from that point |
-| Grid | Cells with column letters (A, B, …) and row numbers (1, 2, …) |
+| Grid | Cells with column letters (A, B, …) and row numbers (1, 2, …). Letters and numbers inside the range that is saved to the file are dark; those outside it are light |
 | Table tabs | Switch between the tables in the document. **+** adds a table |
 | List | Picks a table from a list. Each entry shows the table name and the content of the filled cell nearest to A1 |
 | Live Editing / Source Editing | Switches the display mode. The button shows the current mode |

@@ -18,6 +18,11 @@ fn alignment_marks(alignment: Option<MarkdownTableAlignment>) -> (bool, bool) {
     }
 }
 
+/// Picks the header label color: strong inside the saved range or the selection, weak outside.
+fn header_text_color(selected: bool, saved: bool, strong: Color32, weak: Color32) -> Color32 {
+    if selected || saved { strong } else { weak }
+}
+
 impl GridViewportFrame<'_> {
     /// Draws the visible column headers and records their selection actions.
     pub(super) fn draw_column_headers(
@@ -88,11 +93,12 @@ impl GridViewportFrame<'_> {
                 Stroke::new(0.75, self.palette.grid),
                 egui::StrokeKind::Inside,
             );
-            let header_text_color = if active_column || selected_column {
-                self.palette.foreground
-            } else {
-                self.visuals.weak_text_color()
-            };
+            let header_text_color = header_text_color(
+                active_column || selected_column,
+                *column <= self.extent_end.column,
+                self.palette.foreground,
+                self.visuals.weak_text_color(),
+            );
             header_painter.text(
                 rect.center(),
                 Align2::CENTER_CENTER,
@@ -289,11 +295,12 @@ impl GridViewportFrame<'_> {
                 Align2::RIGHT_CENTER,
                 (*row + 1).to_string(),
                 FontId::proportional(grid_font_size(self.grid.layout.scale())),
-                if active_row || selected_row {
-                    self.palette.foreground
-                } else {
-                    self.visuals.weak_text_color()
-                },
+                header_text_color(
+                    active_row || selected_row,
+                    *row <= self.extent_end.row,
+                    self.palette.foreground,
+                    self.visuals.weak_text_color(),
+                ),
             );
             // Row headers have no resize edge, so the whole header selects the row.
             let response = grid_ui.interact(

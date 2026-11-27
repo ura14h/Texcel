@@ -62,8 +62,10 @@ pub(super) fn draw_virtual_grid(
     );
     let wheel_delta = ui.input(|input| input.smooth_scroll_delta());
     let pending_scroll_ahead = Vec2::new((-wheel_delta.x).max(0.0), (-wheel_delta.y).max(0.0));
+    // The saved rectangle: its headers are drawn stronger than the rest of the sheet.
+    let extent_end = document.extent_end(table_id).unwrap_or_default();
     let total_size = canvas::canvas_size(
-        document.extent_end(table_id).unwrap_or_default(),
+        extent_end,
         row_layout,
         layout,
         viewport_size,
@@ -318,6 +320,7 @@ pub(super) fn draw_virtual_grid(
                 frozen_column_count,
                 row_count,
                 column_count,
+                extent_end,
                 effective_scroll_x,
                 effective_scroll_y,
                 viewport_rect,

@@ -489,5 +489,9 @@ mod fill_handle_tests;
 mod save_extent_tests;
 
 #[cfg(test)]
+#[path = "ui/header_extent_test.rs"]
+mod header_extent_tests;
+
+#[cfg(test)]
 #[path = "ui/formula_structure_test.rs"]
 mod formula_structure_tests;
