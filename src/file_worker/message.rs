@@ -21,9 +21,10 @@ pub(super) enum WorkerMessage {
         language: crate::i18n::Language,
         cancelled: Arc<AtomicBool>,
     },
-    ImportXlsx {
+    ImportWorkbook {
         token: JobToken,
         path: PathBuf,
+        format: WorkbookFormat,
         language: crate::i18n::Language,
         cancelled: Arc<AtomicBool>,
     },

@@ -137,7 +137,7 @@ impl TexcelApp {
         !self.pending_csv_opens.is_empty()
             || !self.pending_markdown_loads.is_empty()
             || !self.pending_html_loads.is_empty()
-            || !self.pending_xlsx_loads.is_empty()
+            || !self.pending_workbook_loads.is_empty()
     }
 
     /// Finds a loaded document whose path already names this open request.
@@ -192,7 +192,7 @@ impl TexcelApp {
         self.pending_csv_opens.contains_key(&document_id)
             || self.pending_markdown_loads.contains_key(&document_id)
             || self.pending_html_loads.contains_key(&document_id)
-            || self.pending_xlsx_loads.contains_key(&document_id)
+            || self.pending_workbook_loads.contains_key(&document_id)
     }
 
     /// Places a successful input or full Save As path at the front of recent files.
@@ -242,7 +242,7 @@ fn has_supported_open_extension(path: &std::path::Path) -> bool {
         .is_some_and(|extension| {
             matches!(
                 extension.to_ascii_lowercase().as_str(),
-                "md" | "markdown" | "csv" | "tsv" | "html" | "htm" | "xlsx"
+                "md" | "markdown" | "csv" | "tsv" | "html" | "htm" | "xlsx" | "ods"
             )
         })
 }

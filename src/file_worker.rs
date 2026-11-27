@@ -196,7 +196,7 @@ pub enum FileOperation {
     LoadCsv,
     LoadMarkdown,
     LoadHtml,
-    LoadXlsx,
+    LoadWorkbook,
     Save,
     SaveReport,
     PrepareExport,
@@ -277,6 +277,14 @@ pub enum FileResultKind {
 pub enum ImportedFormat {
     Html,
     Xlsx,
+    Ods,
+}
+
+/// The spreadsheet file kinds read by the shared workbook import.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum WorkbookFormat {
+    Xlsx,
+    Ods,
 }
 
 impl FileResultKind {
@@ -344,7 +352,7 @@ pub(crate) mod import_markdown;
 mod load;
 mod load_api;
 mod load_progress;
-mod load_xlsx;
+mod load_workbook;
 mod prepare_api;
 mod safe_write;
 mod save;
@@ -360,7 +368,7 @@ use self::dispatch::*;
 use self::html_file::*;
 use self::load::*;
 use self::load_progress::LoadProgressSender;
-use self::load_xlsx::*;
+use self::load_workbook::*;
 pub(crate) use self::safe_write::replace_file_atomic;
 use self::safe_write::*;
 use self::save::*;

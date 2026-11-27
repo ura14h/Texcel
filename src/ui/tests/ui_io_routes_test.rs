@@ -99,6 +99,44 @@ fn long_text_values_survive_load_edit_save_and_reload() {
 }
 
 #[test]
+// Opens an ODS file through the shared path loader as a Markdown import with its own report.
+fn ods_path_load_imports_markdown_and_opens_report() {
+    let directory = TestDirectory::new();
+    let path = directory.0.join("workbook.ods");
+    std::fs::copy(
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("samples/workbook.ods"),
+        &path,
+    )
+    .expect("copy the ODS fixture");
+    let context = egui::Context::default();
+    let mut app = new_app(&context);
+    app.settings_loaded = true;
+    let id = app
+        .start_path_load(path.clone())
+        .expect("the production loader accepts ODS");
+    wait_for_route_load(&mut app, id);
+    let (owner, report) = app
+        .active_import_report
+        .as_ref()
+        .expect("the merged cell's content loss opens the report");
+    assert_eq!(*owner, id);
+    assert_eq!(report.file_name, "workbook.ods");
+    assert_eq!(report.input_format, "ODS");
+    let document = &app.workspace.documents[&id];
+    let names = document
+        .tables
+        .iter()
+        .map(|table| table.name.as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(names, ["売上", "型と書式"]);
+    assert!(
+        app.document_display_name(&context, id)
+            .contains("workbook.ods"),
+        "the window title keeps the imported extension"
+    );
+}
+
+#[test]
 // Separates a formatting-only XLSX report from an import that loses table content.
 fn import_reports_auto_open_only_for_content_impact() {
     let directory = TestDirectory::new();

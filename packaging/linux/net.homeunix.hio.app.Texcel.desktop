@@ -1,12 +1,12 @@
 [Desktop Entry]
 Type=Application
 Name=Texcel
-Comment=Edit Markdown tables; read and write CSV; import XLSX and HTML
-Comment[ja]=Markdownの表を編集。CSVの読み書き、XLSXとHTMLの取り込みに対応
+Comment=Edit Markdown tables; read and write CSV; import XLSX, ODS, and HTML
+Comment[ja]=Markdownの表を編集。CSVの読み書き、XLSX・ODS・HTMLの取り込みに対応
 Exec=texcel %F
 TryExec=texcel
 Icon=texcel
 Terminal=false
 Categories=Office;Spreadsheet;
 StartupWMClass=net.homeunix.hio.app.Texcel
-MimeType=text/markdown;text/csv;text/tab-separated-values;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;text/html;
+MimeType=text/markdown;text/csv;text/tab-separated-values;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;application/vnd.oasis.opendocument.spreadsheet;text/html;

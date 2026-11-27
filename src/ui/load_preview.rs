@@ -90,8 +90,8 @@ impl TexcelApp {
         if self.pending_html_loads.get(&document_id) == Some(&token) {
             self.pending_html_loads.remove(&document_id);
         }
-        if self.pending_xlsx_loads.get(&document_id) == Some(&token) {
-            self.pending_xlsx_loads.remove(&document_id);
+        if self.pending_workbook_loads.get(&document_id) == Some(&token) {
+            self.pending_workbook_loads.remove(&document_id);
         }
     }
 }

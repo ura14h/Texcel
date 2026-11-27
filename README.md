@@ -1,6 +1,6 @@
 # Texcel
 
-Texcel is a desktop app for editing the tables in Markdown files the way you would edit a spreadsheet. It also opens CSV/TSV files and imports tables from XLSX and HTML files into Markdown.
+Texcel is a desktop app for editing the tables in Markdown files the way you would edit a spreadsheet. It also opens CSV/TSV files and imports tables from XLSX, ODS, and HTML files into Markdown.
 
 Texcel is written in Rust with [egui](https://github.com/emilk/egui) and runs on macOS, Windows, and Linux. Version: 0.3.0.
 
@@ -12,7 +12,7 @@ Texcel is written in Rust with [egui](https://github.com/emilk/egui) and runs on
 - **Live and source editing.** Live editing shows formula results and Markdown formatting (bold, italic, strikethrough, code, links). Source editing shows each cell's raw Markdown.
 - **Formulas.** Cells starting with `=` are calculated with [IronCalc](https://github.com/ironcalc/IronCalc). Text such as `00123` or a 20-digit ID stays text, as in Excel: `=SUM()` ignores it and `=VALUE()` converts it.
 - **CSV and TSV.** Delimiter, character encoding (including Shift_JIS / CP932), line endings, and quoting are kept when you save.
-- **XLSX and HTML import.** Each sheet or table becomes a Markdown table. A report lists anything that could not be carried over, such as colors, borders, or merged cells. Texcel never writes back to XLSX or HTML.
+- **XLSX, ODS, and HTML import.** Each sheet or table becomes a Markdown table. A report lists anything that could not be carried over, such as colors, borders, or merged cells. Texcel never writes back to XLSX, ODS, or HTML.
 - **Safe saving.** Files are written to a temporary file and then swapped in. If another app changed the file since you opened it, Texcel asks before overwriting. Unsaved work is restored after a crash.
 - **One window per document**, light and dark themes, English and Japanese UI, and bundled Noto Sans CJK fonts for mixed Japanese and English text.
 
@@ -114,7 +114,7 @@ cargo run --locked --bin texcel-licenses -- target/package/licenses
 
 ## 日本語での概要
 
-TexcelはMarkdownの表を表計算のように編集するデスクトップアプリです。CSV・TSVの読み書きと、XLSX・HTMLの表のMarkdownへの取り込みに対応します。表の外の文章と未編集の部分はバイト単位で保持し、ライブ編集では計算結果とMarkdownの修飾、ソース編集ではセルの原文を表示します。画面は日本語と英語に対応します。
+TexcelはMarkdownの表を表計算のように編集するデスクトップアプリです。CSV・TSVの読み書きと、XLSX・ODS・HTMLの表のMarkdownへの取り込みに対応します。表の外の文章と未編集の部分はバイト単位で保持し、ライブ編集では計算結果とMarkdownの修飾、ソース編集ではセルの原文を表示します。画面は日本語と英語に対応します。
 
 使い方は [取扱説明書](docs/user-manual.ja.md)、仕様は [基本仕様書](docs/basic-spec.md) と [詳細設計書](docs/detail-spec.md) にあります。
 

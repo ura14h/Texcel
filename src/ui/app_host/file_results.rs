@@ -43,7 +43,7 @@ impl HostRuntime {
                 || self.app.pending_csv_opens.contains_key(&document_id)
                 || self.app.pending_markdown_loads.contains_key(&document_id)
                 || self.app.pending_html_loads.contains_key(&document_id)
-                || self.app.pending_xlsx_loads.contains_key(&document_id);
+                || self.app.pending_workbook_loads.contains_key(&document_id);
             if is_host_load_operation(operation) && !needs_load_choice && !load_is_still_pending {
                 self.app.load_request_viewports.remove(&document_id);
             }
@@ -90,6 +90,6 @@ fn is_host_load_operation(operation: crate::file_worker::FileOperation) -> bool 
         crate::file_worker::FileOperation::LoadCsv
             | crate::file_worker::FileOperation::LoadMarkdown
             | crate::file_worker::FileOperation::LoadHtml
-            | crate::file_worker::FileOperation::LoadXlsx
+            | crate::file_worker::FileOperation::LoadWorkbook
     )
 }

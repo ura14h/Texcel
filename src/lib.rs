@@ -16,6 +16,7 @@ pub(crate) mod markdown_adapter;
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 mod native_menu;
 pub(crate) mod numeric_text;
+pub(crate) mod ods_adapter;
 pub(crate) mod recovery;
 pub(crate) mod settings;
 pub(crate) mod source;

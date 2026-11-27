@@ -91,16 +91,23 @@ impl TexcelApp {
                     Err(error) => Err(error),
                 }
             }
-            Some("xlsx") => {
+            Some(extension @ ("xlsx" | "ods")) => {
+                let format = if extension == "ods" {
+                    crate::file_worker::WorkbookFormat::Ods
+                } else {
+                    crate::file_worker::WorkbookFormat::Xlsx
+                };
                 let document_id = self.workspace.reserve_document_id();
                 let token = self.next_job_token(document_id, 0);
                 let load_path = path.clone();
-                match self
-                    .file_worker
-                    .import_xlsx_with_language(token, path, self.language)
-                {
+                match self.file_worker.import_workbook_with_language(
+                    token,
+                    path,
+                    format,
+                    self.language,
+                ) {
                     Ok(()) => {
-                        self.pending_xlsx_loads.insert(document_id, token);
+                        self.pending_workbook_loads.insert(document_id, token);
                         self.pending_file_load_paths.insert(document_id, load_path);
                         self.remember_load_request_viewport(document_id);
                         Ok(Some(document_id))

@@ -344,7 +344,7 @@ impl TexcelApp {
         !self.pending_csv_opens.is_empty()
             || !self.pending_markdown_loads.is_empty()
             || !self.pending_html_loads.is_empty()
-            || !self.pending_xlsx_loads.is_empty()
+            || !self.pending_workbook_loads.is_empty()
             || self.pending_close_document.is_some()
             || !self.pending_structures.is_empty()
             || !self.pending_history_restores.is_empty()

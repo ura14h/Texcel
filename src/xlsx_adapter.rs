@@ -35,7 +35,7 @@ impl From<umya_spreadsheet::XlsxError> for XlsxError {
     }
 }
 
-/// Holds the imported XLSX values, formulas, styles, and layout.
+/// Holds the imported XLSX values, formulas, styles, and layout; ODS import fills the same model.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct XlsxDocument {
     pub date_1904: bool,
@@ -154,6 +154,7 @@ pub use self::rule_scan::{XlsxRuleKind, XlsxRuleLoss};
 use self::style::*;
 use self::values::*;
 
+pub(crate) use self::parse::emit_preview_rows;
 pub(crate) use self::references::{cell_reference, parse_cell_reference};
 pub(crate) use self::style::xlsx_style;
 

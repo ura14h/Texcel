@@ -13,6 +13,7 @@ Texcel edits Markdown tables the way a spreadsheet edits cells. You see cell val
 | Markdown (.md, .markdown) | Every table in the document is editable | Text outside the tables and untouched parts stay as they were |
 | CSV, TSV (.csv, .tsv) | One table | Keeps the original delimiter, encoding, and line endings |
 | XLSX (.xlsx) | Each sheet is imported as a Markdown table | Not saved back to XLSX |
+| ODS (.ods) | Each sheet is imported as a Markdown table | Not saved back to ODS |
 | HTML (.html, .htm) | Each table is imported as a Markdown table | Not saved back to HTML |
 
 Texcel works only with files on your computer. It needs no account and no network connection.
@@ -211,13 +212,13 @@ Choose File > Open… (Ctrl/Cmd+O).
 
 When the delimiter and encoding are clear, Texcel opens the file directly. Otherwise, and for Shift_JIS (CP932) files, it shows a preview of the first lines with the delimiter, encoding, and header settings. Check them, then open the file. To change these settings later, close the document and open the file again.
 
-### 6.2 XLSX and HTML
+### 6.2 XLSX, ODS, and HTML
 
-Each XLSX sheet and each HTML table is imported as a Markdown table. The original file does not become the save destination and is never changed. When you save, choose Markdown or CSV.
+Each sheet of an XLSX or ODS file (OpenDocument spreadsheets from LibreOffice and others) and each HTML table is imported as a Markdown table. Formulas that refer only to their own sheet stay formulas; formulas that refer to another sheet become the result saved in the file. The original file does not become the save destination and is never changed. When you save, choose Markdown or CSV.
 
 If some information could not be imported, Texcel reports it:
 
-- If values, formulas, or table structure were lost, the "XLSX Import Report" or "HTML Import Report" dialog opens automatically.
+- If values, formulas, or table structure were lost, the "XLSX Import Report", "ODS Import Report", or "HTML Import Report" dialog opens automatically.
 - If only visual formatting such as colors or borders was lost, the status bar shows a notice with a **Details** button that opens the report.
 
 The report has three columns: Result, Location, and Details. Select a row on the left to see its location, reason, and ranges under Details. **Save report…** writes the report to a text file.

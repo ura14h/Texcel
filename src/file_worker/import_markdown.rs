@@ -64,10 +64,11 @@ pub(crate) fn html_to_markdown(
 }
 
 /// Converts an imported workbook and reports only losses from its Markdown result.
-pub(crate) fn xlsx_to_markdown(
+pub(crate) fn workbook_to_markdown(
     source: Arc<XlsxDocument>,
     document_id: u64,
     name: String,
+    input_format: &'static str,
     language: crate::i18n::Language,
     mut entries: Vec<ConversionEntry>,
     cancelled: &AtomicBool,
@@ -158,7 +159,7 @@ pub(crate) fn xlsx_to_markdown(
         changes,
         format_changes,
         entries,
-        input_format: "XLSX",
+        input_format,
     };
     markdown_from_import(document_id, name, imported, language, cancelled)
 }

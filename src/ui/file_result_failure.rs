@@ -28,7 +28,7 @@ impl TexcelApp {
                     FileOperation::LoadCsv
                         | FileOperation::LoadMarkdown
                         | FileOperation::LoadHtml
-                        | FileOperation::LoadXlsx
+                        | FileOperation::LoadWorkbook
                 ) =>
             {
                 FileResultKind::Failed(file_open_error(&path, message))
@@ -59,7 +59,7 @@ impl TexcelApp {
                         FileOperation::LoadCsv
                             | FileOperation::LoadMarkdown
                             | FileOperation::LoadHtml
-                            | FileOperation::LoadXlsx
+                            | FileOperation::LoadWorkbook
                     )
                 {
                     self.queued_open_failure = Some(message.clone());
@@ -173,8 +173,8 @@ impl TexcelApp {
                     FileOperation::LoadHtml => {
                         self.pending_html_loads.remove(&document_id);
                     }
-                    FileOperation::LoadXlsx => {
-                        self.pending_xlsx_loads.remove(&document_id);
+                    FileOperation::LoadWorkbook => {
+                        self.pending_workbook_loads.remove(&document_id);
                     }
                 }
                 if operation != FileOperation::PrepareMarkdownDisplay {
@@ -318,8 +318,8 @@ impl TexcelApp {
                     FileOperation::LoadHtml => {
                         self.pending_html_loads.remove(&document_id);
                     }
-                    FileOperation::LoadXlsx => {
-                        self.pending_xlsx_loads.remove(&document_id);
+                    FileOperation::LoadWorkbook => {
+                        self.pending_workbook_loads.remove(&document_id);
                     }
                 }
                 if operation == FileOperation::Save {

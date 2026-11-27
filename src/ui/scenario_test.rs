@@ -368,7 +368,7 @@ pub(super) fn queue_open_and_wait(harness: &mut Harness<'_, TexcelApp>, path: Pa
             && app.pending_markdown_loads.is_empty()
             && app.pending_html_loads.is_empty()
             && app.pending_csv_opens.is_empty()
-            && app.pending_xlsx_loads.is_empty()
+            && app.pending_workbook_loads.is_empty()
     });
 }
 

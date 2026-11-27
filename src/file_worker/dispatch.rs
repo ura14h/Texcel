@@ -59,14 +59,16 @@ pub(super) fn worker_loop(
                 progress.as_ref(),
                 &shutdown,
             ),
-            WorkerMessage::ImportXlsx {
+            WorkerMessage::ImportWorkbook {
                 token,
                 path,
+                format,
                 language,
                 cancelled,
-            } => run_import_xlsx(
+            } => run_import_workbook(
                 token,
                 path,
+                format,
                 language,
                 cancelled,
                 progress.as_ref(),

@@ -99,7 +99,8 @@ impl TexcelApp {
                 set_import_report_file_name(&mut report, &user_path);
                 let pending = match input_format {
                     crate::file_worker::ImportedFormat::Html => &mut self.pending_html_loads,
-                    crate::file_worker::ImportedFormat::Xlsx => &mut self.pending_xlsx_loads,
+                    crate::file_worker::ImportedFormat::Xlsx
+                    | crate::file_worker::ImportedFormat::Ods => &mut self.pending_workbook_loads,
                 };
                 if pending.get(&document_id) != Some(&token) {
                     return true;

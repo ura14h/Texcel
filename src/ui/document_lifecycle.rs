@@ -12,6 +12,7 @@ impl TexcelApp {
             )
             .add_filter(text(self.language, "file-filter-html"), &["html", "htm"])
             .add_filter(text(self.language, "file-filter-xlsx"), &["xlsx"])
+            .add_filter(text(self.language, "file-filter-ods"), &["ods"])
             .pick_files();
         if let Some(paths) = selected {
             self.queue_open_paths(paths);

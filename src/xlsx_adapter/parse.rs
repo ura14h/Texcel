@@ -286,7 +286,7 @@ impl XlsxDocument {
 }
 
 /// Sends sparse cell rows from one converted sheet to the preview worker.
-fn emit_preview_rows(
+pub(crate) fn emit_preview_rows(
     table_index: usize,
     table_name: &str,
     cells: &BTreeMap<CellAddress, XlsxCell>,

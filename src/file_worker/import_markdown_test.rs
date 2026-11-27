@@ -134,10 +134,11 @@ fn xlsx_alignment_ignores_header_and_reports_mixed_body_columns() {
             rule_losses: Vec::new(),
         }],
     });
-    let (markdown, _, report) = xlsx_to_markdown(
+    let (markdown, _, report) = workbook_to_markdown(
         source,
         8816,
         "Alignment.xlsx".to_owned(),
+        "XLSX",
         crate::i18n::Language::English,
         Vec::new(),
         &AtomicBool::new(false),
@@ -370,10 +371,11 @@ fn xlsx_import_reports_empty_fallbacks_and_keeps_rich_formula_text_literal() {
         }],
     });
     let cancelled = AtomicBool::new(false);
-    let (source, document, report) = xlsx_to_markdown(
+    let (source, document, report) = workbook_to_markdown(
         workbook,
         8811,
         "Main".to_owned(),
+        "XLSX",
         crate::i18n::Language::English,
         Vec::new(),
         &cancelled,
@@ -493,10 +495,11 @@ fn xlsx_import_collapses_merges_and_reports_unsupported_style() {
         }],
     });
 
-    let (markdown, document, report) = xlsx_to_markdown(
+    let (markdown, document, report) = workbook_to_markdown(
         source,
         8821,
         "Main".to_owned(),
+        "XLSX",
         crate::i18n::Language::English,
         Vec::new(),
         &AtomicBool::new(false),
@@ -561,7 +564,12 @@ fn xlsx_import_uses_markdown_formula_scope_and_literal_markers() {
         job_id: 2,
     };
     worker
-        .import_xlsx_with_language(token, path.clone(), crate::i18n::Language::English)
+        .import_workbook_with_language(
+            token,
+            path.clone(),
+            WorkbookFormat::Xlsx,
+            crate::i18n::Language::English,
+        )
         .expect("queue XLSX import");
     let result = wait_for_result(&worker);
     let FileResultKind::ImportedMarkdown {

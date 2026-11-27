@@ -1,4 +1,4 @@
-//!  Converts XLSX formulas into Texcel formulas and reports the ones that cannot be kept.
+//!  Converts XLSX and ODS formulas into Texcel formulas and reports the ones that cannot be kept.
 
 use super::*;
 

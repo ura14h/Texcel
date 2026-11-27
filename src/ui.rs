@@ -230,7 +230,7 @@ pub struct TexcelApp {
     pending_csv_opens: BTreeMap<DocumentId, PendingCsvOpen>,
     pending_markdown_loads: BTreeMap<DocumentId, JobToken>,
     pending_html_loads: BTreeMap<DocumentId, JobToken>,
-    pending_xlsx_loads: BTreeMap<DocumentId, JobToken>,
+    pending_workbook_loads: BTreeMap<DocumentId, JobToken>,
     pending_load_previews: BTreeMap<DocumentId, LoadPreviewState>,
     pending_saves: BTreeMap<DocumentId, JobToken>,
     pending_save_history_states: BTreeMap<DocumentId, (JobToken, u64)>,

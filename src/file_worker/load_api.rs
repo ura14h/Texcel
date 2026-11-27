@@ -83,17 +83,19 @@ impl FileWorker {
     }
 
     /// Requests an import-only workbook conversion into the Markdown editing model.
-    pub fn import_xlsx_with_language(
+    pub fn import_workbook_with_language(
         &self,
         token: JobToken,
         path: PathBuf,
+        format: WorkbookFormat,
         language: crate::i18n::Language,
     ) -> Result<(), SubmitError> {
         self.submit(
             token,
-            WorkerMessage::ImportXlsx {
+            WorkerMessage::ImportWorkbook {
                 token,
                 path,
+                format,
                 language,
                 cancelled: Arc::new(AtomicBool::new(false)),
             },

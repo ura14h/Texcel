@@ -174,8 +174,8 @@ impl TexcelApp {
             for (document_id, token) in std::mem::take(&mut self.pending_html_loads) {
                 self.fail_stopped_open(document_id, token, FileOperation::LoadHtml);
             }
-            for (document_id, token) in std::mem::take(&mut self.pending_xlsx_loads) {
-                self.fail_stopped_open(document_id, token, FileOperation::LoadXlsx);
+            for (document_id, token) in std::mem::take(&mut self.pending_workbook_loads) {
+                self.fail_stopped_open(document_id, token, FileOperation::LoadWorkbook);
             }
             let pending_saves = std::mem::take(&mut self.pending_saves);
             for (document_id, token) in pending_saves {
@@ -287,8 +287,8 @@ impl TexcelApp {
                 FileOperation::LoadHtml => {
                     self.pending_html_loads.get(&token.document_id) == Some(&token)
                 }
-                FileOperation::LoadXlsx => {
-                    self.pending_xlsx_loads.get(&token.document_id) == Some(&token)
+                FileOperation::LoadWorkbook => {
+                    self.pending_workbook_loads.get(&token.document_id) == Some(&token)
                 }
                 _ => false,
             }
@@ -301,7 +301,7 @@ impl TexcelApp {
             .any(|pending| pending.prompt.is_none())
             || !self.pending_markdown_loads.is_empty()
             || !self.pending_html_loads.is_empty()
-            || !self.pending_xlsx_loads.is_empty()
+            || !self.pending_workbook_loads.is_empty()
     }
 
     /// Checks the current request without retaining finished tokens forever.
@@ -317,8 +317,8 @@ impl TexcelApp {
             FileOperation::LoadHtml => {
                 self.pending_html_loads.get(&token.document_id) == Some(&token)
             }
-            FileOperation::LoadXlsx => {
-                self.pending_xlsx_loads.get(&token.document_id) == Some(&token)
+            FileOperation::LoadWorkbook => {
+                self.pending_workbook_loads.get(&token.document_id) == Some(&token)
             }
             _ => false,
         }
@@ -383,7 +383,7 @@ impl TexcelApp {
         self.pending_csv_opens.remove(&document_id);
         self.pending_markdown_loads.remove(&document_id);
         self.pending_html_loads.remove(&document_id);
-        self.pending_xlsx_loads.remove(&document_id);
+        self.pending_workbook_loads.remove(&document_id);
         self.pending_file_load_paths.remove(&document_id);
         self.pending_load_previews.remove(&document_id);
     }
@@ -432,6 +432,6 @@ fn is_load_operation(operation: FileOperation) -> bool {
         FileOperation::LoadCsv
             | FileOperation::LoadMarkdown
             | FileOperation::LoadHtml
-            | FileOperation::LoadXlsx
+            | FileOperation::LoadWorkbook
     )
 }

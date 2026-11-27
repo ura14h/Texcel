@@ -197,7 +197,7 @@ impl TexcelApp {
             pending_csv_opens: BTreeMap::new(),
             pending_markdown_loads: BTreeMap::new(),
             pending_html_loads: BTreeMap::new(),
-            pending_xlsx_loads: BTreeMap::new(),
+            pending_workbook_loads: BTreeMap::new(),
             pending_load_previews: BTreeMap::new(),
             pending_saves: BTreeMap::new(),
             pending_save_history_states: BTreeMap::new(),

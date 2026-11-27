@@ -13,7 +13,7 @@ impl TexcelApp {
         let imported_name = self.file_backings.get(&document_id).and_then(|backing| {
             let path = user_file_path(self, document_id, backing);
             let extension = path.extension()?.to_str()?.to_ascii_lowercase();
-            if matches!(extension.as_str(), "xlsx" | "html" | "htm") {
+            if matches!(extension.as_str(), "xlsx" | "ods" | "html" | "htm") {
                 Some(path.file_name()?.to_string_lossy().into_owned())
             } else {
                 None

@@ -72,7 +72,7 @@ impl FileWorker {
                             FileOperation::LoadCsv
                                 | FileOperation::LoadMarkdown
                                 | FileOperation::LoadHtml
-                                | FileOperation::LoadXlsx
+                                | FileOperation::LoadWorkbook
                         )
                     {
                         result.kind = FileResultKind::Cancelled;
@@ -118,7 +118,7 @@ impl FileWorker {
             WorkerMessage::LoadCsv { cancelled, .. }
             | WorkerMessage::LoadMarkdown { cancelled, .. }
             | WorkerMessage::ImportHtml { cancelled, .. }
-            | WorkerMessage::ImportXlsx { cancelled, .. }
+            | WorkerMessage::ImportWorkbook { cancelled, .. }
             | WorkerMessage::SaveConvertedCsv { cancelled, .. }
             | WorkerMessage::SaveReport { cancelled, .. }
             | WorkerMessage::PrepareExport { cancelled, .. }
