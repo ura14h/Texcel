@@ -185,6 +185,14 @@ pub(super) fn install_texcel_grid_fonts(ctx: &egui::Context, preset: FontPreset)
         true,
     );
 
+    // Hack, egui's own monospace font, is the last resort for marks such as ↲.
+    let mut proportional_regular = proportional_regular;
+    let mut proportional_bold = proportional_bold;
+    for family in [&mut proportional_regular, &mut proportional_bold] {
+        if !family.iter().any(|name| name == "Hack") {
+            family.push("Hack".to_owned());
+        }
+    }
     definitions
         .families
         .insert(FontFamily::Proportional, proportional_regular.clone());
