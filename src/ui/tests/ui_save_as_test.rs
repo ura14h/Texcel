@@ -864,3 +864,29 @@ fn markdown_save_as_tsv_uses_tab_delimiters() {
     assert!(output.contains("left,right"));
     assert!(!output.contains("\"left,right\""));
 }
+
+#[test]
+/// Rewrites a comma CSV document with tabs when it is saved as TSV.
+fn comma_csv_save_as_tsv_writes_tabs() {
+    let directory = TestDirectory::new();
+    let destination = directory.0.join("table.tsv");
+    let context = egui::Context::default();
+    let mut app = new_app(&context);
+    let (document_id, _) = install_test_csv_document(&mut app, b"a,b\n1,2\n".to_vec(), "table.csv");
+    assert_eq!(
+        default_save_format(&app.workspace.documents[&document_id]),
+        ExportFormat::Csv
+    );
+
+    app.save_as_to_path(document_id, destination.clone());
+    wait_for_save_as(&mut app, |app| {
+        destination.is_file()
+            && !app.pending_saves.contains_key(&document_id)
+            && !app.pending_exports.contains_key(&document_id)
+            && !app.pending_export_writes.contains_key(&document_id)
+    });
+    assert_eq!(
+        std::fs::read_to_string(&destination).expect("TSV was written"),
+        "a\tb\n1\t2\n"
+    );
+}

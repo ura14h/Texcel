@@ -7,17 +7,7 @@ pub(crate) fn prepare_export_cancellable(
     cancelled: &AtomicBool,
 ) -> Result<PreparedExport, crate::i18n::Message> {
     check_cancelled(Some(cancelled))?;
-    if !matches!(
-        request.options.format,
-        ExportFormat::Csv | ExportFormat::Markdown
-    ) {
-        return Err(crate::i18n::Message::new(
-            "status-export-format-unsupported",
-        ));
-    }
-    if request.options.format == ExportFormat::Csv
-        && request.options.scope == ExportScope::AllTables
-    {
+    if request.options.format.is_delimited() && request.options.scope == ExportScope::AllTables {
         return Err(crate::i18n::Message::new(
             "status-export-csv-selected-table-required",
         ));

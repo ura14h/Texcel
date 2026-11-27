@@ -19,7 +19,7 @@ pub(super) fn export_text_value(
         };
         return match request.options.formulas {
             FormulaOutput::Formula => {
-                if request.options.format == ExportFormat::Csv {
+                if request.options.format.is_delimited() {
                     add_conversion_with_message(
                         entries,
                         table,
@@ -87,7 +87,7 @@ pub(super) fn export_text_value(
         let source_markup_present =
             source_cell.is_some_and(|source_cell| source_cell.value != source_cell.display_value);
         let markup_loss = (display != cell.input.source_text() || source_markup_present)
-            && (request.options.format == ExportFormat::Csv || display_data.has_unsupported_markup);
+            && (request.options.format.is_delimited() || display_data.has_unsupported_markup);
         if markup_loss {
             add_conversion_with_message(
                 entries,

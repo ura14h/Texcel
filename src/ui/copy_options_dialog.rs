@@ -38,10 +38,12 @@ impl TexcelApp {
                             ui,
                             &text(language, "option-format-label"),
                             |ui| {
+                                appearance_dialog::compact_choices(ui);
+                                // Same order as the Save As formats, with HTML last.
                                 for (format, key) in [
-                                    (CopyFormatChoice::Tsv, "dialog-copy-format-tsv"),
-                                    (CopyFormatChoice::Csv, "dialog-copy-format-csv"),
                                     (CopyFormatChoice::Markdown, "dialog-copy-format-markdown"),
+                                    (CopyFormatChoice::Csv, "dialog-copy-format-csv"),
+                                    (CopyFormatChoice::Tsv, "dialog-copy-format-tsv"),
                                     (CopyFormatChoice::Html, "dialog-copy-format-html"),
                                 ] {
                                     ui.radio_value(
@@ -56,6 +58,7 @@ impl TexcelApp {
                             ui,
                             &text(language, "option-content-label"),
                             |ui| {
+                                appearance_dialog::compact_choices(ui);
                                 ui.radio_value(
                                     &mut options.content,
                                     CopyContentChoice::Source,

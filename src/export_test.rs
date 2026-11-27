@@ -1412,9 +1412,14 @@ fn markdown_line_break_tags_become_newlines_in_csv_and_tsv() {
         ("breaks.csv", ModifierOutput::TextOnly, "value\n\"a\nb\"\n"),
         ("breaks.tsv", ModifierOutput::Convert, "value\n\"a\nb\"\n"),
     ] {
+        let format = if destination.ends_with(".tsv") {
+            ExportFormat::Tsv
+        } else {
+            ExportFormat::Csv
+        };
         let mut request = request_for_source(
             ExportSource::Markdown(markdown_source("| value |\n| --- |\n| a<br>b |\n")),
-            ExportFormat::Csv,
+            format,
             FormulaOutput::Formula,
             modifiers,
             MarkdownHeader::UseFirstRow,
@@ -1429,4 +1434,76 @@ fn markdown_line_break_tags_become_newlines_in_csv_and_tsv() {
             "{destination} {modifiers:?}"
         );
     }
+}
+
+#[test]
+// Writes TSV with tabs, and rewrites a CSV source only when its delimiter does not fit.
+fn tsv_output_uses_tabs_and_keeps_only_a_matching_csv_delimiter() {
+    let mut markdown = request_for_source(
+        ExportSource::Markdown(markdown_source("| a | b |\n| --- | --- |\n| 1 | x,y |\n")),
+        ExportFormat::Tsv,
+        FormulaOutput::Formula,
+        ModifierOutput::Convert,
+        MarkdownHeader::UseFirstRow,
+        "table.tsv",
+    );
+    markdown.options.scope = ExportScope::Selected(markdown.tables[0].id);
+    let prepared = prepare_export(&markdown, None).expect("Markdown exports as TSV");
+    assert_eq!(prepared.artifacts[0].bytes, b"a\tb\n1\tx,y\n");
+
+    for (bytes, delimiter, format, destination, expected) in [
+        (
+            &b"a,b\n1,2\n"[..],
+            ',',
+            ExportFormat::Tsv,
+            "out.tsv",
+            &b"a\tb\n1\t2\n"[..],
+        ),
+        (
+            &b"a\tb\n1\t2\n"[..],
+            '\t',
+            ExportFormat::Csv,
+            "out.csv",
+            &b"a,b\n1,2\n"[..],
+        ),
+        (
+            &b"a\tb\n1\t2\n"[..],
+            '\t',
+            ExportFormat::Tsv,
+            "out.tsv",
+            &b"a\tb\n1\t2\n"[..],
+        ),
+        (
+            &b"a;b\n1;2\n"[..],
+            ';',
+            ExportFormat::Csv,
+            "out.csv",
+            &b"a;b\n1;2\n"[..],
+        ),
+    ] {
+        let source = Arc::new(
+            CsvDocument::parse(
+                bytes.to_vec(),
+                crate::csv_adapter::EncodingChoice::Auto,
+                delimiter,
+            )
+            .expect("csv"),
+        );
+        let mut request = request_for_source(
+            ExportSource::Csv(source),
+            format,
+            FormulaOutput::Formula,
+            ModifierOutput::Convert,
+            MarkdownHeader::UseFirstRow,
+            destination,
+        );
+        request.options.scope = ExportScope::Selected(request.tables[0].id);
+        let prepared = prepare_export(&request, None).expect("CSV source exports");
+        assert_eq!(
+            prepared.artifacts[0].bytes, expected,
+            "{delimiter:?} source as {format:?}"
+        );
+    }
+    assert!(ExportFormat::Tsv.matches_path(std::path::Path::new("x.TSV")));
+    assert!(!ExportFormat::Csv.matches_path(std::path::Path::new("x.tsv")));
 }

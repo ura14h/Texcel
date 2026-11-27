@@ -561,7 +561,6 @@ status-selection-range-limit = 選択できる範囲は{ $limit }個までです
 status-selection-range-overlap = 既存の選択範囲と重ならない範囲を選択してください。
 status-export-table-area-limit = 表「{ $table }」の出力範囲がセル数の上限 { $limit } を超えています。
 status-export-no-tables = 出力する表がありません。
-status-export-format-unsupported = この形式へのエクスポートは対応していません。
 status-export-csv-selected-table-required = CSVの出力には表を1つ選択してください。
 status-export-selected-table-missing = 選択した表が見つかりません。
 status-export-latest-result-missing = 表「{ $table }」のセル{ $cell }に最新の計算結果がありません。

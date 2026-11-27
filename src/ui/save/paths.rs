@@ -84,10 +84,11 @@ impl TexcelApp {
                         .add_filter("TSV", &["tsv"])
                         .save_file()
                 }
-                Some(SourceDocument::Csv(_)) => {
+                Some(SourceDocument::Csv(csv)) => {
+                    let extension = ExportFormat::for_csv_delimiter(csv.delimiter).extension();
                     let dialog = dialog
                         .set_title(text(language, "dialog-save-csv-title"))
-                        .set_file_name(format!("{document_name}.csv"))
+                        .set_file_name(format!("{document_name}.{extension}"))
                         .add_filter("CSV", &["csv"])
                         .add_filter("TSV", &["tsv"]);
                     dialog

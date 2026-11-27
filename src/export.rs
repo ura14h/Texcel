@@ -27,6 +27,7 @@ use crate::xlsx_adapter::{XlsxDocument, XlsxSheet, XlsxStyle, XlsxTextRun};
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExportFormat {
     Csv,
+    Tsv,
     Markdown,
 }
 
@@ -35,6 +36,7 @@ impl ExportFormat {
     pub fn label(self) -> &'static str {
         match self {
             Self::Csv => "CSV",
+            Self::Tsv => "TSV",
             Self::Markdown => "Markdown",
         }
     }
@@ -43,7 +45,46 @@ impl ExportFormat {
     pub fn extension(self) -> &'static str {
         match self {
             Self::Csv => "csv",
+            Self::Tsv => "tsv",
             Self::Markdown => "md",
+        }
+    }
+
+    /// Reports a one-table delimited format, CSV or TSV.
+    pub fn is_delimited(self) -> bool {
+        matches!(self, Self::Csv | Self::Tsv)
+    }
+
+    /// Reports whether a file extension belongs to this format.
+    pub fn matches_path(self, path: &std::path::Path) -> bool {
+        let Some(extension) = path.extension().and_then(|value| value.to_str()) else {
+            return false;
+        };
+        match self {
+            Self::Csv => extension.eq_ignore_ascii_case("csv"),
+            Self::Tsv => extension.eq_ignore_ascii_case("tsv"),
+            Self::Markdown => {
+                extension.eq_ignore_ascii_case("md") || extension.eq_ignore_ascii_case("markdown")
+            }
+        }
+    }
+
+    /// Reports whether a CSV source's own delimiter can be kept for this format.
+    /// TSV keeps only tabs; CSV keeps any other delimiter, such as a semicolon.
+    pub fn keeps_csv_delimiter(self, delimiter: char) -> bool {
+        match self {
+            Self::Csv => delimiter != '\t',
+            Self::Tsv => delimiter == '\t',
+            Self::Markdown => false,
+        }
+    }
+
+    /// Picks the delimited format whose files normally use this delimiter.
+    pub fn for_csv_delimiter(delimiter: char) -> Self {
+        if delimiter == '\t' {
+            Self::Tsv
+        } else {
+            Self::Csv
         }
     }
 }

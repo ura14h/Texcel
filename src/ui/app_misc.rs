@@ -21,7 +21,7 @@ pub(super) fn file_open_error(path: &std::path::Path, cause: Message) -> Message
 /// Chooses the natural Save As format for a document.
 pub(super) fn default_save_format(document: &crate::document::Document) -> ExportFormat {
     match document.source.as_deref() {
-        Some(SourceDocument::Csv(_)) => ExportFormat::Csv,
+        Some(SourceDocument::Csv(source)) => ExportFormat::for_csv_delimiter(source.delimiter),
         Some(SourceDocument::Markdown(_)) | None => ExportFormat::Markdown,
     }
 }

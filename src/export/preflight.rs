@@ -34,7 +34,7 @@ pub(super) fn prepare_destinations(
         );
     }
 
-    if request.options.format == ExportFormat::Csv
+    if request.options.format.is_delimited()
         && let (Some(ExportSource::Markdown(_)), ExportScope::Selected(selected_id)) =
             (&request.source, request.options.scope)
     {
@@ -73,7 +73,7 @@ pub(super) fn prepare_destinations(
         );
     }
 
-    if request.options.format == ExportFormat::Csv && selected.len() > 1 {
+    if request.options.format.is_delimited() && selected.len() > 1 {
         let mut paths = BTreeSet::new();
         let duplicate_names = duplicate_table_names(selected);
         for table in selected {
@@ -131,18 +131,7 @@ pub(super) fn prepare_destinations(
         destinations.push((request.destination.clone(), selected.to_vec()));
     }
     for (path, _) in &destinations {
-        let extension = path
-            .extension()
-            .and_then(|value| value.to_str())
-            .unwrap_or_default();
-        let extension_matches = match request.options.format {
-            ExportFormat::Csv => {
-                extension.eq_ignore_ascii_case("csv") || extension.eq_ignore_ascii_case("tsv")
-            }
-            ExportFormat::Markdown => {
-                extension.eq_ignore_ascii_case("md") || extension.eq_ignore_ascii_case("markdown")
-            }
-        };
+        let extension_matches = request.options.format.matches_path(path);
         if !extension_matches {
             entries.push(
                 ConversionEntry::new(

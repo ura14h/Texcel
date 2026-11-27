@@ -26,13 +26,7 @@ impl TexcelApp {
             self.status = Some(Message::new("status-export-target-document-required"));
             return;
         };
-        if !matches!(
-            state.options.format,
-            ExportFormat::Csv | ExportFormat::Markdown
-        ) {
-            state.options.format = ExportFormat::Markdown;
-        }
-        if state.options.format == ExportFormat::Csv {
+        if state.options.format.is_delimited() {
             normalize_csv_export_scope(&mut state.options.scope, active_table_id, &tables);
         } else {
             state.options.scope = ExportScope::AllTables;
@@ -69,15 +63,19 @@ impl TexcelApp {
                             ui,
                             &context_text(ui.ctx(), "option-format-label"),
                             |ui| {
-                                ui.radio_value(
-                                    &mut state.options.format,
-                                    ExportFormat::Markdown,
-                                    "Markdown",
-                                );
-                                ui.radio_value(&mut state.options.format, ExportFormat::Csv, "CSV");
+                                appearance_dialog::compact_choices(ui);
+                                for format in
+                                    [ExportFormat::Markdown, ExportFormat::Csv, ExportFormat::Tsv]
+                                {
+                                    ui.radio_value(
+                                        &mut state.options.format,
+                                        format,
+                                        format.label(),
+                                    );
+                                }
                             },
                         );
-                        if state.options.format == ExportFormat::Csv {
+                        if state.options.format.is_delimited() {
                             normalize_csv_export_scope(
                                 &mut state.options.scope,
                                 active_table_id,
@@ -86,7 +84,7 @@ impl TexcelApp {
                         } else {
                             state.options.scope = ExportScope::AllTables;
                         }
-                        if state.options.format == ExportFormat::Csv {
+                        if state.options.format.is_delimited() {
                             appearance_dialog::settings_row(
                                 ui,
                                 &context_text(ui.ctx(), "export-scope-label"),
@@ -122,6 +120,7 @@ impl TexcelApp {
                                 ui,
                                 &context_text(ui.ctx(), "option-content-label"),
                                 |ui| {
+                                    appearance_dialog::compact_choices(ui);
                                     ui.radio_value(
                                         &mut state.options.formulas,
                                         FormulaOutput::Formula,
@@ -137,7 +136,7 @@ impl TexcelApp {
                         } else {
                             state.options.formulas = FormulaOutput::Formula;
                         }
-                        if state.options.format == ExportFormat::Csv
+                        if state.options.format.is_delimited()
                             && state.options.formulas == FormulaOutput::Formula
                         {
                             ui.colored_label(
@@ -204,6 +203,7 @@ impl TexcelApp {
                 .set_file_name(file_name);
             let dialog = match state.options.format {
                 ExportFormat::Csv => dialog.add_filter("CSV", &["csv"]),
+                ExportFormat::Tsv => dialog.add_filter("TSV", &["tsv"]),
                 ExportFormat::Markdown => dialog.add_filter("Markdown", &["md", "markdown"]),
             };
             #[cfg(test)]
@@ -214,11 +214,7 @@ impl TexcelApp {
             #[cfg(not(test))]
             let destination = dialog.save_file();
             if let Some(destination) = destination {
-                let csv_path = destination.extension().is_some_and(|extension| {
-                    extension.to_string_lossy().eq_ignore_ascii_case("csv")
-                        || extension.to_string_lossy().eq_ignore_ascii_case("tsv")
-                });
-                if csv_path != (state.options.format == ExportFormat::Csv) {
+                if !state.options.format.matches_path(&destination) {
                     self.status = Some(Message::new("status-save-format-mismatch"));
                     self.export_dialog = Some(state);
                     return;

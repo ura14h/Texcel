@@ -93,8 +93,9 @@ pub(super) fn build_artifact(
             .map_err(crate::i18n::markdown_error_message)?;
         return Ok(updated.source_bytes().to_vec());
     }
-    if request.options.format == ExportFormat::Csv
-        && let Some(ExportSource::Csv(source)) = &request.source
+    // Patch the original CSV bytes only when the chosen format keeps its delimiter.
+    if let Some(ExportSource::Csv(source)) = &request.source
+        && request.options.format.keeps_csv_delimiter(source.delimiter)
         && tables.len() == 1
     {
         let table = &tables[0];
@@ -160,7 +161,7 @@ pub(super) fn build_artifact(
         return Ok(updated.source_bytes().to_vec());
     }
     match request.options.format {
-        ExportFormat::Csv => export_csv(context, tables, entries),
+        ExportFormat::Csv | ExportFormat::Tsv => export_csv(context, tables, entries),
         ExportFormat::Markdown => export_markdown(context, tables, entries),
     }
 }

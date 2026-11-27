@@ -561,7 +561,6 @@ status-selection-range-limit = Select no more than { $limit } separate ranges.
 status-selection-range-overlap = Select a range that does not overlap the existing selection.
 status-export-table-area-limit = Output range for table “{ $table }” exceeds the limit of { $limit } cells.
 status-export-no-tables = There are no tables to export.
-status-export-format-unsupported = Export to this format is not supported.
 status-export-csv-selected-table-required = Choose one table for CSV output.
 status-export-selected-table-missing = The selected table is no longer available.
 status-export-latest-result-missing = Cell { $cell } in table “{ $table }” has no current calculation result.

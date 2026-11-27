@@ -233,14 +233,14 @@ The report has three columns: Result, Location, and Details. Select a row on the
 
 The save dialog has these settings:
 
-- **Format**: Markdown or CSV.
-- **Table** (CSV only): the one table to save.
+- **Format**: Markdown, CSV, or TSV.
+- **Table** (CSV and TSV only): the one table to save.
 - **Content**: Keep formulas or Calculated values. Keep formulas is the default.
 
 Notes:
 
 - Markdown with Calculated values is written as a separate export. The document's file and its unsaved mark do not change.
-- A CSV file holds only the one table you chose. If other tables or Markdown formatting would be lost, Texcel lists what will be lost before saving. If CSV cannot hold the whole document, Texcel writes the CSV file but keeps the document's own file and its unsaved mark.
+- A CSV or TSV file holds only the one table you chose. Saving a CSV document as TSV, or a tab-separated document as CSV, rewrites it with the new delimiter. If other tables or Markdown formatting would be lost, Texcel lists what will be lost before saving. If CSV cannot hold the whole document, Texcel writes the CSV file but keeps the document's own file and its unsaved mark.
 - Saving an unchanged Markdown or CSV file leaves every byte as it was. Text outside the tables and cells you did not edit keep their original form. Cells that Texcel writes get one space on each side of the value.
 - If another app changed the file after you opened it, Texcel asks whether to overwrite it, save as a new file, or cancel.
 
@@ -251,7 +251,7 @@ Notes:
 - Pasted formulas move their relative references with the cell, as in Excel. Absolute references with `$` stay.
 - Cut cells move when you paste them in the same table: the original range becomes empty, and formulas that referred to the moved cells now refer to their new place. Pasting them into another table or app copies them and leaves the original range as it was.
 - Ctrl/Cmd+Shift+V (Paste as Text) pastes only the text, as if you typed it, without formatting or Texcel data.
-- Edit > Copy with Options… lets you choose the format (TSV, CSV, Markdown table, or HTML) and the content (source, or displayed values).
+- Edit > Copy with Options… lets you choose the format (Markdown table, CSV, TSV, or HTML) and the content (source, or displayed values).
 - Edit > Paste Special… (Ctrl+Alt+V, or Cmd+Control+V on macOS) offers these choices:
   - Format: Automatic (Texcel data, then HTML, then text) or Text only
   - Content: keep formulas or paste calculated values, and keep or remove Markdown formatting such as bold and links. With Text only, Calculated values pastes text that starts with "=" as text, not as a formula.

@@ -10,11 +10,7 @@ pub(super) fn export_csv(
     let formula_index = context.formula_index;
     let markdown_context = context.markdown_context;
     let cancelled = context.cancelled;
-    let delimiter = if request
-        .destination
-        .extension()
-        .is_some_and(|extension| extension.to_string_lossy().eq_ignore_ascii_case("tsv"))
-    {
+    let delimiter = if request.options.format == ExportFormat::Tsv {
         b'\t'
     } else {
         b','

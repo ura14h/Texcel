@@ -67,6 +67,16 @@ pub(in crate::ui) fn settings_row(
     }
 }
 
+/// Height of one radio choice in a list, shorter than a button row.
+const CHOICE_HEIGHT: f32 = 24.0;
+
+/// Packs a list of radio choices closer together, keeping the first one level with its label.
+pub(in crate::ui) fn compact_choices(ui: &mut egui::Ui) {
+    ui.spacing_mut().interact_size.y = CHOICE_HEIGHT;
+    ui.spacing_mut().item_spacing.y = 2.0;
+    ui.add_space((visual::BUTTON_HEIGHT - CHOICE_HEIGHT) / 2.0);
+}
+
 /// Builds a left-aligned settings label that may wrap at the available width.
 fn settings_label(label: &str, color: Color32) -> egui::Label {
     egui::Label::new(egui::RichText::new(label).color(color))

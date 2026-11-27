@@ -3,8 +3,8 @@ mod pages;
 mod widgets;
 
 use pages::*;
-pub(in crate::ui) use widgets::settings_row;
 use widgets::*;
+pub(in crate::ui) use widgets::{compact_choices, settings_row};
 
 const SETTINGS_MAX_WIDTH: f32 = 680.0;
 const SETTINGS_CONTROL_WIDTH: f32 = 360.0;

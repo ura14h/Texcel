@@ -186,7 +186,7 @@ pub(super) fn collect_table_entries(
                     || cell.style.wrap_text
                     || cell.style.font_size.is_some()
                     || cell.style.font_color.is_some()
-                    || (request.options.format == ExportFormat::Csv
+                    || (request.options.format.is_delimited()
                         && (cell.style.bold || cell.style.italic || cell.style.strike))
             }) {
                 entries.push(

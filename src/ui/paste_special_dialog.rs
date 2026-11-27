@@ -26,6 +26,7 @@ impl TexcelApp {
                 // Same rows and words as Save As and Copy with Options.
                 appearance_dialog::settings_row(ui, &text(language, "option-format-label"), |ui| {
                     ui.vertical(|ui| {
+                        appearance_dialog::compact_choices(ui);
                         ui.radio_value(
                             &mut options.text_only,
                             false,
@@ -43,6 +44,7 @@ impl TexcelApp {
                     &text(language, "option-content-label"),
                     |ui| {
                         ui.vertical(|ui| {
+                            appearance_dialog::compact_choices(ui);
                             ui.horizontal_wrapped(|ui| {
                                 ui.radio_value(
                                     &mut options.values_only,

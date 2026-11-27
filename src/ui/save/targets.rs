@@ -1,4 +1,4 @@
-use super::paths::{is_csv_path, is_markdown_path};
+use super::paths::is_markdown_path;
 use super::*;
 use std::path::Path;
 
@@ -68,7 +68,7 @@ impl TexcelApp {
             && self.app_close_save_collecting_targets
         {
             if !self.save_as_path_supported(document_id, &intent.path)
-                || (is_csv_path(&intent.path) != (intent.options.format == ExportFormat::Csv))
+                || !intent.options.format.matches_path(&intent.path)
             {
                 self.status = Some(Message::new("status-save-format-mismatch"));
                 self.app_close_save_failed = true;
@@ -83,7 +83,7 @@ impl TexcelApp {
             return;
         }
         if !self.save_as_path_supported(document_id, &intent.path)
-            || (is_csv_path(&intent.path) != (intent.options.format == ExportFormat::Csv))
+            || !intent.options.format.matches_path(&intent.path)
         {
             self.status = Some(Message::new("status-save-format-mismatch"));
             return;
@@ -142,8 +142,11 @@ impl TexcelApp {
             .get(&document_id)
             .and_then(|document| document.source.as_deref());
         let requires_export = options.formulas != FormulaOutput::Formula
-            || (options.format == ExportFormat::Csv
-                && !matches!(source, Some(SourceDocument::Csv(_))));
+            || (options.format.is_delimited()
+                && !matches!(
+                    source,
+                    Some(SourceDocument::Csv(csv)) if options.format.keeps_csv_delimiter(csv.delimiter)
+                ));
         if requires_export {
             self.save_as_export_documents.insert(document_id);
             self.start_export_preflight(document_id, options, path);
@@ -220,14 +223,13 @@ impl TexcelApp {
         path: &Path,
     ) -> Option<ExportOptions> {
         let document = self.workspace.documents.get(&document_id)?;
-        let format = if is_csv_path(path) {
-            ExportFormat::Csv
-        } else {
-            ExportFormat::Markdown
-        };
+        let format = [ExportFormat::Csv, ExportFormat::Tsv]
+            .into_iter()
+            .find(|format| format.matches_path(path))
+            .unwrap_or(ExportFormat::Markdown);
         Some(ExportOptions {
             format,
-            scope: if format == ExportFormat::Csv {
+            scope: if format.is_delimited() {
                 ExportScope::Selected(document.active_table)
             } else {
                 ExportScope::AllTables

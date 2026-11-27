@@ -227,7 +227,7 @@ impl TexcelApp {
         };
         let summary = prepared.report.summary();
         self.save_as_export_documents.contains(&document_id)
-            && options.format == ExportFormat::Csv
+            && options.format.is_delimited()
             && summary.omitted == 0
             && summary.unprocessable == 0
             && csv_save_report_preserves_document(&prepared.report)
