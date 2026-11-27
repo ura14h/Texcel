@@ -220,6 +220,10 @@ impl HostRuntime {
             let viewport = egui::ViewportId::from_hash_of(("texcel-document", document_id));
             self.document_viewports.insert(document_id, viewport);
             self.app.set_window_document(viewport, Some(document_id));
+            // Bring the new window forward. A file dropped from Explorer or Finder leaves
+            // that app in front, and Windows would keep the new window inactive; the menu
+            // bar would then still act on the window that last had focus.
+            self.app.pending_document_focus = Some(document_id);
         }
     }
 

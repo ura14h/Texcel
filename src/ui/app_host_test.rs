@@ -465,3 +465,27 @@ fn type_and_save_in_host_window(
         "the owning file contains the typed value"
     );
 }
+
+#[test]
+/// Asks the OS to bring a newly opened document window forward, so the shared menu bar
+/// acts on it even when a file was dropped from another app that stays in front.
+fn newly_opened_document_window_is_brought_forward() {
+    let directory = crate::ui::tests::TestDirectory::new();
+    let (harness, _) = host_with_three_documents(&directory.0);
+    with_host(harness.state().id, |host| {
+        host.app.pending_document_focus = None;
+        let document_id = host
+            .app
+            .workspace
+            .add_document("Dropped import", &["Sheet"]);
+        host.sync_document_viewports();
+        assert_eq!(host.app.pending_document_focus, Some(document_id));
+        assert_eq!(
+            host.document_viewports.get(&document_id),
+            Some(&egui::ViewportId::from_hash_of((
+                "texcel-document",
+                document_id
+            )))
+        );
+    });
+}
