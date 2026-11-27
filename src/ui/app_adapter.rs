@@ -213,7 +213,10 @@ impl TexcelApp {
         self.finish_ordered_input_owner_change();
         self.request_initial_dialog_focus(&ctx);
         self.draw_settings_dialog(&ctx);
-        self.draw_help_dialog(&ctx);
+        self.draw_about_dialog(&ctx);
+        if !self.multi_window_mode {
+            self.draw_help_viewport_immediate(&ctx);
+        }
         self.draw_import_report(&ctx);
         self.draw_cell_link_dialog(&ctx);
         self.draw_layout_dialog(&ctx);
@@ -244,7 +247,7 @@ impl TexcelApp {
                 .flatten();
         }
         let text_dialog_open = self.settings_window_open
-            || self.help_window_open
+            || self.about_dialog_open
             || self.pending_close_document.is_some()
             || self.save_conflict_dialog.is_some()
             || self.cell_link_dialog.is_some()
@@ -358,7 +361,7 @@ impl TexcelApp {
     /// Shares one modal gate across grid, native input, and formula picking.
     pub(super) fn modal_input_blocked(&self) -> bool {
         self.settings_window_open
-            || self.help_window_open
+            || self.about_dialog_open
             || self.active_import_report.is_some()
             || self.active_export_confirmation.is_some()
             || self.export_dialog.is_some()

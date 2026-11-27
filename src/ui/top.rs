@@ -29,6 +29,7 @@ pub(super) struct TopActionState {
     close_document: Option<DocumentId>,
     open_settings: bool,
     open_help: bool,
+    open_about: bool,
     quit_app: bool,
     commands: Vec<AppCommand>,
     format_action: Option<CellFormatAction>,
@@ -66,6 +67,7 @@ impl TopActionState {
             || self.structure_action.is_some()
             || self.open_settings
             || self.open_help
+            || self.open_about
             || self.quit_app
             || self.zoom_action.is_some()
             || self.minimize_window

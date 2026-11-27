@@ -50,6 +50,7 @@ use crate::structure::{ClipboardPasteRequest, StructureRequest, StructureTableMe
 
 use grid_theme::GridThemePalette;
 
+mod about_dialog;
 mod app_host;
 mod appearance_dialog;
 mod chrome;
@@ -58,7 +59,7 @@ mod formula_bar;
 mod formula_functions;
 mod grid_focus;
 mod grid_theme;
-mod help_dialog;
+pub(crate) use about_dialog::APP_COPYRIGHT;
 mod input_sequence;
 mod menu_focus;
 mod pending_checks;
@@ -127,7 +128,10 @@ pub struct TexcelApp {
     completion_notices: BTreeMap<DocumentId, (JobToken, Message)>,
     show_invisibles: bool,
     settings_window_open: bool,
-    help_window_open: bool,
+    about_dialog_open: bool,
+    /// App-wide: one Help window serves every document window.
+    help_viewport_open: bool,
+    help_blocks: help_window::HelpBlocks,
     font_preview_details_open: bool,
     settings_worker: Option<SettingsWorker>,
     settings_file: SettingsFile,
@@ -356,6 +360,7 @@ mod grid_layout;
 mod grid_scale;
 mod grid_segment;
 mod grid_selection;
+mod help_window;
 mod ime;
 mod keyboard;
 mod keyboard_navigation;
@@ -366,6 +371,7 @@ mod markdown_cell_layout;
 mod markdown_display;
 mod markdown_format;
 mod markdown_text_layout;
+mod markdown_view;
 mod open_queue;
 mod ordered_edit_input;
 mod paste_special_dialog;

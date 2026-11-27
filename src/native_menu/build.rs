@@ -214,13 +214,22 @@ fn top_menu(
     definition: &'static MenuTree,
     state: &mut BuildState,
 ) -> Result<Submenu, String> {
-    let entries = if cfg!(target_os = "macos") && definition.id == "menu.file" {
-        definition
+    // macOS keeps Settings, Quit, and About in the application menu only.
+    let entries = if cfg!(target_os = "macos") && matches!(definition.id, "menu.file" | "menu.help")
+    {
+        let mut entries = definition
             .entries
             .iter()
             .copied()
-            .filter(|entry| !matches!(entry, MenuEntry::Action(action) if action.id == "app.settings" || action.id == "app.quit"))
-            .collect::<Vec<_>>()
+            .filter(|entry| {
+                !matches!(entry, MenuEntry::Action(action)
+                    if matches!(action.id, "app.settings" | "app.quit" | "help.about"))
+            })
+            .collect::<Vec<_>>();
+        if entries.last() == Some(&MenuEntry::Separator) {
+            entries.pop();
+        }
+        entries
     } else {
         definition.entries.to_vec()
     };
@@ -304,6 +313,7 @@ fn application_submenu(
             env!("CARGO_PKG_VERSION_MAJOR"),
             env!("CARGO_PKG_VERSION_MINOR")
         )),
+        copyright: Some(crate::ui::APP_COPYRIGHT.to_owned()),
         ..Default::default()
     };
     let about = PredefinedMenuItem::about(

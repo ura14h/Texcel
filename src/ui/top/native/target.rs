@@ -67,7 +67,7 @@ impl TexcelApp {
         }
         if matches!(
             event.id.as_str(),
-            "file.open" | "file.new" | "app.settings" | "app.quit" | "help.open"
+            "file.open" | "file.new" | "app.settings" | "app.quit" | "help.open" | "help.about"
         ) || event.id.starts_with("file.recent.")
         {
             return true;

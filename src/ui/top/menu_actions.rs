@@ -102,6 +102,7 @@ impl TexcelApp {
                 state.open_data_edit_dialog = Some(DataEditKind::RemoveDuplicates)
             }
             "help.open" => state.open_help = true,
+            "help.about" => state.open_about = true,
             _ => (),
         }
     }

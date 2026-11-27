@@ -129,7 +129,7 @@ impl TexcelApp {
             "file.new" => !blocked,
             "file.save" | "file.save_as" => !blocked && self.workspace.active_document().is_some(),
             "file.close" => !blocked && self.workspace.active_document().is_some(),
-            "app.settings" | "help.open" | "app.quit" => !blocked,
+            "app.settings" | "help.open" | "help.about" | "app.quit" => !blocked,
             "edit.undo" => command_enabled(AppCommand::Undo),
             "edit.redo" => command_enabled(AppCommand::Redo),
             "edit.cut" => command_enabled(AppCommand::CutAs(CopyFormat::DisplayTsv)),

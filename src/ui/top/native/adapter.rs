@@ -12,7 +12,12 @@ impl TexcelApp {
             .filter(|event| {
                 matches!(
                     event.id.as_str(),
-                    "file.new" | "file.open" | "app.settings" | "app.quit" | "help.open"
+                    "file.new"
+                        | "file.open"
+                        | "app.settings"
+                        | "app.quit"
+                        | "help.open"
+                        | "help.about"
                 ) || event.id.starts_with("file.recent.")
             })
             .collect();

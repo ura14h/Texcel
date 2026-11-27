@@ -108,7 +108,7 @@ impl TexcelApp {
     /// Keeps open requests behind modal decisions and active close or load work.
     fn open_entry_is_blocked(&self) -> bool {
         self.edit.composing
-            || self.help_window_open
+            || self.about_dialog_open
             || self.settings_window_open
             || self.active_import_report.is_some()
             || self.active_export_confirmation.is_some()

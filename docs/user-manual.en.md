@@ -130,7 +130,7 @@ Each window holds one document. New Document and Open… open a new window. If t
 - **Live Editing** (default) shows formula results and renders Markdown formatting such as bold, italic, and links.
 - **Source Editing** shows the Markdown source of every cell, including formulas and marks such as `**`.
 
-Switch with the button at the bottom right, the View menu, or Ctrl+/ (Cmd+/ on macOS). Switching does not change the document.
+Switch with Live and Source to the right of the formula bar, the View menu, or Ctrl+/ (Cmd+/ on macOS). Switching does not change the document.
 
 ## 5. Basic operations
 
@@ -215,7 +215,7 @@ When the delimiter and encoding are clear, Texcel opens the file directly. Other
 
 ### 6.2 XLSX, ODS, and HTML
 
-Each sheet of an XLSX or ODS file (OpenDocument spreadsheets from LibreOffice and others) and each HTML table is imported as a Markdown table. Formulas that refer only to their own sheet stay formulas; formulas that refer to another sheet become the result saved in the file. The original file does not become the save destination and is never changed. When you save, choose Markdown or CSV.
+Each sheet of an XLSX or ODS file (OpenDocument spreadsheets from LibreOffice and others) and each HTML table is imported as a Markdown table. Formulas that refer only to their own sheet stay formulas; formulas that refer to another sheet become the result saved in the file. The original file does not become the save destination and is never changed. When you save, choose Markdown, CSV, or TSV.
 
 If some information could not be imported, Texcel reports it:
 

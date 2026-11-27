@@ -170,7 +170,10 @@ impl TexcelApp {
             self.settings_window_open = true;
         }
         if state.open_help {
-            self.help_window_open = true;
+            self.open_help_window(ctx);
+        }
+        if state.open_about {
+            self.about_dialog_open = true;
         }
         if state.quit_app {
             if self.multi_window_mode {

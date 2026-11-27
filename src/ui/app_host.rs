@@ -120,7 +120,7 @@ impl eframe::App for TexcelAppHost {
                     || no_document_windows
                         && (!app.queued_open_paths.is_empty()
                             || app.settings_window_open
-                            || app.help_window_open
+                            || app.about_dialog_open
                             || app.app_close_dialog_open)
                 {
                     ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
@@ -182,6 +182,7 @@ impl eframe::App for TexcelAppHost {
             )
         });
         draw_child_viewports(self.id, &ctx, children, retired);
+        draw_help_viewport(self.id, &ctx);
     }
 }
 
@@ -253,7 +254,7 @@ impl HostRuntime {
                 .is_some_and(|state| {
                     state.app_close_dialog_open
                         || state.settings_window_open
-                        || state.help_window_open
+                        || state.about_dialog_open
                 });
         if self.root_document.is_some()
             || close_dialog_open
@@ -336,6 +337,24 @@ fn draw_child_viewports(
             },
         );
     }
+}
+
+/// Shows the app-wide Help window while it is open.
+fn draw_help_viewport(host_id: u64, ctx: &egui::Context) {
+    let Some(builder) = with_host(host_id, |host| {
+        host.app
+            .help_viewport_open
+            .then(|| host.app.help_viewport_builder())
+    }) else {
+        return;
+    };
+    ctx.show_viewport_deferred(
+        help_window::help_viewport_id(),
+        builder,
+        move |ui, _class| {
+            with_host(host_id, |host| host.app.draw_help_window_contents(ui));
+        },
+    );
 }
 
 /// Handles one child viewport with the same input and close path in tests and the app.

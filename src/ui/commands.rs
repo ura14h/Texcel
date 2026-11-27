@@ -242,7 +242,7 @@ impl TexcelApp {
             && self.edit.target == Some(crate::document::EditTarget::DetailPanel)
             && self.edit.is_editing()
             && !self.settings_window_open
-            && !self.help_window_open
+            && !self.about_dialog_open
             && self.active_import_report.is_none()
             && self.active_export_confirmation.is_none()
             && self.export_dialog.is_none()
