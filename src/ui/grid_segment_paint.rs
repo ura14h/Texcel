@@ -63,3 +63,61 @@ pub(super) fn paint_selection_overlay(
         );
     }
 }
+
+/// Paints the dashed outline of copied or cut ranges over one cell segment.
+/// A cut uses longer dashes so that it reads differently from a copy.
+pub(super) fn paint_copy_marquee(
+    painter: &egui::Painter,
+    rect: Rect,
+    address: CellAddress,
+    marquee: Option<super::clipboard::CopyMarquee<'_>>,
+    palette: &GridThemePalette,
+) {
+    let Some(marquee) = marquee else {
+        return;
+    };
+    let (dash, gap) = if marquee.cut { (7.0, 3.0) } else { (3.0, 3.0) };
+    let stroke = Stroke::new(1.5, palette.selection);
+    // Inset from the cell edge so the outline stays visible inside the selection frame.
+    const INSET: f32 = 3.5;
+    for range in marquee.ranges {
+        let (start, end) = range.normalized();
+        if address.row < start.row
+            || address.row > end.row
+            || address.column < start.column
+            || address.column > end.column
+        {
+            continue;
+        }
+        let left = rect.left()
+            + if address.column == start.column {
+                INSET
+            } else {
+                0.0
+            };
+        let right = rect.right()
+            - if address.column == end.column {
+                INSET
+            } else {
+                0.0
+            };
+        let top = rect.top() + if address.row == start.row { INSET } else { 0.0 };
+        let bottom = rect.bottom() - if address.row == end.row { INSET } else { 0.0 };
+        let mut edges = Vec::new();
+        if address.row == start.row {
+            edges.push([egui::pos2(left, top), egui::pos2(right, top)]);
+        }
+        if address.row == end.row {
+            edges.push([egui::pos2(left, bottom), egui::pos2(right, bottom)]);
+        }
+        if address.column == start.column {
+            edges.push([egui::pos2(left, top), egui::pos2(left, bottom)]);
+        }
+        if address.column == end.column {
+            edges.push([egui::pos2(right, top), egui::pos2(right, bottom)]);
+        }
+        for edge in edges {
+            painter.extend(egui::Shape::dashed_line(&edge, stroke, dash, gap));
+        }
+    }
+}

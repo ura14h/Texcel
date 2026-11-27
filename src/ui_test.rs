@@ -3075,6 +3075,7 @@ fn submit_test_paste(
         document_id,
         table_id,
         ClipboardPasteRequest {
+            cut_source: None,
             text: text.to_owned(),
             html,
             options: PasteOptions::default(),

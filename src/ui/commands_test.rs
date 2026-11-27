@@ -77,6 +77,7 @@ fn paste_options_are_scoped_to_one_request() {
             transpose: true,
             values_only: true,
             skip_blank: true,
+            ..PasteOptions::default()
         },
     };
     let regular = AppCommand::PasteText {
@@ -92,6 +93,7 @@ fn paste_options_are_scoped_to_one_request() {
             transpose: true,
             values_only: true,
             skip_blank: true,
+            ..PasteOptions::default()
         }
     );
     let AppCommand::PasteText { options, .. } = regular else {
@@ -215,4 +217,20 @@ fn delayed_text_command_cannot_follow_a_tab_switch() {
 
     assert_eq!(field, "kept");
     assert!(app.deferred_text_commands.is_empty());
+}
+
+/// Maps the held modifiers of a V chord to Paste, Paste as Text, or Paste Special.
+#[test]
+fn paste_chords_choose_text_or_special_paste() {
+    use super::keyboard::{PasteShortcut, paste_shortcut_kind};
+    let mut modifiers = egui::Modifiers::COMMAND;
+    assert_eq!(paste_shortcut_kind(modifiers), PasteShortcut::Normal);
+    modifiers.shift = true;
+    assert_eq!(paste_shortcut_kind(modifiers), PasteShortcut::Text);
+    let special = if cfg!(target_os = "macos") {
+        egui::Modifiers::MAC_CMD | egui::Modifiers::CTRL
+    } else {
+        egui::Modifiers::CTRL | egui::Modifiers::ALT
+    };
+    assert_eq!(paste_shortcut_kind(special), PasteShortcut::Special);
 }

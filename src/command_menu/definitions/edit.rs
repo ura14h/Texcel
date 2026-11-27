@@ -7,6 +7,12 @@ const EDIT_REDO: MenuAction = action("edit.redo", "top-redo", MenuShortcut::Redo
 const EDIT_CUT: MenuAction = action("edit.cut", "action-cut", Cmd('X'), MenuCheck::None);
 const EDIT_COPY: MenuAction = action("edit.copy", "action-copy", Cmd('C'), MenuCheck::None);
 const EDIT_PASTE: MenuAction = action("edit.paste", "action-paste", Cmd('V'), MenuCheck::None);
+const EDIT_PASTE_TEXT: MenuAction = action(
+    "edit.paste_text",
+    "action-paste-text",
+    Shift('V'),
+    MenuCheck::None,
+);
 const EDIT_CLEAR: MenuAction = action("edit.clear", "action-clear-cells", NoKey, MenuCheck::None);
 const EDIT_SELECT_ALL: MenuAction = action(
     "edit.select_all",
@@ -27,7 +33,7 @@ const EDIT_COPY_AS: MenuAction =
 const PASTE_SPECIAL: MenuAction = action(
     "edit.paste_special",
     "top-paste-special-open",
-    NoKey,
+    MenuShortcut::PasteSpecial,
     MenuCheck::None,
 );
 const DELETE_ROWS: MenuAction = action("edit.delete_rows", "delete-row", NoKey, MenuCheck::None);
@@ -125,6 +131,7 @@ pub(super) const EDIT: &[MenuEntry] = &[
     A(&EDIT_COPY_AS),
     A(&EDIT_PASTE),
     A(&PASTE_SPECIAL),
+    A(&EDIT_PASTE_TEXT),
     A(&EDIT_CLEAR),
     A(&EDIT_SELECT_ALL),
     Sep,

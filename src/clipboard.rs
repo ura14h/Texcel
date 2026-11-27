@@ -1,10 +1,10 @@
 //!  The OS clipboard boundary and conversions to text formats for table data.
 
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 
 use crate::document::{
-    CalcStatus, CalcValue, Cell, CellFormat, CellHyperlink, CellInput, CellStyle, CellTextRun,
+    CalcStatus, CalcValue, Cell, CellAddress, CellFormat, CellHyperlink, CellInput, CellStyle,
+    CellTextRun,
 };
 
 pub const MAX_CLIPBOARD_BYTES: usize = 16 * 1024 * 1024;
@@ -33,11 +33,28 @@ pub enum CopyFormat {
     Rich,
 }
 
+/// One paste request's choices. The default is the normal paste.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct PasteOptions {
-    pub transpose: bool,
+    /// Reads only plain text, ignoring Texcel data and HTML.
+    pub text_only: bool,
+    /// Pastes formula results as values and keeps text that starts with `=` as text.
     pub values_only: bool,
+    /// Drops Markdown formatting and links from the pasted cells.
+    pub strip_formatting: bool,
+    pub transpose: bool,
     pub skip_blank: bool,
+}
+
+impl PasteOptions {
+    /// Pastes plain text read like typed input.
+    pub const TEXT: Self = Self {
+        text_only: true,
+        values_only: false,
+        strip_formatting: true,
+        transpose: false,
+        skip_blank: false,
+    };
 }
 
 /// Clipboard-safe cell state: exact input and formatting, without stale calculation caches.
@@ -150,6 +167,8 @@ pub enum ClipboardInputKind {
 pub struct ParsedClipboard {
     pub ranges: Vec<Vec<Vec<ClipboardCell>>>,
     pub kind: ClipboardInputKind,
+    /// Top-left source cell of each copied range; only Texcel data carries it.
+    pub origins: Vec<CellAddress>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -165,23 +184,27 @@ impl std::fmt::Display for ClipboardError {
 /// Writes HTML plus plain text through the single native clipboard adapter.
 pub fn write_system_clipboard(html: &str, text: &str) -> Result<(), ClipboardError> {
     set_owned_payload(None);
+    let text = native_line_endings(text);
     let mut clipboard = arboard::Clipboard::new().map_err(|error| {
         ClipboardError(
             crate::i18n::Message::new("status-clipboard-open-failed").with_text("detail", error),
         )
     })?;
     clipboard
-        .set_html(html.to_owned(), Some(text.to_owned()))
+        .set_html(html.to_owned(), Some(text.into_owned()))
         .map_err(|error| {
             ClipboardError(
                 crate::i18n::Message::new("status-clipboard-copy-failed")
                     .with_text("detail", error),
             )
         })?;
-    let mark = read_internal_payload(html).map(|payload| OwnedPayloadMark {
-        owner_id: payload.owner_id,
-        html_digest: Sha256::digest(html.as_bytes()).into(),
-    });
+    let mark =
+        read_internal_payload(html)
+            .zip(payload_digest(html))
+            .map(|(payload, payload_digest)| OwnedPayloadMark {
+                owner_id: payload.owner_id,
+                payload_digest,
+            });
     set_owned_payload(mark);
     Ok(())
 }
@@ -189,18 +212,29 @@ pub fn write_system_clipboard(html: &str, text: &str) -> Result<(), ClipboardErr
 /// Writes text to the operating system clipboard.
 pub fn write_system_text(text: &str) -> Result<(), ClipboardError> {
     set_owned_payload(None);
+    let text = native_line_endings(text);
     let mut clipboard = arboard::Clipboard::new().map_err(|error| {
         ClipboardError(
             crate::i18n::Message::new("status-clipboard-open-failed").with_text("detail", error),
         )
     })?;
-    clipboard.set_text(text.to_owned()).map_err(|error| {
+    clipboard.set_text(text.into_owned()).map_err(|error| {
         ClipboardError(
             crate::i18n::Message::new("status-clipboard-copy-failed").with_text("detail", error),
         )
     })?;
     set_owned_payload(None);
     Ok(())
+}
+
+/// Returns the owner ID of the clipboard data this process wrote last, if any.
+pub fn owned_payload_owner_id() -> Option<String> {
+    current_owned_payload().map(|mark| mark.owner_id)
+}
+
+/// Returns the owner ID when `html` is exactly what this process wrote last.
+pub fn owner_id_of_html(html: &str) -> Option<String> {
+    owned_html_owner_id(html)
 }
 
 /// Reads plain text for a one-time paste command.
@@ -265,9 +299,22 @@ pub fn parse_clipboard_with_owner(
             && normalize_clipboard_text(&payload.text) == normalize_clipboard_text(plain_text)
             && validate_ranges(&payload.ranges).is_ok()
         {
+            let origins = if payload.origins.len() == payload.ranges.len() {
+                payload
+                    .origins
+                    .iter()
+                    .map(|[row, column]| CellAddress {
+                        row: *row,
+                        column: *column,
+                    })
+                    .collect()
+            } else {
+                Vec::new()
+            };
             return Ok(ParsedClipboard {
                 ranges: payload.ranges,
                 kind: ClipboardInputKind::Internal,
+                origins,
             });
         }
         if let Some(cells) = parse_html_table(html)
@@ -276,6 +323,7 @@ pub fn parse_clipboard_with_owner(
             return Ok(ParsedClipboard {
                 ranges: vec![cells],
                 kind: ClipboardInputKind::Html,
+                origins: Vec::new(),
             });
         }
     }
@@ -284,6 +332,7 @@ pub fn parse_clipboard_with_owner(
     Ok(ParsedClipboard {
         ranges: vec![matrix],
         kind: ClipboardInputKind::Text,
+        origins: Vec::new(),
     })
 }
 

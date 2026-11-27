@@ -24,6 +24,13 @@ pub(super) fn show(
                 ),
             ),
             (5, ("top-paste-special-open", AppCommand::OpenPasteSpecial)),
+            (
+                2,
+                (
+                    "action-paste-text",
+                    AppCommand::PasteSystem(PasteOptions::TEXT),
+                ),
+            ),
         ] {
             if menu
                 .add_enabled(

@@ -22,6 +22,9 @@ pub(crate) fn expand_clipboard_paste(
     if parsed.ranges.len() != 1 {
         return Err(Message::new("status-paste-multiple-ranges"));
     }
+    // Copied formulas move their references only when Texcel data says where they came from.
+    let copied_origin = parsed.origins.first().copied().filter(|_| internal_source);
+    let mut formula_mover = None;
     let mut matrix = parsed.ranges.pop().unwrap_or_default();
     if paste.options.transpose {
         matrix = transpose(matrix);
@@ -106,7 +109,10 @@ pub(crate) fn expand_clipboard_paste(
             } else {
                 &matrix[row_index][column_index]
             };
-            let preserve_raw_markdown = !paste.options.values_only
+            let mut cell = convert_paste_cell(source, &paste.options, internal_source)?;
+            // Raw Markdown is kept only when the cell keeps its copied source text.
+            let preserve_raw_markdown = !paste.options.strip_formatting
+                && cell.input == source.input
                 && internal_source
                 && source.raw_markdown_source
                 && (markdown_target || (csv_target && source.markdown_has_features));
@@ -115,14 +121,14 @@ pub(crate) fn expand_clipboard_paste(
                 continue;
             }
             let address = CellAddress { row, column };
-            let mut cell = convert_paste_cell(source, paste.options.values_only, internal_source)?;
-            let mut format = if paste.options.values_only {
+            let mut format = if paste.options.strip_formatting {
                 crate::document::CellFormat::default()
             } else {
                 source.format()
             };
             if csv_target
-                && !paste.options.values_only
+                && !paste.options.strip_formatting
+                && cell.input == source.input
                 && internal_source
                 && source.raw_markdown_source
                 && !source.markdown_has_features
@@ -132,6 +138,24 @@ pub(crate) fn expand_clipboard_paste(
                     crate::document::encode_literal_text(plain_text),
                 );
                 format = crate::document::CellFormat::default();
+            }
+            if let Some(copied_origin) = copied_origin {
+                let (source_row, source_column) = match (one_cell_source, paste.options.transpose) {
+                    (true, _) => (0, 0),
+                    (false, false) => (row_index, column_index),
+                    (false, true) => (column_index, row_index),
+                };
+                let source_address = CellAddress {
+                    row: copied_origin.row + source_row,
+                    column: copied_origin.column + source_column,
+                };
+                move_pasted_formula(
+                    &mut cell,
+                    &mut formula_mover,
+                    source_address,
+                    address,
+                    paste.cut_source,
+                )?;
             }
             let keep = cell.input != crate::document::CellInput::Empty || !format.is_empty();
             if keep && !format.is_empty() {
@@ -188,41 +212,74 @@ pub(super) fn retain_markdown_paste_features(
     }
 }
 
+/// Moves the references of one pasted formula from its copied cell to its new cell.
+fn move_pasted_formula(
+    cell: &mut crate::document::Cell,
+    mover: &mut Option<crate::calc::PasteFormulaMover>,
+    source: CellAddress,
+    target: CellAddress,
+    cut_area: Option<CellRange>,
+) -> Result<(), Message> {
+    let Some(formula) = crate::calc::formula_source(&cell.input, false) else {
+        return Ok(());
+    };
+    if source == target {
+        return Ok(());
+    }
+    let mover = match mover {
+        Some(mover) => mover,
+        None => mover.insert(crate::calc::PasteFormulaMover::new()?),
+    };
+    let moved = match cut_area {
+        Some(area) => mover.cut(&formula, source, target, area)?,
+        None => mover.copy(&formula, source, target)?,
+    };
+    cell.input = match cell.input {
+        crate::document::CellInput::Formula(_) => crate::document::CellInput::Formula(moved),
+        _ => crate::document::CellInput::Text(moved),
+    };
+    Ok(())
+}
+
 // Convert a clipboard cell to the requested paste mode. Formatting is returned separately.
 pub(crate) fn convert_paste_cell(
     source: &crate::clipboard::ClipboardCell,
-    values_only: bool,
+    options: &crate::clipboard::PasteOptions,
     internal_source: bool,
 ) -> Result<crate::document::Cell, Message> {
     let mut cell = source.clone().into_cell();
-    if values_only {
-        cell.input = if source.formula_source
-            || matches!(source.input, crate::document::CellInput::Formula(_))
-        {
-            source
+    let formula =
+        source.formula_source || matches!(source.input, crate::document::CellInput::Formula(_));
+    if formula {
+        if options.values_only {
+            cell.input = source
                 .fresh_formula_value
                 .clone()
-                .ok_or_else(|| Message::new("status-paste-current-formula-result-missing"))?
-        } else if let crate::document::CellInput::Text(value) = &source.input {
-            if internal_source && source.raw_markdown_source {
-                let plain_text = source
-                    .markdown_plain_text
-                    .as_deref()
-                    .unwrap_or_else(|| crate::document::literal_text_value(value));
-                crate::document::CellInput::Text(crate::document::encode_literal_text(plain_text))
-            } else {
-                // Only a Texcel-owned payload proves that the leading apostrophe is a saved marker.
-                let has_internal_marker =
-                    internal_source && crate::document::literal_text_value(value) != value;
-                if has_internal_marker {
-                    source.input.clone()
-                } else {
-                    crate::document::CellInput::Text(crate::document::encode_literal_text(value))
-                }
-            }
-        } else {
-            source.input.clone()
-        };
+                .ok_or_else(|| Message::new("status-paste-current-formula-result-missing"))?;
+        }
+        return Ok(cell);
+    }
+    let crate::document::CellInput::Text(value) = &source.input else {
+        return Ok(cell);
+    };
+    if internal_source && source.raw_markdown_source {
+        // Texcel Markdown source: dropping formatting pastes the shown text as a string.
+        if options.strip_formatting {
+            let plain_text = source
+                .markdown_plain_text
+                .as_deref()
+                .unwrap_or_else(|| crate::document::literal_text_value(value));
+            cell.input =
+                crate::document::CellInput::Text(crate::document::encode_literal_text(plain_text));
+        }
+    } else if options.values_only {
+        // Only a Texcel-owned payload proves that the leading apostrophe is a saved marker.
+        let has_internal_marker =
+            internal_source && crate::document::literal_text_value(value) != value;
+        if !has_internal_marker {
+            cell.input =
+                crate::document::CellInput::Text(crate::document::encode_literal_text(value));
+        }
     }
     Ok(cell)
 }

@@ -136,6 +136,7 @@ impl TexcelApp {
             "edit.copy" => command_enabled(AppCommand::CopyAs(CopyFormat::DisplayTsv)),
             "edit.copy_as" => command_enabled(AppCommand::OpenCopyOptions),
             "edit.paste" => command_enabled(AppCommand::PasteSystem(PasteOptions::default())),
+            "edit.paste_text" => command_enabled(AppCommand::PasteSystem(PasteOptions::TEXT)),
             "edit.clear" => command_enabled(AppCommand::ClearSelection),
             "edit.select_all" => command_enabled(AppCommand::SelectAll),
             "edit.paste_special" => command_enabled(AppCommand::OpenPasteSpecial),

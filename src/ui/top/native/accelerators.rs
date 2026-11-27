@@ -11,6 +11,15 @@ pub(super) fn native_accelerator_matches(
     let Some(action) = crate::command_menu::action(id) else {
         return false;
     };
+    if action.shortcut == MenuShortcut::PasteSpecial {
+        return key == egui::Key::V
+            && !modifiers.shift
+            && if is_mac {
+                modifiers.mac_cmd && modifiers.ctrl && !modifiers.alt
+            } else {
+                modifiers.ctrl && modifiers.alt && !modifiers.mac_cmd
+            };
+    }
     let (expected_key, shift) = match action.shortcut {
         MenuShortcut::Command(character) => {
             let Some(key) = key_for_character(character) else {
@@ -29,7 +38,7 @@ pub(super) fn native_accelerator_matches(
         MenuShortcut::Redo => (egui::Key::Z, true),
         MenuShortcut::ZoomIn => (egui::Key::Plus, true),
         MenuShortcut::Settings if is_mac => (egui::Key::Comma, false),
-        MenuShortcut::None | MenuShortcut::Settings => return false,
+        MenuShortcut::None | MenuShortcut::Settings | MenuShortcut::PasteSpecial => return false,
     };
     key == expected_key
         && modifiers.command

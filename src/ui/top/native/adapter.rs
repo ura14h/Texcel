@@ -71,6 +71,7 @@ impl TexcelApp {
                     | "edit.copy"
                     | "edit.copy_display"
                     | "edit.paste"
+                    | "edit.paste_text"
                     | "edit.clear"
                     | "edit.select_all"
             );

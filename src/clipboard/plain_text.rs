@@ -223,6 +223,31 @@ pub(super) fn normalize_clipboard_text(text: &str) -> String {
     text.replace("\r\n", "\n").replace('\r', "\n")
 }
 
+/// Uses CRLF between rows on Windows, where other apps expect it. Line breaks inside
+/// quoted fields stay LF, as Excel writes them.
+pub(super) fn native_line_endings(text: &str) -> std::borrow::Cow<'_, str> {
+    if cfg!(windows) {
+        std::borrow::Cow::Owned(row_breaks_as_crlf(text))
+    } else {
+        std::borrow::Cow::Borrowed(text)
+    }
+}
+
+/// Replaces each LF outside double quotes with CRLF.
+pub(super) fn row_breaks_as_crlf(text: &str) -> String {
+    let mut output = String::with_capacity(text.len() + text.len() / 16);
+    let mut quoted = false;
+    for character in text.chars() {
+        match character {
+            '"' => quoted = !quoted,
+            '\n' if !quoted => output.push('\r'),
+            _ => (),
+        }
+        output.push(character);
+    }
+    output
+}
+
 /// Builds a text clipboard cell.
 pub(super) fn text_cell(text: String) -> ClipboardCell {
     ClipboardCell {

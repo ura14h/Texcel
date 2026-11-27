@@ -36,3 +36,13 @@ range is deleted.
 engine implements. The `functions` module is private in the release, so Texcel
 cannot otherwise list the built-in functions for its function picker. The
 function is marked with a `Texcel patch` comment.
+
+## References that follow a cut range
+
+`src/model.rs`: `Model::displace_references_to_area` rewrites a formula that
+stays in its cell so that its references into a cut range point to where the
+range was pasted. It reuses the release's cut-and-paste rule for moved formulas
+(`move_formula`): a reference or a whole range inside the area moves, and other
+references keep their cells. The release only rewrites formulas inside the moved
+area, so Texcel could not otherwise make other cells follow a cut and paste like
+Excel. The function is marked with a `Texcel patch` comment.

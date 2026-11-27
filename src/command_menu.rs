@@ -37,6 +37,14 @@ pub(crate) fn shortcut_text(ctx: &egui::Context, shortcut: MenuShortcut) -> Stri
         MenuShortcut::Redo if !ctx.os().is_mac() => (Key::Y, false),
         MenuShortcut::Redo => (Key::Z, true),
         MenuShortcut::ZoomIn => return ctx.format_shortcut(&egui::gui_zoom::kb_shortcuts::ZOOM_IN),
+        MenuShortcut::PasteSpecial => {
+            let modifiers = if ctx.os().is_mac() {
+                egui::Modifiers::MAC_CMD | egui::Modifiers::CTRL
+            } else {
+                egui::Modifiers::CTRL | egui::Modifiers::ALT
+            };
+            return ctx.format_shortcut(&egui::KeyboardShortcut::new(modifiers, Key::V));
+        }
         MenuShortcut::Command(character) => {
             let Some(key) = key_for_character(character) else {
                 return String::new();

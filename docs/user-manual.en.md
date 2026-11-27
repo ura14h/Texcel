@@ -246,8 +246,15 @@ Notes:
 ## 8. Copy and paste
 
 - Ctrl/Cmd+C, X, and V copy, cut, and paste cell ranges, also to and from Excel and Google Sheets.
+- A dashed outline marks the copied range. Esc or an edit removes the outline, but the clipboard keeps its contents, so you can still paste.
+- Pasted formulas move their relative references with the cell, as in Excel. Absolute references with `$` stay.
+- Cut cells move when you paste them in the same table: the original range becomes empty, and formulas that referred to the moved cells now refer to their new place. Pasting them into another table or app copies them and leaves the original range as it was.
+- Ctrl/Cmd+Shift+V (Paste as Text) pastes only the text, as if you typed it, without formatting or Texcel data.
 - Edit > Copy with Options… lets you choose the format (TSV, CSV, Markdown table, or HTML) and the content (source, or displayed values).
-- Edit > Paste Special… offers Values only, Transpose, and Skip Blank Cells.
+- Edit > Paste Special… (Ctrl+Alt+V, or Cmd+Control+V on macOS) offers these choices:
+  - Format: Automatic (Texcel data, then HTML, then text) or Text only
+  - Content: keep formulas or paste calculated values, and keep or remove Markdown formatting such as bold and links. With Text only, Calculated values pastes text that starts with "=" as text, not as a formula.
+  - Layout: Transpose, Skip Blank Cells
 - Pasting past the right or bottom edge of the table extends the table.
 
 ## 9. View settings
@@ -301,6 +308,9 @@ On macOS, use Cmd instead of Ctrl, except where Control is written.
 | Close document | Ctrl+W |
 | Undo / Redo | Ctrl+Z / Ctrl+Shift+Z (Ctrl+Y also on Windows) |
 | Cut / Copy / Paste | Ctrl+X / C / V |
+| Paste as Text | Ctrl+Shift+V |
+| Paste Special | Ctrl+Alt+V (Cmd+Control+V on macOS) |
+| Remove the copy outline | Esc |
 | Select all | Ctrl+A |
 | Search | Ctrl+F |
 | Replace | Ctrl+H (Cmd+Shift+H on macOS) |

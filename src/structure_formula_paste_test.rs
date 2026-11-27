@@ -3,6 +3,15 @@ use crate::document::CalcValue;
 use std::sync::atomic::AtomicBool;
 use std::time::{Duration, Instant};
 
+/// The Paste Values choices: formula results without formatting.
+const VALUES_PASTE: crate::clipboard::PasteOptions = crate::clipboard::PasteOptions {
+    text_only: false,
+    values_only: true,
+    strip_formatting: true,
+    transpose: false,
+    skip_blank: false,
+};
+
 #[test]
 // Paste only a fresh value from a text formula and reject its missing result.
 fn values_only_paste_uses_fresh_text_formula_values() {
@@ -17,7 +26,7 @@ fn values_only_paste_uses_fresh_text_formula_values() {
         true,
         Some(&fresh),
     );
-    let pasted = paste::convert_paste_cell(&copied, true, true)
+    let pasted = paste::convert_paste_cell(&copied, &VALUES_PASTE, true)
         .expect("the current text-formula result is available");
     assert_eq!(pasted.input, CellInput::Number(2.0));
 
@@ -31,7 +40,7 @@ fn values_only_paste_uses_fresh_text_formula_values() {
         Some(&stale),
     );
     assert_eq!(
-        paste::convert_paste_cell(&copied_stale, true, true)
+        paste::convert_paste_cell(&copied_stale, &VALUES_PASTE, true)
             .expect_err("cancelled or stale text formulas have no current value"),
         Message::new("status-paste-current-formula-result-missing")
     );
@@ -39,7 +48,7 @@ fn values_only_paste_uses_fresh_text_formula_values() {
     let forced_text =
         crate::clipboard::ClipboardCell::from_cell_with_formula_context(&formula_cell, false, None);
     assert_eq!(
-        paste::convert_paste_cell(&forced_text, true, false)
+        paste::convert_paste_cell(&forced_text, &VALUES_PASTE, false)
             .expect("a forced-text cell is not treated as a formula")
             .input,
         CellInput::Text("'=1+1".to_owned())
@@ -47,7 +56,7 @@ fn values_only_paste_uses_fresh_text_formula_values() {
 
     let marked_text = crate::clipboard::ClipboardCell::from(&Cell::text("'=1+1"));
     assert_eq!(
-        paste::convert_paste_cell(&marked_text, true, true)
+        paste::convert_paste_cell(&marked_text, &VALUES_PASTE, true)
             .expect("an existing literal marker stays unchanged")
             .input,
         CellInput::Text("'=1+1".to_owned())
@@ -58,7 +67,7 @@ fn values_only_paste_uses_fresh_text_formula_values() {
     let external_cell = &external.ranges[0][0][0];
     let preserved_external = paste::convert_paste_cell(
         external_cell,
-        true,
+        &VALUES_PASTE,
         external.kind == crate::clipboard::ClipboardInputKind::Internal,
     )
     .expect("an external apostrophe remains part of the value");
@@ -134,12 +143,10 @@ fn values_only_paste_request(document: &Document, html: String) -> StructureRequ
         view_layout: Arc::clone(&view.layout),
         selection: CellRange::single(target),
         clipboard_paste: Some(ClipboardPasteRequest {
+            cut_source: None,
             text: "=1+1".to_owned(),
             html: Some(html),
-            options: PasteOptions {
-                values_only: true,
-                ..PasteOptions::default()
-            },
+            options: VALUES_PASTE,
             selection: CellRange::single(target),
             rows: table.row_count(),
             columns: table.column_count(),
@@ -181,6 +188,7 @@ fn assert_values_only_literal_undo_redo(source: crate::clipboard::ClipboardCell,
     let html = crate::clipboard::create_html_clipboard(
         &[vec![vec![source]]],
         &[vec![vec![visible]]],
+        &[],
         "=1+1",
     )
     .expect("the clipboard payload is valid");

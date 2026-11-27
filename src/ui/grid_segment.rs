@@ -412,5 +412,12 @@ pub(super) fn draw_grid_cell_segment(
         &palette,
     );
     formula_reference_paint::paint(painter, rect, cell_address, formula_reference_overlays);
+    grid_segment_paint::paint_copy_marquee(
+        painter,
+        rect,
+        cell_address,
+        input.copy_marquee,
+        &palette,
+    );
 }
 use super::commands::AppCommand;

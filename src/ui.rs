@@ -264,6 +264,7 @@ pub struct TexcelApp {
     search_dialog: Option<SearchDialogState>,
     paste_special_dialog: Option<PasteOptions>,
     copy_options_dialog: Option<CopyOptionsDialog>,
+    clipboard_mark: Option<clipboard::ClipboardMark>,
     data_edit_dialog: Option<DataEditDialogState>,
     pending_searches: BTreeMap<DocumentId, PendingSearch>,
     pending_data_edits: BTreeMap<DocumentId, PendingDataEdit>,

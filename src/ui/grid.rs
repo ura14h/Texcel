@@ -100,6 +100,10 @@ impl TexcelApp {
             .active_document()
             .is_some_and(|document| self.cell_edit_locked(document.id));
         let context_commands_enabled = self.grid_context_command_availability(navigation_blocked);
+        self.expire_clipboard_mark();
+        let copy_marquee = self
+            .active_copy_marquee()
+            .map(|marquee| (marquee.ranges.to_vec(), marquee.cut));
         {
             let workspace = &self.workspace;
             let grid_row_layouts = &mut self.grid_row_layouts;
@@ -159,6 +163,9 @@ impl TexcelApp {
                             fill_handle_drag,
                             selection_drag: grid_selection_drag,
                             scroll_to_address: request_scroll_to_address,
+                            copy_marquee: copy_marquee.as_ref().map(|(ranges, cut)| {
+                                super::clipboard::CopyMarquee { ranges, cut: *cut }
+                            }),
                         },
                         GridState {
                             edit,

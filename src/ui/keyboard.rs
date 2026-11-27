@@ -109,6 +109,10 @@ impl TexcelApp {
         if ctx.text_edit_focused() {
             return;
         }
+        // Esc ends the copy outline before other grid keys; the clipboard keeps its data.
+        if ctx.input(|input| input.key_pressed(Key::Escape)) && self.clear_clipboard_mark() {
+            return;
+        }
         let clipboard_event = ctx.input(|input| {
             input.events.iter().find_map(|event| match event {
                 egui::Event::Copy => Some((0_u8, None)),
@@ -117,6 +121,7 @@ impl TexcelApp {
                 _ => None,
             })
         });
+        let paste_kind = ctx.input(|input| paste_shortcut_kind(input.modifiers));
         if let Some((kind, text)) = clipboard_event {
             self.axis_space_text_pending = None;
             if bulk_edit_locked && kind != 0 {
@@ -141,13 +146,22 @@ impl TexcelApp {
                         ctx,
                     );
                 }
+                2 if paste_kind == PasteShortcut::Special => self.dispatch_command(
+                    AppCommand::OpenPasteSpecial,
+                    InputOwner::Grid,
+                    false,
+                    None,
+                    ctx,
+                ),
                 2 => {
                     if let Some(text) = text {
+                        let options = if paste_kind == PasteShortcut::Text {
+                            PasteOptions::TEXT
+                        } else {
+                            PasteOptions::default()
+                        };
                         self.dispatch_command(
-                            AppCommand::PasteText {
-                                text,
-                                options: PasteOptions::default(),
-                            },
+                            AppCommand::PasteText { text, options },
                             InputOwner::Grid,
                             false,
                             None,
@@ -447,5 +461,31 @@ impl TexcelApp {
             column_delta as isize,
         );
         self.select_boundary(target, extend);
+    }
+}
+
+/// Which paste a Ctrl/Cmd+V chord asks for, read from the held modifier keys.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) enum PasteShortcut {
+    Normal,
+    /// Ctrl/Cmd+Shift+V pastes plain text.
+    Text,
+    /// Ctrl+Alt+V, or Cmd+Ctrl+V on macOS, opens Paste Special.
+    Special,
+}
+
+/// Classifies the modifiers held with V; egui reports every such chord as one paste.
+pub(super) fn paste_shortcut_kind(modifiers: egui::Modifiers) -> PasteShortcut {
+    let special = if cfg!(target_os = "macos") {
+        modifiers.mac_cmd && modifiers.ctrl
+    } else {
+        modifiers.ctrl && modifiers.alt
+    };
+    if special {
+        PasteShortcut::Special
+    } else if modifiers.shift {
+        PasteShortcut::Text
+    } else {
+        PasteShortcut::Normal
     }
 }

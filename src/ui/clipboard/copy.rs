@@ -74,6 +74,11 @@ impl TexcelApp {
         } else {
             Vec::new()
         };
+        let copied_ranges = selected_ranges.clone();
+        let origins = copied_ranges
+            .iter()
+            .map(|range| range.normalized().0)
+            .collect::<Vec<_>>();
         let mut pending_markdown_copy = Vec::new();
         let mut unavailable_formula_result = false;
         let mut internal_ranges = Vec::with_capacity(selected_ranges.len());
@@ -228,7 +233,7 @@ impl TexcelApp {
         } else {
             format_ranges_plain_text(&visible_ranges, format)
         };
-        let html = match create_html_clipboard(&internal_ranges, &visible_ranges, &text) {
+        let html = match create_html_clipboard(&internal_ranges, &visible_ranges, &origins, &text) {
             Ok(html) => html,
             Err(error) => {
                 self.status = Some(error.0);
@@ -242,9 +247,18 @@ impl TexcelApp {
         match write_system_clipboard(&html, &text) {
             Ok(()) => {
                 self.status = None;
+                self.set_clipboard_mark(
+                    crate::clipboard::owned_payload_owner_id(),
+                    document_id,
+                    table_id,
+                    copied_ranges,
+                    document_revision,
+                );
                 true
             }
             Err(error) => {
+                // Without Texcel data a later paste cannot move or outline these cells.
+                self.clipboard_mark = None;
                 if write_system_text(&text).is_ok() {
                     self.status = Some(
                         Message::new("status-clipboard-html-failed")

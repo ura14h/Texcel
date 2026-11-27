@@ -158,6 +158,14 @@ fn window_list_submenu(
 
 // Applies platform shortcut differences from the shared key metadata.
 fn accelerator(shortcut: MenuShortcut) -> Option<Accelerator> {
+    if shortcut == MenuShortcut::PasteSpecial {
+        let modifiers = if cfg!(target_os = "macos") {
+            Modifiers::META | Modifiers::CONTROL
+        } else {
+            Modifiers::CONTROL | Modifiers::ALT
+        };
+        return Some(Accelerator::new(modifiers, Code::KeyV));
+    }
     let (key, shift) = match shortcut {
         MenuShortcut::None => return None,
         MenuShortcut::Command('N') => (Code::KeyN, false),
@@ -183,6 +191,7 @@ fn accelerator(shortcut: MenuShortcut) -> Option<Accelerator> {
         MenuShortcut::CommandShift('N') => (Code::KeyN, true),
         MenuShortcut::CommandShift('L') => (Code::KeyL, true),
         MenuShortcut::CommandShift('X') => (Code::KeyX, true),
+        MenuShortcut::CommandShift('V') => (Code::KeyV, true),
         MenuShortcut::Replace => (Code::KeyH, cfg!(target_os = "macos")),
         MenuShortcut::Redo if cfg!(target_os = "windows") => (Code::KeyY, false),
         MenuShortcut::Redo => (Code::KeyZ, true),

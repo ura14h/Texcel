@@ -4,6 +4,9 @@ use super::*;
 mod copy;
 #[path = "clipboard/copy_content.rs"]
 mod copy_content;
+#[path = "clipboard/mark.rs"]
+mod mark;
+pub(super) use mark::{ClipboardMark, CopyMarquee};
 
 #[cfg(test)]
 #[path = "clipboard/copy_options_test.rs"]
@@ -85,7 +88,12 @@ impl TexcelApp {
             self.status = Some(Message::new("status-paste-clipboard-limit-exceeded"));
             return;
         }
-        let html = read_system_html_if_matching(&text);
+        // Text-only pastes never read Texcel data or HTML.
+        let html = if paste_options.text_only {
+            None
+        } else {
+            read_system_html_if_matching(&text)
+        };
         let Some(document) = self.workspace.active_document() else {
             return;
         };
@@ -107,6 +115,9 @@ impl TexcelApp {
         let rows = MAX_ROWS;
         let columns = MAX_COLUMNS;
         let scroll = view.scroll;
+        let owner_id = html.as_deref().and_then(crate::clipboard::owner_id_of_html);
+        let cut_source =
+            self.cut_source_for_paste(owner_id.as_deref(), document_id, table_id, paste_options);
         self.submit_clipboard_paste(
             document_id,
             table_id,
@@ -117,6 +128,7 @@ impl TexcelApp {
                 selection,
                 rows,
                 columns,
+                cut_source,
             },
             scroll,
         );

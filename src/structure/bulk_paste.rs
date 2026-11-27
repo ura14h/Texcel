@@ -56,6 +56,23 @@ pub(crate) fn prepare_bulk_cells(
     )?;
     let mut cells = std::mem::take(&mut expanded.cells);
     let mut formats = std::mem::take(&mut expanded.formats);
+    // A paste of cut cells in the same table moves them in this one Undo step.
+    if let Some(area) = paste.cut_source {
+        let table = document
+            .tables
+            .iter()
+            .find(|table| table.id == request.view_table_id)
+            .ok_or_else(|| Message::new("status-paste-target-table-missing"))?;
+        let moved = super::paste_cut::cut_move_changes(table, area, &cells)?;
+        // Rewritten formulas keep their Markdown source spelling instead of being escaped.
+        expanded.raw_markdown_sources.extend(
+            moved
+                .iter()
+                .filter(|(_, cell)| cell.is_some())
+                .map(|(address, _)| *address),
+        );
+        cells.extend(moved);
+    }
     let markdown_features = !expanded.markdown_feature_sources.is_empty();
     if text_format {
         super::paste::retain_markdown_paste_features(&mut cells, &mut formats);

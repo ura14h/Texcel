@@ -2010,6 +2010,48 @@ impl<'a> Model<'a> {
         }
     }
 
+    /// Texcel patch: rewrites the formula `value`, which stays in `cell`, so that its
+    /// references into `area` follow the area when it is cut and pasted `row_delta` rows
+    /// and `column_delta` columns away. References outside `area` keep their cells.
+    pub fn displace_references_to_area(
+        &mut self,
+        value: &str,
+        cell: &CellReferenceIndex,
+        area: &Area,
+        row_delta: i32,
+        column_delta: i32,
+    ) -> Result<String, String> {
+        let sheet_name = self
+            .workbook
+            .worksheet(cell.sheet)
+            .map_err(|e| format!("Could not find worksheet: {e}"))?
+            .get_name();
+        if let Some(formula) = self.formula_without_prefix(value) {
+            let cell_reference = CellReferenceRC {
+                sheet: sheet_name.to_owned(),
+                row: cell.row,
+                column: cell.column,
+            };
+            let formula_str = move_formula(
+                &self.parser.parse(formula, &cell_reference),
+                &MoveContext {
+                    source_sheet_name: &sheet_name,
+                    row: cell.row,
+                    column: cell.column,
+                    area,
+                    target_sheet_name: &sheet_name,
+                    row_delta,
+                    column_delta,
+                },
+                self.locale,
+                self.language,
+            );
+            Ok(format!("={formula_str}"))
+        } else {
+            Ok(value.to_string())
+        }
+    }
+
     /// 'Extends' the value from cell (`sheet`, `row`, `column`) to (`target_row`, `target_column`) in the same sheet
     ///
     /// # Examples

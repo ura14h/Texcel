@@ -230,6 +230,7 @@ impl TexcelApp {
             sheet_zoom_dialog: None,
             search_dialog: None,
             paste_special_dialog: None,
+            clipboard_mark: None,
             copy_options_dialog: None,
             data_edit_dialog: None,
             pending_searches: BTreeMap::new(),

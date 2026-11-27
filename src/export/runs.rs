@@ -63,6 +63,10 @@ pub(super) fn markdown_cell_source_for_paste(
     if input.is_empty() {
         return (String::new(), false);
     }
+    // A formula is written as typed; Markdown escapes would change what the engine reads.
+    if crate::calc::formula_source(&cell.input, string_cell).is_some() {
+        return (cell.source_text_for_text_file(string_cell), false);
+    }
     let stored = cell.source_text_for_text_file(string_cell);
     let text = crate::document::literal_text_value(&stored);
     let default_format = CellFormat::default();

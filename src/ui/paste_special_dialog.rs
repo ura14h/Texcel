@@ -24,25 +24,76 @@ impl TexcelApp {
                 visual::group_gap(ui);
                 let language = self.language;
                 // Same rows and words as Save As and Copy with Options.
+                appearance_dialog::settings_row(ui, &text(language, "option-format-label"), |ui| {
+                    ui.vertical(|ui| {
+                        ui.radio_value(
+                            &mut options.text_only,
+                            false,
+                            text(language, "option-paste-source-auto"),
+                        );
+                        ui.radio_value(
+                            &mut options.text_only,
+                            true,
+                            text(language, "option-paste-source-text-only"),
+                        );
+                    });
+                });
                 appearance_dialog::settings_row(
                     ui,
                     &text(language, "option-content-label"),
                     |ui| {
-                        ui.checkbox(
-                            &mut options.values_only,
-                            text(language, "option-content-values-only"),
-                        );
+                        ui.vertical(|ui| {
+                            ui.horizontal_wrapped(|ui| {
+                                ui.radio_value(
+                                    &mut options.values_only,
+                                    false,
+                                    text(language, "option-content-formulas"),
+                                );
+                                ui.radio_value(
+                                    &mut options.values_only,
+                                    true,
+                                    text(language, "option-content-values"),
+                                );
+                            });
+                            // Plain text has no formatting to keep or remove.
+                            ui.add_enabled_ui(!options.text_only, |ui| {
+                                ui.horizontal_wrapped(|ui| {
+                                    ui.radio_value(
+                                        &mut options.strip_formatting,
+                                        false,
+                                        text(language, "option-formatting-keep"),
+                                    );
+                                    ui.radio_value(
+                                        &mut options.strip_formatting,
+                                        true,
+                                        text(language, "option-formatting-strip"),
+                                    );
+                                });
+                            });
+                            if options.text_only && options.values_only {
+                                ui.label(
+                                    egui::RichText::new(text(
+                                        language,
+                                        "option-paste-as-string-hint",
+                                    ))
+                                    .small()
+                                    .weak(),
+                                );
+                            }
+                        });
                     },
                 );
                 appearance_dialog::settings_row(ui, &text(language, "option-layout-label"), |ui| {
-                    ui.checkbox(
-                        &mut options.transpose,
-                        text(language, "top-paste-transpose"),
-                    );
-                    ui.checkbox(
-                        &mut options.skip_blank,
-                        text(language, "top-paste-skip-blanks"),
-                    );
+                    ui.vertical(|ui| {
+                        ui.checkbox(
+                            &mut options.transpose,
+                            text(language, "top-paste-transpose"),
+                        );
+                        ui.checkbox(
+                            &mut options.skip_blank,
+                            text(language, "top-paste-skip-blanks"),
+                        );
+                    });
                 });
                 ui.separator();
                 visual::dialog_footer(ui, |ui| {

@@ -116,6 +116,8 @@ pub struct ClipboardPasteRequest {
     pub selection: CellRange,
     pub rows: usize,
     pub columns: usize,
+    /// The cut range in the target table when this paste moves it there.
+    pub cut_source: Option<CellRange>,
 }
 
 /// Search and optional replacement over a revision-pinned document snapshot.
@@ -317,6 +319,7 @@ mod history_growth;
 mod history_validation;
 mod markdown;
 mod paste;
+mod paste_cut;
 mod prepare;
 mod search;
 mod search_helpers;
@@ -367,6 +370,9 @@ pub(crate) use table_management::prepare_table_structure;
 #[cfg(test)]
 #[path = "structure_formula_paste_test.rs"]
 mod formula_paste_tests;
+#[cfg(test)]
+#[path = "structure_move_paste_test.rs"]
+mod move_paste_tests;
 #[cfg(test)]
 #[path = "structure_test.rs"]
 mod tests;

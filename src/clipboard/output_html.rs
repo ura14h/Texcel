@@ -4,6 +4,7 @@ use super::*;
 pub fn create_html_clipboard(
     internal_ranges: &[Vec<Vec<ClipboardCell>>],
     visible_ranges: &[Vec<Vec<ClipboardCell>>],
+    origins: &[CellAddress],
     text: &str,
 ) -> Result<String, ClipboardError> {
     validate_ranges(internal_ranges)?;
@@ -13,6 +14,10 @@ pub fn create_html_clipboard(
         owner_id: next_owner_id(),
         text: text.to_owned(),
         ranges: internal_ranges.to_vec(),
+        origins: origins
+            .iter()
+            .map(|origin| [origin.row, origin.column])
+            .collect(),
     })
     .map_err(|error| {
         ClipboardError(

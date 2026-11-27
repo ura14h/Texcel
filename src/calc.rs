@@ -24,7 +24,7 @@ pub(crate) use snapshot::{MarkdownCalculationSource, project_markdown_changes};
 use std::sync::mpsc::{self, Receiver, SyncSender};
 #[cfg(test)]
 use std::thread;
-pub(crate) use structure::rewrite_structure_formulas;
+pub(crate) use structure::{PasteFormulaMover, rewrite_structure_formulas};
 #[cfg(test)]
 pub(crate) use worker::Message;
 pub use worker::{CalculationSubmitError, CalculationWorker};

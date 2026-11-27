@@ -80,8 +80,9 @@ impl TexcelApp {
                 self.copy_selected_grid(ctx, format);
             }
             AppCommand::CutAs(format) => {
+                // Like Excel, the cut cells stay until a paste in the same table moves them.
                 if self.copy_selected_grid(ctx, format) {
-                    self.clear_selected_range();
+                    self.mark_clipboard_as_cut();
                 }
             }
             AppCommand::PasteText { text, options } => {

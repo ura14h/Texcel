@@ -76,6 +76,8 @@ pub(super) struct GridInput<'a> {
     pub(super) fill_handle_drag: Option<FillHandleDrag>,
     pub(super) selection_drag: Option<GridSelectionDrag>,
     pub(super) scroll_to_address: Option<CellAddress>,
+    /// The copied or cut ranges outlined with a dashed line.
+    pub(super) copy_marquee: Option<super::clipboard::CopyMarquee<'a>>,
 }
 
 /// App state that the grid reads and updates while it draws.

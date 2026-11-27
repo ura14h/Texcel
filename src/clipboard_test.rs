@@ -2,10 +2,13 @@ use super::*;
 
 /// Marks generated HTML so tests can verify internal paste ownership.
 pub(crate) fn mark_test_owned_html(html: &str) {
-    let mark = read_internal_payload(html).map(|payload| OwnedPayloadMark {
-        owner_id: payload.owner_id,
-        html_digest: Sha256::digest(html.as_bytes()).into(),
-    });
+    let mark =
+        read_internal_payload(html)
+            .zip(payload_digest(html))
+            .map(|(payload, payload_digest)| OwnedPayloadMark {
+                owner_id: payload.owner_id,
+                payload_digest,
+            });
     set_owned_payload(mark);
 }
 
@@ -117,6 +120,7 @@ fn internal_payload_requires_matching_plain_text_and_valid_dimensions() {
     let html = create_html_clipboard(
         std::slice::from_ref(&matrix),
         std::slice::from_ref(&matrix),
+        &[],
         text,
     )
     .expect("HTML");
@@ -153,7 +157,7 @@ fn internal_text_formula_payload_keeps_its_fresh_result() {
     };
     let copied = ClipboardCell::from_cell_with_formula_context(&cell, true, Some(&result));
     let ranges = vec![vec![vec![copied]]];
-    let html = create_html_clipboard(&ranges, &ranges, "=1+1").expect("valid owned payload");
+    let html = create_html_clipboard(&ranges, &ranges, &[], "=1+1").expect("valid owned payload");
     let owner = read_internal_payload(&html)
         .expect("read generated payload")
         .owner_id;
@@ -172,7 +176,7 @@ fn internal_text_formula_payload_keeps_its_fresh_result() {
 fn internal_payload_requires_the_current_clipboard_owner_id() {
     let matrix = vec![vec![ClipboardCell::from(&Cell::number(7.0))]];
     let matrix_ref = std::slice::from_ref(&matrix);
-    let html = create_html_clipboard(matrix_ref, matrix_ref, "7").expect("HTML");
+    let html = create_html_clipboard(matrix_ref, matrix_ref, &[], "7").expect("HTML");
     let payload = read_internal_payload(&html).expect("payload");
     let external = parse_clipboard_with_owner("7", Some(&html), Some("another-copy"))
         .expect("unowned HTML falls back to text");
@@ -260,19 +264,38 @@ fn malformed_multibyte_color_does_not_panic() {
 }
 
 #[test]
-// Verify that private clipboard data is bound to the exact copied HTML value.
-fn internal_payload_owner_is_bound_to_the_exact_html_clipboard_value() {
-    let html = "<table><tr><td>7</td></tr></table>";
+// Private clipboard data is bound to the payload this process wrote, even when the OS wraps
+// the HTML in its own header on the way back (macOS adds a <head> with a charset).
+fn internal_payload_owner_is_bound_to_the_written_payload() {
+    let cell = vec![vec![ClipboardCell::from(&Cell::text("7"))]];
+    let html = create_html_clipboard(
+        std::slice::from_ref(&cell),
+        std::slice::from_ref(&cell),
+        &[],
+        "7",
+    )
+    .expect("clipboard data encodes");
     let mark = OwnedPayloadMark {
         owner_id: "owner-1".to_owned(),
-        html_digest: Sha256::digest(html.as_bytes()).into(),
+        payload_digest: payload_digest(&html).expect("the HTML carries a payload"),
     };
-    assert_eq!(
-        owned_html_owner_id_for_mark(html, &mark).as_deref(),
-        Some("owner-1")
+    let wrapped = format!(
+        "<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\"></head><body>{html}</body></html>"
     );
     assert_eq!(
-        owned_html_owner_id_for_mark("<table><tr><td>8</td></tr></table>", &mark),
+        owned_html_owner_id_for_mark(&wrapped, &mark).as_deref(),
+        Some("owner-1")
+    );
+    let other = create_html_clipboard(
+        std::slice::from_ref(&cell),
+        std::slice::from_ref(&cell),
+        &[],
+        "7",
+    )
+    .expect("clipboard data encodes");
+    assert_eq!(owned_html_owner_id_for_mark(&other, &mark), None);
+    assert_eq!(
+        owned_html_owner_id_for_mark("<table><tr><td>7</td></tr></table>", &mark),
         None
     );
 }
@@ -319,4 +342,16 @@ fn disjoint_copy_concatenates_ranges_without_copying_the_gaps() {
         format_ranges_plain_text(&[first, second], CopyFormat::DisplayTsv),
         "first\n\nsecond"
     );
+}
+
+#[test]
+fn windows_row_breaks_leave_line_breaks_inside_quoted_cells() {
+    assert_eq!(
+        plain_text::row_breaks_as_crlf("a\t\"b\nc\"\nd\t\"say \"\"hi\"\"\"\n"),
+        "a\t\"b\nc\"\r\nd\t\"say \"\"hi\"\"\"\r\n"
+    );
+    let parsed = parse_plain_text(&plain_text::row_breaks_as_crlf("a\t\"b\nc\"\nd\te"))
+        .expect("CRLF rows parse");
+    assert_eq!(parsed.len(), 2);
+    assert_eq!(parsed[0][1].input, CellInput::Text("b\nc".to_owned()));
 }

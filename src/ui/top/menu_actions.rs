@@ -27,6 +27,9 @@ impl TexcelApp {
             "edit.paste" => state
                 .commands
                 .push(AppCommand::PasteSystem(PasteOptions::default())),
+            "edit.paste_text" => state
+                .commands
+                .push(AppCommand::PasteSystem(PasteOptions::TEXT)),
             "edit.clear" => state.commands.push(AppCommand::ClearSelection),
             "edit.select_all" => state.commands.push(AppCommand::SelectAll),
             "edit.search" => state.open_search_dialog = true,

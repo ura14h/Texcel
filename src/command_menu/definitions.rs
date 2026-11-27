@@ -9,6 +9,8 @@ pub(crate) enum MenuShortcut {
     Redo,
     ZoomIn,
     Settings,
+    /// Ctrl+Alt+V, or Cmd+Ctrl+V on macOS, like Excel's Paste Special.
+    PasteSpecial,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

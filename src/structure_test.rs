@@ -2,6 +2,15 @@ use super::history_validation::validate_table_history;
 use super::paste::convert_paste_cell;
 use super::*;
 
+/// The Paste Values choices: formula results without formatting.
+const VALUES_PASTE: crate::clipboard::PasteOptions = crate::clipboard::PasteOptions {
+    text_only: false,
+    values_only: true,
+    strip_formatting: true,
+    transpose: false,
+    skip_blank: false,
+};
+
 // Create a CSV source fixture for structure operation tests.
 fn csv_fixture(bytes: Vec<u8>, operation: StructureOperation) -> (Document, StructureRequest) {
     let csv = crate::csv_adapter::CsvDocument::parse(bytes, EncodingChoice::Auto, ',')
@@ -1347,6 +1356,7 @@ fn paste_fixture(text: &str, selection: CellRange) -> (Document, StructureReques
         view_layout: Arc::clone(&view.layout),
         selection,
         clipboard_paste: Some(ClipboardPasteRequest {
+            cut_source: None,
             text: text.to_owned(),
             html: None,
             options: PasteOptions::default(),
@@ -1397,6 +1407,7 @@ fn csv_paste_request(
         view_layout: Arc::clone(&view.layout),
         selection,
         clipboard_paste: Some(ClipboardPasteRequest {
+            cut_source: None,
             text: text.to_owned(),
             html,
             options: PasteOptions::default(),
@@ -1438,6 +1449,7 @@ fn csv_source_with_non_one_table_id_keeps_edits_and_paste() {
         Some(crate::document::Cell::text("staged")),
     ));
     request.clipboard_paste = Some(ClipboardPasteRequest {
+        cut_source: None,
         text: "pasted".to_owned(),
         html: None,
         options: PasteOptions::default(),
@@ -1618,7 +1630,7 @@ fn text_source_paste_keeps_markdown_modifier_and_drops_xlsx_only_styles() {
     });
     let rich_matrix = vec![vec![rich]];
     let rich_range = std::slice::from_ref(&rich_matrix);
-    let html = crate::clipboard::create_html_clipboard(rich_range, rich_range, "strong")
+    let html = crate::clipboard::create_html_clipboard(rich_range, rich_range, &[], "strong")
         .expect("internal rich HTML is valid");
     crate::clipboard::tests::mark_test_owned_html(&html);
 
@@ -1800,11 +1812,12 @@ fn markdown_paste_preserves_owned_source_and_escapes_html_text() {
     let internal = vec![vec![source_cell]];
     let internal_range = std::slice::from_ref(&internal);
     let owned_html =
-        crate::clipboard::create_html_clipboard(internal_range, internal_range, "**word**")
+        crate::clipboard::create_html_clipboard(internal_range, internal_range, &[], "**word**")
             .expect("internal Markdown payload encodes");
     crate::clipboard::tests::mark_test_owned_html(&owned_html);
     let mut owned_request = snapshot_structure_request(&document);
     owned_request.clipboard_paste = Some(ClipboardPasteRequest {
+        cut_source: None,
         text: "**word**".to_owned(),
         html: Some(owned_html),
         options: PasteOptions::default(),
@@ -1825,6 +1838,7 @@ fn markdown_paste_preserves_owned_source_and_escapes_html_text() {
 
     let mut external_request = snapshot_structure_request(&document);
     external_request.clipboard_paste = Some(ClipboardPasteRequest {
+        cut_source: None,
         text: "<b>A</b>".to_owned(),
         html: Some("<table><tr><td>&lt;b&gt;A&lt;/b&gt;</td></tr></table>".to_owned()),
         options: PasteOptions::default(),
@@ -1852,6 +1866,7 @@ fn markdown_paste_preserves_owned_source_and_escapes_html_text() {
 
     let mut rich_request = snapshot_structure_request(&document);
     rich_request.clipboard_paste = Some(ClipboardPasteRequest {
+        cut_source: None,
         text: "Styled".to_owned(),
         html: Some("<table><tr><td><strong>Styled</strong></td></tr></table>".to_owned()),
         options: PasteOptions::default(),
@@ -1885,6 +1900,7 @@ fn markdown_paste_preserves_owned_source_and_escapes_html_text() {
 
     let mut checked_request = snapshot_structure_request(&document);
     checked_request.clipboard_paste = Some(ClipboardPasteRequest {
+        cut_source: None,
         text: "A（字）B safe".to_owned(),
         html: Some(
             "<table><tr><td>A<strong>（字）</strong>B <em>safe</em></td></tr></table>".to_owned(),
@@ -1943,6 +1959,7 @@ fn markdown_owned_paste_promotes_csv_but_values_only_keeps_plain_literal_text() 
         let html = crate::clipboard::create_html_clipboard(
             std::slice::from_ref(&internal),
             std::slice::from_ref(&visible),
+            &[],
             "=語",
         )
         .expect("owned Markdown clipboard encodes");
@@ -2000,8 +2017,7 @@ fn markdown_owned_paste_promotes_csv_but_values_only_keeps_plain_literal_text() 
         .clipboard_paste
         .as_mut()
         .expect("paste request exists")
-        .options
-        .values_only = true;
+        .options = VALUES_PASTE;
     let prepared =
         prepare_structure(&request, &AtomicBool::new(false)).expect("values-only paste keeps CSV");
     let SourceDocument::Csv(source) = prepared.source_after.as_deref().unwrap() else {
@@ -2025,8 +2041,8 @@ fn values_only_uses_fresh_formula_value() {
     let mut formula =
         crate::document::Cell::formula("=1+1", Some(crate::document::CalcValue::Number(2.0)));
     let mut copied = crate::clipboard::ClipboardCell::from_cell(&formula, 0);
-    let value =
-        convert_paste_cell(&copied, true, true).expect("fresh result can be pasted as a value");
+    let value = convert_paste_cell(&copied, &VALUES_PASTE, true)
+        .expect("fresh result can be pasted as a value");
     assert_eq!(value.input, crate::document::CellInput::Number(2.0));
 
     let text_formula = crate::document::Cell::formula(
@@ -2034,7 +2050,7 @@ fn values_only_uses_fresh_formula_value() {
         Some(crate::document::CalcValue::Text("=1+1".to_owned())),
     );
     let text_copied = crate::clipboard::ClipboardCell::from_cell(&text_formula, 0);
-    let literal = convert_paste_cell(&text_copied, true, true)
+    let literal = convert_paste_cell(&text_copied, &VALUES_PASTE, true)
         .expect("formula text result can be pasted as a value");
     assert_eq!(
         literal.input,
@@ -2087,14 +2103,14 @@ fn values_only_uses_fresh_formula_value() {
     formula.calculation.as_mut().unwrap().status = crate::document::CalcStatus::Pending;
     copied = crate::clipboard::ClipboardCell::from_cell(&formula, 0);
     assert!(
-        convert_paste_cell(&copied, true, true)
+        convert_paste_cell(&copied, &VALUES_PASTE, true)
             .unwrap_err()
             .resolve(crate::i18n::Language::Japanese)
             .contains("数式に最新の計算結果がありません")
     );
     formula.calculation.as_mut().unwrap().revision = 99;
     copied = crate::clipboard::ClipboardCell::from_cell(&formula, 0);
-    assert!(convert_paste_cell(&copied, true, true).is_err());
+    assert!(convert_paste_cell(&copied, &VALUES_PASTE, true).is_err());
 }
 
 #[test]
