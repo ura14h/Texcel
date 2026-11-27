@@ -25,6 +25,7 @@ settings-ui-font-size = Interface text size
 settings-edit-display-section = Editing Display
 settings-show-invisibles-label = Show invisible characters
 settings-show-invisibles = Spaces, tabs, and line breaks
+settings-reset-defaults = Restore Defaults
 settings-preview-regular = Regular
 settings-preview-bold = Bold
 settings-preview-mono = Monospace

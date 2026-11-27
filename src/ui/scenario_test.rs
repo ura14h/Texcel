@@ -498,6 +498,30 @@ fn clean_startup_close_waits_for_settings_without_a_document_prompt() {
 }
 
 #[test]
+/// Puts every Settings choice back to the app defaults from the dialog's reset button.
+fn settings_reset_restores_the_app_defaults() {
+    let directory = ScenarioDirectory::new();
+    let mut harness = scenario_harness(directory.0.join("settings.json"));
+    open_settings(&mut harness);
+    harness.step();
+    click_button(&mut harness, "Dark");
+    harness.state_mut().show_invisibles = true;
+    harness.state_mut().font_preset = crate::settings::FontPreset::NotoSansJp;
+    harness.step();
+    assert_eq!(harness.state().theme, ThemeChoice::Dark);
+
+    click_button_after_layout(&mut harness, "Restore Defaults");
+    let defaults = crate::settings::AppPreferences::default();
+    let app = harness.state();
+    assert!(app.settings_window_open, "reset keeps the dialog open");
+    assert_eq!(app.theme, defaults.theme);
+    assert_eq!(app.font_preset, defaults.font_preset);
+    assert_eq!(app.language_choice, defaults.language);
+    assert_eq!(app.show_invisibles, defaults.show_invisibles);
+    assert_eq!(app.ui_font_size, defaults.ui_font_size);
+}
+
+#[test]
 /// Accepts an untouched startup close without asking about a document.
 fn untouched_startup_quit_is_accepted_without_a_document_prompt() {
     let directory = ScenarioDirectory::new();

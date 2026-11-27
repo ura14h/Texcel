@@ -27,6 +27,7 @@ impl TexcelApp {
         // Leave room for the centered modal frame in shorter native windows.
         let max_height = (content.height() - visual::DIALOG_MARGIN * 2.0).max(180.0);
         let mut close_requested = false;
+        let mut reset_requested = false;
         let modal_id = Id::unique("texcel_appearance_settings");
         let close_key =
             self.dialog_key_pressed_in_modal(ctx, modal_id, Key::Escape, self.edit.composing);
@@ -73,10 +74,27 @@ impl TexcelApp {
                         egui::Button::new(text(language, "action-close")),
                     );
                     close_requested |= close.clicked();
+                    // The reset choice sits at the left end, away from Close.
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                        let reset = ui.add(
+                            egui::Button::new(text(language, "settings-reset-defaults"))
+                                .min_size(Vec2::new(0.0, visual::BUTTON_HEIGHT)),
+                        );
+                        reset_requested |= reset.clicked();
+                    });
                 });
             });
         });
 
+        // Restore every choice on this page to the app's built-in defaults.
+        if reset_requested {
+            let defaults = crate::settings::AppPreferences::default();
+            self.language_choice = defaults.language;
+            self.theme = defaults.theme;
+            self.font_preset = defaults.font_preset;
+            next_font_size = defaults.ui_font_size;
+            self.show_invisibles = defaults.show_invisibles;
+        }
         close_requested |= close_key;
         self.settings_window_open = !close_requested;
         if (next_font_size - before_font_size).abs() > 0.001 {

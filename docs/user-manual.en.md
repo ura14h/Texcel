@@ -288,6 +288,8 @@ Settings… is in the Texcel menu on macOS (Cmd+,) and in the File menu on Windo
 | Interface text size | Text size in pixels for everything but the sheet: menus, formula bar, sheet tabs, status bar, and dialogs. The default follows the operating system |
 | Show invisible characters | Show spaces, tabs, and line breaks as marks |
 
+Restore Defaults, at the lower left of the dialog, puts every setting above back to its default.
+
 ## 12. Closing, quitting, and recovered work
 
 - When you close a document with unsaved changes, choose Save and Close, Discard Changes, or Cancel. When you quit, Texcel lists all unsaved documents together and offers Save All and Exit, Discard All and Exit, or Cancel.

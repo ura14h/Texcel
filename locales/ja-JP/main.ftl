@@ -25,6 +25,7 @@ settings-ui-font-size = UIの文字サイズ
 settings-edit-display-section = 編集時の表示
 settings-show-invisibles-label = 空白等を表示
 settings-show-invisibles = 空白・タブ・改行
+settings-reset-defaults = 初期値に戻す
 settings-preview-regular = 標準
 settings-preview-bold = 太字
 settings-preview-mono = 等幅
