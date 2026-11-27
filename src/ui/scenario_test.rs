@@ -1186,7 +1186,7 @@ fn cancelled_cell_preedit_reaches_the_platform_output() {
     fs::write(&source_path, "| A | B |\n| --- | --- |\n|  | keep |\n")
         .expect("write a two-column document for focus changes");
 
-    for destination in ["cell", "header", "sheet-band", "other-window"] {
+    for destination in ["cell", "header", "mode-bar", "other-window"] {
         let mut harness =
             scenario_harness(directory.0.join(format!("settings-{destination}.json")));
         queue_open_and_wait(&mut harness, source_path.clone());
@@ -1221,14 +1221,10 @@ fn cancelled_cell_preedit_reaches_the_platform_output() {
                         .rect();
                     Pos2::new(first_row.center().x, first_row.top() - HEADER_HEIGHT / 2.0)
                 }
-                "sheet-band" => harness
-                    .query_all(
-                        By::new()
-                            .role(egui::Role::Button)
-                            .label("Switch to Source Editing"),
-                    )
+                "mode-bar" => harness
+                    .query_all(By::new().role(egui::Role::Button).label("Source Editing"))
                     .next()
-                    .expect("the source mode control is visible in the sheet band")
+                    .expect("the source mode control is visible beside the formula bar")
                     .rect()
                     .center(),
                 _ => unreachable!(),
