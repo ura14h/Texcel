@@ -31,6 +31,8 @@ pub(super) fn show_markdown(
 ) -> MarkdownViewOutput {
     let mut output = MarkdownViewOutput::default();
     ui.spacing_mut().item_spacing.y = style.body_size * 0.5;
+    // Table rows and list markers follow the text size, not the size of buttons.
+    ui.spacing_mut().interact_size.y = style.body_size * 1.3;
     for (index, block) in blocks.iter().enumerate() {
         show_block(ui, block, style, &mut output, index);
     }

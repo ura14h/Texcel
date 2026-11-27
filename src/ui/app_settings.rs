@@ -55,6 +55,7 @@ impl TexcelApp {
             AppPreferenceField::ShowInvisibles => {
                 self.app_preference_changes.show_invisibles = true;
             }
+            AppPreferenceField::MinimapWidth => self.app_preference_changes.minimap_width = true,
         }
         self.mark_settings_write();
     }
@@ -84,6 +85,7 @@ impl TexcelApp {
         }
         self.theme = preferences.theme;
         self.show_invisibles = preferences.show_invisibles;
+        self.minimap_width = preferences.minimap_width;
         self.apply_appearance(ctx);
         let changed = before.0 != self.language_choice
             || before.1 != self.language
@@ -307,6 +309,11 @@ impl TexcelApp {
                 self.show_invisibles
             } else {
                 loaded.show_invisibles
+            },
+            minimap_width: if self.app_preference_changes.minimap_width {
+                self.minimap_width
+            } else {
+                loaded.minimap_width
             },
         };
         self.apply_app_preferences(ctx, &merged);

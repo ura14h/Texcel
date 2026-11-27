@@ -57,32 +57,15 @@ impl TexcelApp {
         if let Some(action) = sheet_action {
             match action {
                 sheet_tabs::SheetBandAction::Select(table_id) if !navigation_blocked => {
-                    let document_id = self.workspace.active_document;
-                    if self.edit.is_editing() {
-                        self.commit_edit(None);
-                    }
-                    if self.edit.is_editing() {
-                        return;
-                    }
-                    if let Some(document_id) = document_id
-                        && self.pending_text_growth_sessions.contains_key(&document_id)
-                    {
-                        self.pending_growth_selection =
-                            Some(grid_events::PendingGrowthSelection::Table {
-                                document_id,
-                                table_id,
-                            });
-                    } else if let Some(document) = self.workspace.active_document_mut() {
-                        document.select_table(table_id);
-                    }
-                    self.grid_focused = false;
-                    self.request_grid_focus = true;
-                    self.request_scroll_to_selection = false;
+                    self.select_table_from_chrome(table_id);
                 }
                 sheet_tabs::SheetBandAction::Manage(action, context_table_id)
                     if !navigation_blocked =>
                 {
                     self.request_table_management(action, context_table_id, None);
+                }
+                sheet_tabs::SheetBandAction::ToggleMinimap => {
+                    self.minimap_open = !self.minimap_open;
                 }
                 sheet_tabs::SheetBandAction::OpenZoom if !navigation_blocked => {
                     self.open_sheet_zoom_dialog();
@@ -109,6 +92,33 @@ impl TexcelApp {
                 FooterAction::DismissImportNotice => self.import_notice = None,
             }
         }
+    }
+}
+
+impl TexcelApp {
+    /// Switches tables from a sheet tab, the table list, or the minimap after finishing
+    /// the cell edit.
+    pub(super) fn select_table_from_chrome(&mut self, table_id: TableId) {
+        let document_id = self.workspace.active_document;
+        if self.edit.is_editing() {
+            self.commit_edit(None);
+        }
+        if self.edit.is_editing() {
+            return;
+        }
+        if let Some(document_id) = document_id
+            && self.pending_text_growth_sessions.contains_key(&document_id)
+        {
+            self.pending_growth_selection = Some(grid_events::PendingGrowthSelection::Table {
+                document_id,
+                table_id,
+            });
+        } else if let Some(document) = self.workspace.active_document_mut() {
+            document.select_table(table_id);
+        }
+        self.grid_focused = false;
+        self.request_grid_focus = true;
+        self.request_scroll_to_selection = false;
     }
 }
 

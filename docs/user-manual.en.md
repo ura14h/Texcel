@@ -119,7 +119,7 @@ Texcel starts with an empty sheet (Table1). You can type into any cell right awa
 | Live / Source | Right of the formula bar. Switches the display mode; the current mode is highlighted |
 | Grid | Cells with column letters (A, B, …) and row numbers (1, 2, …). Letters and numbers inside the range that is saved to the file are dark; those outside it are light |
 | Table tabs | Switch between the tables in the document. **+** adds a table |
-| List | Picks a table from a list. Each entry shows the table name and the content of the filled cell nearest to A1 |
+| List | Picks a table from a list. Each entry shows the table name and the content of the filled cell nearest to A1. For a Markdown file you opened, it shows a minimap of the whole file right of the sheet instead; click a table on it to switch to that table |
 | Zoom | The sheet zoom. Click it to choose another zoom |
 | Status bar | A notice when a save, replace, row insertion, or similar command finishes, problems and warnings you need to act on, a Cancel button while work is in progress, and how many cells are selected |
 
@@ -288,6 +288,7 @@ Settings… is in the Texcel menu on macOS (Cmd+,) and in the File menu on Windo
 | Font | Automatic (match language), Default, Noto Sans JP |
 | Interface text size | The box right of Font. Text size in points for everything but the sheet: menus, formula bar, sheet tabs, status bar, and dialogs. The default follows the operating system |
 | Show invisible characters | Show spaces, tabs, and line breaks as marks |
+| Minimap width | Wide, Medium, Narrow |
 
 Restore Defaults, at the lower left of the dialog, puts every setting above back to its default.
 

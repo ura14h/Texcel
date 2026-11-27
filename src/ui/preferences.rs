@@ -21,6 +21,7 @@ pub(super) enum AppPreferenceField {
     FontPreset,
     UiFontSize,
     ShowInvisibles,
+    MinimapWidth,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -30,6 +31,7 @@ pub(super) struct AppPreferenceChanges {
     pub(super) font_preset: bool,
     pub(super) ui_font_points: bool,
     pub(super) show_invisibles: bool,
+    pub(super) minimap_width: bool,
 }
 
 // Build the saved preference key from a path and file identity.

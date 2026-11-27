@@ -113,6 +113,7 @@ impl TexcelApp {
             font_preset: self.font_preset,
             ui_font_points: self.ui_font_points,
             show_invisibles: self.show_invisibles,
+            minimap_width: self.minimap_width,
         }
     }
 

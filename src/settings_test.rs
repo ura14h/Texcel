@@ -82,6 +82,7 @@ fn settings_roundtrip_preserves_app_and_document_preferences() {
     settings.app.language = LanguageChoice::Japanese;
     settings.app.font_preset = FontPreset::NotoSansJp;
     settings.app.ui_font_points = 16.0;
+    settings.app.minimap_width = MinimapWidth::Wide;
     settings.upsert_document(preferences);
     save_settings(&path, settings).expect("save settings");
 
@@ -89,6 +90,7 @@ fn settings_roundtrip_preserves_app_and_document_preferences() {
     assert_eq!(loaded.app.language, LanguageChoice::Japanese);
     assert_eq!(loaded.app.font_preset, FontPreset::NotoSansJp);
     assert_eq!(loaded.app.ui_font_points, 16.0);
+    assert_eq!(loaded.app.minimap_width, MinimapWidth::Wide);
     let saved_document = loaded.document(&key).expect("matching identity");
     assert_eq!(
         saved_document.display_mode,

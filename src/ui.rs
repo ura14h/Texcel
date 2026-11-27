@@ -127,11 +127,15 @@ pub struct TexcelApp {
     /// What to report when a user command's background job for a document succeeds.
     completion_notices: BTreeMap<DocumentId, (JobToken, Message)>,
     show_invisibles: bool,
+    minimap_width: crate::settings::MinimapWidth,
     settings_window_open: bool,
     about_dialog_open: bool,
     /// App-wide: one Help window serves every document window.
     help_viewport_open: bool,
     help_blocks: help_window::HelpBlocks,
+    /// Whether this window shows the Markdown minimap instead of the table list.
+    minimap_open: bool,
+    minimap_cache: Option<minimap::MinimapCache>,
     font_preview_details_open: bool,
     settings_worker: Option<SettingsWorker>,
     settings_file: SettingsFile,
@@ -372,6 +376,7 @@ mod markdown_display;
 mod markdown_format;
 mod markdown_text_layout;
 mod markdown_view;
+mod minimap;
 mod open_queue;
 mod ordered_edit_input;
 mod paste_special_dialog;
@@ -509,3 +514,7 @@ mod formula_structure_tests;
 #[cfg(test)]
 #[path = "ui/header_selection_test.rs"]
 mod header_selection_tests;
+
+#[cfg(test)]
+#[path = "ui/minimap_test.rs"]
+mod minimap_tests;

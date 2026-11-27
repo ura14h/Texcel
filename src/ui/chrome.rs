@@ -94,6 +94,28 @@ pub(super) fn sheet_table_list_button(
     .inner
 }
 
+/// Draws the table list button as a toggle for the Markdown minimap.
+pub(super) fn sheet_minimap_button(
+    ui: &mut egui::Ui,
+    visible_label: &str,
+    label: &str,
+    open: bool,
+) -> egui::Response {
+    ui.scope(|ui| {
+        ui.spacing_mut().button_padding = Vec2::new(CHROME_TEXT_PADDING, 0.0);
+        ui.spacing_mut().interact_size.y = CHROME_TAB_HEIGHT;
+        let band_fill = GridThemePalette::from_visuals(ui.visuals()).header_background;
+        set_sheet_button_fills(ui, band_fill);
+        ui.add(
+            egui::Button::selectable(open, visible_label.to_owned())
+                .min_size(Vec2::new(0.0, CHROME_TAB_HEIGHT)),
+        )
+        .accessible_name(label.to_owned())
+        .on_hover_text(label.to_owned())
+    })
+    .inner
+}
+
 /// Gives sheet controls calm default fills with clear hover and press states.
 fn set_sheet_button_fills(ui: &mut egui::Ui, base: Color32) {
     let dark = ui.visuals().dark_mode;

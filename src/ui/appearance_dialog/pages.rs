@@ -52,6 +52,13 @@ pub(super) struct LanguageControls<'a> {
     pub(super) selected: &'a mut LanguageChoice,
 }
 
+/// Text size and editing-display choices edited on the settings page.
+pub(super) struct DisplayControls<'a> {
+    pub(super) ui_font_points: &'a mut f32,
+    pub(super) show_invisibles: &'a mut bool,
+    pub(super) minimap_width: &'a mut crate::settings::MinimapWidth,
+}
+
 /// Draws app-wide appearance controls in their own sections.
 pub(super) fn draw_appearance_page(
     ui: &mut egui::Ui,
@@ -59,13 +66,17 @@ pub(super) fn draw_appearance_page(
     font_preset: &mut FontPreset,
     font_preview_details_open: &mut bool,
     theme: &mut ThemeChoice,
-    ui_font_points: &mut f32,
-    show_invisibles: &mut bool,
+    display: DisplayControls<'_>,
 ) {
     let LanguageControls {
         current: language,
         selected: language_choice,
     } = language_controls;
+    let DisplayControls {
+        ui_font_points,
+        show_invisibles,
+        minimap_width,
+    } = display;
     settings_page_header(
         ui,
         &text(language, "settings-page-appearance"),
@@ -133,6 +144,18 @@ pub(super) fn draw_appearance_page(
             ui.checkbox(show_invisibles, text(language, "settings-show-invisibles"));
         },
     );
+    settings_row(ui, &text(language, "settings-minimap-width"), |ui| {
+        use crate::settings::MinimapWidth;
+        ui.horizontal(|ui| {
+            for (width, key) in [
+                (MinimapWidth::Wide, "settings-minimap-wide"),
+                (MinimapWidth::Medium, "settings-minimap-medium"),
+                (MinimapWidth::Narrow, "settings-minimap-narrow"),
+            ] {
+                ui.selectable_value(minimap_width, width, text(language, key));
+            }
+        });
+    });
 }
 
 /// Picks the interface text size in points from the offered list.

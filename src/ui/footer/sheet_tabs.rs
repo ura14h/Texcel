@@ -4,6 +4,7 @@ pub(super) enum SheetBandAction {
     Select(TableId),
     Manage(StructureAction, Option<TableId>),
     OpenZoom,
+    ToggleMinimap,
 }
 
 /// Draws the sheet strip with tabs and Add inside the scroller.
@@ -138,34 +139,51 @@ pub(super) fn draw_sheet_band(
                     });
                 let list_label = context_text(ui.ctx(), "dialog-table-list");
                 ui.add_space(8.0);
-                chrome::sheet_table_list_button(ui, &list_visible, &list_label, |menu| {
-                    visual::prepare_context_menu(menu);
-                    let max_height =
-                        (menu.ctx().content_rect().height() - 48.0).clamp(120.0, 360.0);
-                    // Summaries are built only while the list is open.
-                    let empty = text(app.language, "dialog-empty-table");
-                    egui::ScrollArea::vertical()
-                        .id_salt("table_list_choices")
-                        .auto_shrink([true, true])
-                        .max_height(max_height)
-                        .show(menu, |menu| {
-                            let Some(document) = document else {
-                                return;
-                            };
-                            for ((table_id, name, active), table) in
-                                tabs.iter().zip(&document.tables)
-                            {
-                                let summary = table_summary(table).unwrap_or_else(|| empty.clone());
-                                if menu
-                                    .selectable_label(*active, format!("{name} — {summary}"))
-                                    .clicked()
+                // A Markdown file shows its minimap beside the sheet instead of a menu.
+                let minimap_available =
+                    document.is_some_and(|document| app.minimap_source(document.id).is_some());
+                if minimap_available {
+                    if chrome::sheet_minimap_button(
+                        ui,
+                        &list_visible,
+                        &list_label,
+                        app.minimap_open,
+                    )
+                    .clicked()
+                    {
+                        action = Some(SheetBandAction::ToggleMinimap);
+                    }
+                } else {
+                    chrome::sheet_table_list_button(ui, &list_visible, &list_label, |menu| {
+                        visual::prepare_context_menu(menu);
+                        let max_height =
+                            (menu.ctx().content_rect().height() - 48.0).clamp(120.0, 360.0);
+                        // Summaries are built only while the list is open.
+                        let empty = text(app.language, "dialog-empty-table");
+                        egui::ScrollArea::vertical()
+                            .id_salt("table_list_choices")
+                            .auto_shrink([true, true])
+                            .max_height(max_height)
+                            .show(menu, |menu| {
+                                let Some(document) = document else {
+                                    return;
+                                };
+                                for ((table_id, name, active), table) in
+                                    tabs.iter().zip(&document.tables)
                                 {
-                                    action = Some(SheetBandAction::Select(*table_id));
-                                    menu.close();
+                                    let summary =
+                                        table_summary(table).unwrap_or_else(|| empty.clone());
+                                    if menu
+                                        .selectable_label(*active, format!("{name} — {summary}"))
+                                        .clicked()
+                                    {
+                                        action = Some(SheetBandAction::Select(*table_id));
+                                        menu.close();
+                                    }
                                 }
-                            }
-                        });
-                });
+                            });
+                    });
+                }
                 // The sheet zoom of this window sits at the right end.
                 let zoom_name = context_message(
                     ui.ctx(),

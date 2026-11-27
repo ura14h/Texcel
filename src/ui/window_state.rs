@@ -39,6 +39,7 @@ define_window_state! {
     long_text_panel_dismissed_session: Option<u64>,
     settings_window_open: bool,
     about_dialog_open: bool,
+    minimap_open: bool,
     font_preview_details_open: bool,
     pending_accesskit_focus: Option<(DocumentId, u64, CellAddress)>,
     request_scroll_to_address: Option<(DocumentId, u64, CellAddress)>,

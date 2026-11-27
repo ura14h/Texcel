@@ -507,6 +507,7 @@ fn settings_reset_restores_the_app_defaults() {
     click_button(&mut harness, "Dark");
     harness.state_mut().show_invisibles = true;
     harness.state_mut().font_preset = crate::settings::FontPreset::NotoSansJp;
+    harness.state_mut().minimap_width = crate::settings::MinimapWidth::Narrow;
     harness.step();
     assert_eq!(harness.state().theme, ThemeChoice::Dark);
 
@@ -519,6 +520,7 @@ fn settings_reset_restores_the_app_defaults() {
     assert_eq!(app.language_choice, defaults.language);
     assert_eq!(app.show_invisibles, defaults.show_invisibles);
     assert_eq!(app.ui_font_points, defaults.ui_font_points);
+    assert_eq!(app.minimap_width, defaults.minimap_width);
 }
 
 #[test]

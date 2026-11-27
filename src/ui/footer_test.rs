@@ -359,6 +359,10 @@ fn sheet_band_table_list_selects_and_add_button_creates_a_table() {
     let mut harness = scenario::scenario_harness(directory.0.join("settings.json"));
     scenario::queue_open_and_wait(&mut harness, source);
     let document_id = harness.state().workspace.active_document.unwrap();
+    // A Markdown file shows the minimap; without its file the document keeps the menu, as
+    // untitled and imported documents do.
+    harness.state_mut().file_backings.remove(&document_id);
+    harness.step();
     assert_eq!(
         harness.state().workspace.documents[&document_id]
             .tables
@@ -484,6 +488,9 @@ fn sheet_list_scroll_reaches_the_last_table() {
     assert_eq!(document.tables.len(), 40);
     let document_id = document.id;
     let last_table_id = document.tables[39].id;
+    // A Markdown file shows the minimap; without its file the document keeps the menu.
+    harness.state_mut().file_backings.remove(&document_id);
+    harness.step();
 
     let list_label = crate::i18n::context_text(&harness.ctx, "dialog-table-list");
     let list_rect = button_rect(&harness, &list_label);

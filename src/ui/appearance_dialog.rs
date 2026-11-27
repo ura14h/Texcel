@@ -20,6 +20,7 @@ impl TexcelApp {
         let before_theme = self.theme;
         let before_language = self.language_choice;
         let before_invisibles = self.show_invisibles;
+        let before_minimap = self.minimap_width;
         let mut next_font_size = self.ui_font_points;
         let language = self.language;
         let content = ctx.content_rect();
@@ -63,8 +64,11 @@ impl TexcelApp {
                             &mut self.font_preset,
                             &mut self.font_preview_details_open,
                             &mut self.theme,
-                            &mut next_font_size,
-                            &mut self.show_invisibles,
+                            DisplayControls {
+                                ui_font_points: &mut next_font_size,
+                                show_invisibles: &mut self.show_invisibles,
+                                minimap_width: &mut self.minimap_width,
+                            },
                         );
                     });
                 ui.separator();
@@ -94,6 +98,7 @@ impl TexcelApp {
             self.font_preset = defaults.font_preset;
             next_font_size = defaults.ui_font_points;
             self.show_invisibles = defaults.show_invisibles;
+            self.minimap_width = defaults.minimap_width;
         }
         close_requested |= close_key;
         self.settings_window_open = !close_requested;
@@ -113,6 +118,9 @@ impl TexcelApp {
         }
         if self.show_invisibles != before_invisibles {
             self.mark_app_preference_change(AppPreferenceField::ShowInvisibles);
+        }
+        if self.minimap_width != before_minimap {
+            self.mark_app_preference_change(AppPreferenceField::MinimapWidth);
         }
         self.apply_appearance(ctx);
         let other_appearance_changed = self.font_preset != before_font

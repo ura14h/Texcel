@@ -60,6 +60,27 @@ pub enum WrapMode {
     Off,
 }
 
+/// Width of the Markdown minimap panel beside the sheet.
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MinimapWidth {
+    Wide,
+    #[default]
+    Medium,
+    Narrow,
+}
+
+impl MinimapWidth {
+    /// Returns the panel width in logical points.
+    pub fn points(self) -> f32 {
+        match self {
+            Self::Wide => 360.0,
+            Self::Medium => 260.0,
+            Self::Narrow => 180.0,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(default)]
 pub struct AppPreferences {
@@ -71,6 +92,7 @@ pub struct AppPreferences {
     /// status, dialogs. `ui_font_points_to_logical` turns it into egui's logical points.
     pub ui_font_points: f32,
     pub show_invisibles: bool,
+    pub minimap_width: MinimapWidth,
 }
 
 /// The smallest UI text size the settings accept, in points.
@@ -125,6 +147,7 @@ impl Default for AppPreferences {
             font_preset: FontPreset::Auto,
             ui_font_points: default_ui_font_points(),
             show_invisibles: false,
+            minimap_width: MinimapWidth::default(),
         }
     }
 }

@@ -106,6 +106,8 @@ impl TexcelApp {
         let copy_marquee = self
             .active_copy_marquee()
             .map(|marquee| (marquee.ranges.to_vec(), marquee.cut));
+        // The minimap takes the right side of the sheet area before the grid fills the rest.
+        let minimap_choice = self.draw_minimap_panel(root);
         {
             let workspace = &self.workspace;
             let grid_row_layouts = &mut self.grid_row_layouts;
@@ -200,5 +202,8 @@ impl TexcelApp {
             navigation_blocked,
             &ctx,
         );
+        if let Some(table_id) = minimap_choice.filter(|_| !navigation_blocked) {
+            self.select_table_from_chrome(table_id);
+        }
     }
 }
