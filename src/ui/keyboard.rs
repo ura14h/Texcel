@@ -188,6 +188,7 @@ impl TexcelApp {
                 Key::Z,
                 Key::D,
                 Key::R,
+                Key::C,
                 Key::Home,
                 Key::End,
                 Key::A,
@@ -313,6 +314,12 @@ impl TexcelApp {
                 self.request_structure_action(StructureAction::DuplicateTable)
             }
             Some(Key::D) if command => self.request_structure_action(StructureAction::FillDown),
+            Some(Key::R) if command && shift => {
+                self.request_structure_action(StructureAction::InsertRows)
+            }
+            Some(Key::C) if command && shift => {
+                self.request_structure_action(StructureAction::InsertColumns)
+            }
             Some(Key::R) if command => self.request_structure_action(StructureAction::FillRight),
             Some(Key::Z) if command && shift => {
                 self.dispatch_command(AppCommand::Redo, InputOwner::Grid, false, None, ctx)

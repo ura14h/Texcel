@@ -93,6 +93,7 @@ CSVのヘッダー有無は既定で「なし」。Markdownは構文上の先頭
 | Ctrl/Cmd＋Shift＋矢印 | 領域の端まで選択 |
 | Ctrl＋Home／End | 表の先頭／使用範囲の末尾へ移動 |
 | Ctrl＋D／R | 上／左のセルからコピー |
+| Ctrl/Cmd＋Shift＋R／C | 選択行の上に行を挿入／選択列の左に列を挿入 |
 | Ctrl/Cmd＋Shift＋V | テキストとして貼り付け |
 | Ctrl＋Alt＋V（macOSはCmd＋Control＋V） | 形式を選択して貼り付け |
 | Esc（編集していないとき） | コピー範囲の点線を消す |

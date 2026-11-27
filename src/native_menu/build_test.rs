@@ -86,6 +86,8 @@ fn native_format_accelerators_use_the_shared_format_shortcuts() {
         ("format.italic", muda::accelerator::Code::KeyI, false),
         ("format.code", muda::accelerator::Code::KeyE, false),
         ("format.strike", muda::accelerator::Code::KeyX, true),
+        ("insert.rows", muda::accelerator::Code::KeyR, true),
+        ("insert.columns", muda::accelerator::Code::KeyC, true),
     ] {
         let definition = action(id).expect("the format action has shared shortcut metadata");
         let accelerator = super::accelerator(definition.shortcut)

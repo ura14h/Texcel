@@ -330,6 +330,7 @@ macOSではCtrlの代わりにCmdを使います（「Control」と書いたも�
 | 表の先頭／使用範囲の末尾へ | Ctrl＋Home／End |
 | 列全体／行全体を選択 | Control＋Space／Shift＋Space |
 | 上／左のセルからコピー | Ctrl＋D／R |
+| 選択行の上に行を挿入／選択列の左に列を挿入 | Ctrl＋Shift＋R／C |
 | 参照の種類を切り替える | F4（macOSはCmd＋T） |
 | 太字／斜体 | Ctrl＋B／I |
 | 打ち消し | Ctrl＋Shift＋X |

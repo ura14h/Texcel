@@ -192,6 +192,8 @@ fn accelerator(shortcut: MenuShortcut) -> Option<Accelerator> {
         MenuShortcut::CommandShift('L') => (Code::KeyL, true),
         MenuShortcut::CommandShift('X') => (Code::KeyX, true),
         MenuShortcut::CommandShift('V') => (Code::KeyV, true),
+        MenuShortcut::CommandShift('R') => (Code::KeyR, true),
+        MenuShortcut::CommandShift('C') => (Code::KeyC, true),
         MenuShortcut::Replace => (Code::KeyH, cfg!(target_os = "macos")),
         MenuShortcut::Redo if cfg!(target_os = "windows") => (Code::KeyY, false),
         MenuShortcut::Redo => (Code::KeyZ, true),

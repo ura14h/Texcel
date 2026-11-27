@@ -330,6 +330,7 @@ On macOS, use Cmd instead of Ctrl, except where Control is written.
 | Start of the table / end of the used range | Ctrl+Home / End |
 | Select whole column / row | Control+Space / Shift+Space |
 | Copy from above / left | Ctrl+D / R |
+| Insert rows above / columns left of the selection | Ctrl+Shift+R / C |
 | Change the reference type | F4 (Cmd+T on macOS) |
 | Bold / Italic | Ctrl+B / I |
 | Strikethrough | Ctrl+Shift+X |

@@ -823,3 +823,55 @@ fn shifted_new_shortcut_keeps_the_existing_add_table_action() {
     let app = harness.state();
     assert!(app.pending_structures.contains_key(&document_id));
 }
+
+#[test]
+// Verify Ctrl/Cmd+Shift+R and +C insert a row above and a column left of the selection.
+fn shifted_r_and_c_insert_rows_and_columns() {
+    for (key, moved_to) in [
+        (Key::R, CellAddress { row: 1, column: 0 }),
+        (Key::C, CellAddress { row: 0, column: 1 }),
+    ] {
+        let mut harness = Harness::builder()
+            .with_size([900.0, 620.0])
+            .build_eframe(|creation| TexcelApp::new_with_settings_path(creation, None));
+        let (document_id, table_id) = {
+            let app = harness.state_mut();
+            app.create_new_document("Insert shortcut".to_owned())
+                .expect("create a Markdown document");
+            let document = app.workspace.active_document_mut().unwrap();
+            let table_id = document.active_table;
+            document
+                .set_cell(table_id, CellAddress::default(), Some(Cell::text("x")))
+                .expect("A1 accepts text");
+            app.grid_focused = true;
+            (document.id, table_id)
+        };
+        harness.step();
+        let modifiers = command_modifiers(harness.ctx.os().is_mac(), true);
+        harness.event(Event::ModifiersChanged(modifiers));
+        harness.event(key_event(key, modifiers));
+        harness.step();
+        for _ in 0..200 {
+            if !harness
+                .state()
+                .pending_structures
+                .contains_key(&document_id)
+            {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(5));
+            harness.step();
+        }
+
+        let document = &harness.state().workspace.documents[&document_id];
+        let table = document.tables.iter().find(|table| table.id == table_id);
+        let text_at = |address| {
+            table
+                .and_then(|table| table.cell(address))
+                .map(|cell| cell.input.source_text())
+                .unwrap_or_default()
+        };
+        assert_eq!(text_at(moved_to), "x", "{key:?} inserts before A1");
+        assert_eq!(text_at(CellAddress::default()), "");
+    }
+}

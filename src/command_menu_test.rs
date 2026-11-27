@@ -67,6 +67,14 @@ fn shared_menu_shortcuts_match_existing_bindings() {
         MenuShortcut::Command('E')
     );
     assert_eq!(
+        action("insert.rows").unwrap().shortcut,
+        MenuShortcut::CommandShift('R')
+    );
+    assert_eq!(
+        action("insert.columns").unwrap().shortcut,
+        MenuShortcut::CommandShift('C')
+    );
+    assert_eq!(
         action("window.minimize").unwrap().shortcut,
         MenuShortcut::Command('M')
     );
