@@ -122,7 +122,7 @@ fn sheet_controls_stay_inside_a_narrow_window() {
     harness.step();
 
     let viewport = harness.ctx.content_rect();
-    for key in ["dialog-table-list", "view-switch-to-source"] {
+    for key in ["dialog-table-list", "view-source"] {
         let label = crate::i18n::context_text(&harness.ctx, key);
         let node = harness
             .query_all(By::new().role(egui::Role::Button).label_contains(&label))

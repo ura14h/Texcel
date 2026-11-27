@@ -84,19 +84,6 @@ impl TexcelApp {
                 {
                     self.request_table_management(action, context_table_id, None);
                 }
-                sheet_tabs::SheetBandAction::ToggleMode(document_id, table_id, mode)
-                    if !navigation_blocked =>
-                {
-                    if let Some(document) = self.workspace.documents.get_mut(&document_id) {
-                        document.display_mode = mode;
-                        self.mark_document_preference_change(
-                            document_id,
-                            table_id,
-                            TablePreferenceField::DisplayMode,
-                        );
-                        root.ctx().request_repaint();
-                    }
-                }
                 sheet_tabs::SheetBandAction::OpenZoom if !navigation_blocked => {
                     self.open_sheet_zoom_dialog();
                 }

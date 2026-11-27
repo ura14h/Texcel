@@ -116,10 +116,11 @@ Texcel starts with an empty sheet (Table1). You can type into any cell right awa
 | Name box | The address of the selected cell, such as `B2`. Type `C12` or `A1:D20` and press Enter to go to that cell or range. Absolute and mixed forms such as `$C$12`, `$C12`, and `C$12` also work |
 | ✗ ✓ fx | ✗ cancels the entry, ✓ confirms it, and fx inserts a function. ✗ and ✓ work only while you are entering text |
 | Formula bar | The selected cell's source, including formulas and Markdown marks. Click it to edit from that point |
+| Live / Source | Right of the formula bar. Switches the display mode; the current mode is highlighted |
 | Grid | Cells with column letters (A, B, …) and row numbers (1, 2, …). Letters and numbers inside the range that is saved to the file are dark; those outside it are light |
 | Table tabs | Switch between the tables in the document. **+** adds a table |
 | List | Picks a table from a list. Each entry shows the table name and the content of the filled cell nearest to A1 |
-| Live Editing / Source Editing | Switches the display mode. The button shows the current mode |
+| Zoom | The sheet zoom. Click it to choose another zoom |
 | Status bar | A notice when a save, replace, row insertion, or similar command finishes, problems and warnings you need to act on, a Cancel button while work is in progress, and how many cells are selected |
 
 Each window holds one document. New Document and Open… open a new window. If the file is already open, Texcel brings its window to the front instead. A document with unsaved changes is marked in the window title (on macOS, a dot in the close button).
@@ -261,7 +262,7 @@ Notes:
 
 The View menu has these commands. None of them change the file.
 
-- Zoom: Ctrl/Cmd++ and Ctrl/Cmd+− change the sheet zoom in steps of 10%, and Ctrl/Cmd+0 returns to 100%. Click the percentage to the right of Live Editing at the bottom of the window to choose 200%, 100%, 75%, 50%, 25%, or a custom zoom from 10% to 400%. Each window has its own sheet zoom; menus, the formula bar, and dialogs keep their size.
+- Zoom: Ctrl/Cmd++ and Ctrl/Cmd+− change the sheet zoom in steps of 10%, and Ctrl/Cmd+0 returns to 100%. Click the percentage at the lower right of the window to choose 200%, 100%, 75%, 50%, 25%, or a custom zoom from 10% to 400%. Each window has its own sheet zoom; menus, the formula bar, and dialogs keep their size.
 - Text Wrapping: wrap long content or not.
 - Freeze Panes: keep rows or columns up to the selection in view while scrolling.
 - Column Width…: set a column's width as a number (up to two decimal places).

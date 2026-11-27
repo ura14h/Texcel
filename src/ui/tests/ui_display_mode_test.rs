@@ -90,9 +90,9 @@ fn view_menu_changes_document_mode_without_changing_history_or_dirty_state() {
     );
 }
 
-/// Checks the sheet-band toggle and Ctrl/Cmd+/ share the document-wide display setting.
+/// Checks the live/source bar and Ctrl/Cmd+/ share the document-wide display setting.
 #[test]
-fn sheet_band_and_shortcut_change_display_mode_without_editing_the_document() {
+fn mode_bar_and_shortcut_change_display_mode_without_editing_the_document() {
     let mut harness = Harness::builder()
         .with_size([980.0, 680.0])
         .build_eframe(|creation| TexcelApp::new_with_settings_path(creation, None));
@@ -111,11 +111,11 @@ fn sheet_band_and_shortcut_change_display_mode_without_editing_the_document() {
         )
     };
 
-    let show_source = crate::i18n::context_text(&harness.ctx, "view-switch-to-source");
+    let show_source = crate::i18n::context_text(&harness.ctx, "view-source");
     harness
         .query_all(By::new().role(egui::Role::Button).label(&show_source))
         .next()
-        .expect("the sheet band can switch to Source")
+        .expect("the bar beside the formula bar can switch to Source")
         .click();
     harness.step();
     assert_eq!(

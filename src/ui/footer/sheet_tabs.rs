@@ -3,7 +3,6 @@ use super::*;
 pub(super) enum SheetBandAction {
     Select(TableId),
     Manage(StructureAction, Option<TableId>),
-    ToggleMode(DocumentId, TableId, crate::document::DocumentDisplayMode),
     OpenZoom,
 }
 
@@ -40,10 +39,6 @@ pub(super) fn draw_sheet_band(
     let management_enabled = can_manage_tables
         && !navigation_blocked
         && !document.is_some_and(|document| app.document_bulk_edit_pending(document.id));
-    let display_mode = document.and_then(|document| {
-        let table = document.active_table()?;
-        Some((document.id, table.id, document.display_mode))
-    });
     let mut action = None;
     let band_fill = GridThemePalette::from_visuals(ui.visuals()).header_background;
     egui::Frame::new()
@@ -55,25 +50,13 @@ pub(super) fn draw_sheet_band(
             ui.spacing_mut().item_spacing.x = 0.0;
             ui.spacing_mut().interact_size.y = CHROME_TAB_HEIGHT;
             ui.horizontal(|ui| {
-                let mode_width = display_mode.map_or(0.0, |(_, _, mode)| {
-                    let label = match mode {
-                        crate::document::DocumentDisplayMode::Live => {
-                            context_text(ui.ctx(), "view-live")
-                        }
-                        crate::document::DocumentDisplayMode::Source => {
-                            context_text(ui.ctx(), "view-source")
-                        }
-                    };
-                    chrome::mode_tab_width(ui, &label)
-                });
                 let zoom_label = format!(
                     "{}%",
                     super::super::sheet_zoom_dialog::zoom_percent(app.sheet_zoom.0)
                 );
                 let zoom_width = chrome::mode_tab_width(ui, &zoom_label);
                 let list_visible = context_text(ui.ctx(), "dialog-table-list-button");
-                let fixed_width =
-                    chrome::command_width(ui, &list_visible) + mode_width + zoom_width + 8.0;
+                let fixed_width = chrome::command_width(ui, &list_visible) + zoom_width + 8.0;
                 let scroll_width = (ui.available_width() - fixed_width).max(0.0);
                 egui::ScrollArea::horizontal()
                     .id_salt("table_tab_scroll")
@@ -183,46 +166,7 @@ pub(super) fn draw_sheet_band(
                             }
                         });
                 });
-                if let Some((document_id, table_id, current_mode)) = display_mode {
-                    let (visible_key, action_key, next_mode) = match current_mode {
-                        crate::document::DocumentDisplayMode::Live => (
-                            "view-live",
-                            "view-switch-to-source",
-                            crate::document::DocumentDisplayMode::Source,
-                        ),
-                        crate::document::DocumentDisplayMode::Source => (
-                            "view-source",
-                            "view-switch-to-live",
-                            crate::document::DocumentDisplayMode::Live,
-                        ),
-                    };
-                    let visible = context_text(ui.ctx(), visible_key);
-                    let mode_action = context_text(ui.ctx(), action_key);
-                    let shortcut = ui.ctx().format_shortcut(&egui::KeyboardShortcut::new(
-                        egui::Modifiers::COMMAND,
-                        egui::Key::Slash,
-                    ));
-                    let hint = format!(
-                        "{mode_action} ({shortcut})\n{}",
-                        context_text(ui.ctx(), "view-mode-help")
-                    );
-                    if chrome::mode_tab_button(
-                        ui,
-                        current_mode == crate::document::DocumentDisplayMode::Source,
-                        &visible,
-                        &mode_action,
-                    )
-                    .on_hover_text(hint)
-                    .clicked()
-                    {
-                        action = Some(SheetBandAction::ToggleMode(
-                            document_id,
-                            table_id,
-                            next_mode,
-                        ));
-                    }
-                }
-                // The sheet zoom of this window sits right of the display mode.
+                // The sheet zoom of this window sits at the right end.
                 let zoom_name = context_message(
                     ui.ctx(),
                     &Message::new("view-sheet-zoom").with_text("zoom", zoom_label.clone()),

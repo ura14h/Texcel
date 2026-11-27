@@ -218,7 +218,19 @@ impl TexcelApp {
                     self.cell_edit_locked(document.id)
                         || self.close_after_save.contains(&document.id)
                 });
-            self.draw_formula_bar(ui, formula_bar_blocked);
+            // The formula bar takes the width left of the narrow live/source bar.
+            let mode_bar_width = self.display_mode_bar_width(ui);
+            ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 0.0;
+                ui.scope(|ui| {
+                    ui.set_max_width((ui.available_width() - mode_bar_width).max(0.0));
+                    self.draw_formula_bar(ui, formula_bar_blocked);
+                });
+                if mode_bar_width > 0.0 {
+                    ui.add_space(display_mode_bar::DISPLAY_MODE_BAR_GAP);
+                    self.draw_display_mode_bar(ui, navigation_blocked);
+                }
+            });
         });
 
         self.restore_modal_menu_focus_this_frame = false;

@@ -325,6 +325,7 @@ mod copy_options_dialog;
 mod data_edit_actions;
 mod data_edit_dialog;
 mod dialog_state;
+mod display_mode_bar;
 mod document_lifecycle;
 mod document_names;
 mod edit_text;
