@@ -112,7 +112,7 @@ Texcel starts with an empty sheet (Table1). You can type into any cell right awa
 
 | Area | What it shows |
 | --- | --- |
-| Menus | File, Edit, View, Insert, Format, Data, and Help. On macOS they are in the menu bar at the top of the screen, with an extra Window menu. On Windows they are in the window's menu bar (also reachable with Alt). On Linux they are inside the window |
+| Menus | File, Edit, View, Insert, Format, Table, Data, and Help. On macOS they are in the menu bar at the top of the screen, with an extra Window menu. On Windows they are in the window's menu bar (also reachable with Alt). On Linux they are inside the window |
 | Name box | The address of the selected cell, such as `B2`. Type `C12` or `A1:D20` and press Enter to go to that cell or range. Absolute and mixed forms such as `$C$12`, `$C12`, and `C$12` also work |
 | ✗ ✓ fx | ✗ cancels the entry, ✓ confirms it, and fx inserts a function. ✗ and ✓ work only while you are entering text |
 | Formula bar | The selected cell's source, including formulas and Markdown marks. Click it to edit from that point |
@@ -175,13 +175,13 @@ Drag the small square at the bottom right of the selection (the fill handle) to 
 - If two or more values in one row or column form an even sequence of numbers, dates, or text ending in a number (such as `Item1`, `Item2`), Texcel continues the sequence.
 - Anything else (a single cell, formulas, values without a clear sequence) is copied.
 
-Edit > Fill lets you choose filling by copying or with a series explicitly. Ctrl+D and Ctrl+R copy the cell above or to the left.
+Table > Fill lets you choose filling by copying or with a series explicitly. Ctrl+D and Ctrl+R copy the cell above or to the left.
 
 ### 5.5 Rows, columns, and tables
 
-- Insert rows and columns from the Insert menu. Delete, duplicate, and move them from Edit > Rows and Edit > Columns. The same commands are on the right-click menus of cells, row numbers, and column letters. Inserting adds rows above the selected rows and columns to the left of the selected columns.
+- Insert rows and columns from the Insert menu. Delete, duplicate, and move them from Table > Rows and Table > Columns. The same commands are on the right-click menus of cells, row numbers, and column letters. Inserting adds rows above the selected rows and columns to the left of the selected columns.
 - Drag the border between column letters to change a column's width, or double-click it to fit the content. Column widths are a view setting and are not saved in the file.
-- Add, duplicate, and delete tables from Edit > Tables or from a table tab's right-click menu. A CSV document holds only one table.
+- Add, duplicate, and delete tables from the Table menu or from a table tab's right-click menu. A CSV document holds only one table.
 
 ### 5.6 Markdown formatting
 

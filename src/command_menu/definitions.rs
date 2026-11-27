@@ -84,6 +84,8 @@ mod format;
 mod help;
 #[path = "definitions/insert.rs"]
 mod insert;
+#[path = "definitions/table.rs"]
+mod table;
 #[path = "definitions/view.rs"]
 mod view;
 #[path = "definitions/window.rs"]
@@ -95,6 +97,7 @@ use file::FILE;
 use format::FORMAT;
 use help::HELP;
 use insert::INSERT;
+use table::TABLE;
 use view::VIEW;
 use window::WINDOW;
 
@@ -123,6 +126,11 @@ pub(crate) const MENUS: &[MenuTree] = &[
         id: "menu.format",
         label: "menu-format",
         entries: FORMAT,
+    },
+    MenuTree {
+        id: "menu.table",
+        label: "menu-table",
+        entries: TABLE,
     },
     MenuTree {
         id: "menu.data",

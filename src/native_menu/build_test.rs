@@ -16,15 +16,15 @@ fn shared_menu_tree_keeps_grouped_actions_and_short_levels() {
         assert!(menu_level_is_short(menu), "{} keeps a short level", menu.id);
     }
     for (menu, id) in [
-        ("menu.edit", "edit.delete_rows"),
-        ("menu.edit", "edit.duplicate_columns"),
-        ("menu.edit", "edit.fill_series"),
-        ("menu.edit", "edit.table_delete"),
+        ("menu.table", "edit.delete_rows"),
+        ("menu.table", "edit.duplicate_columns"),
+        ("menu.table", "edit.fill_series"),
+        ("menu.table", "edit.table_delete"),
         ("menu.edit", "edit.copy_as"),
         ("menu.view", "view.zoom_in"),
         ("menu.view", "view.wrap_off"),
         ("menu.insert", "insert.rows"),
-        ("menu.edit", "edit.table_add"),
+        ("menu.table", "edit.table_add"),
         ("menu.data", "data.sort"),
         ("menu.data", "data.replace_results"),
         ("menu.window", "window.minimize"),
