@@ -44,6 +44,7 @@ pub(super) fn draw_virtual_grid(
     let column_count = MAX_COLUMNS;
     row_layout.sync_layout_revision(layout.revision());
     row_layout.sync_display_generation(display.font_layout_generation);
+    row_layout.sync_text_display(display.mode, display.show_invisibles);
     row_layout.sync_scale(display.scale);
     let header_height = grid_header_height(display.scale);
     row_layout.ensure_row_count(row_count);

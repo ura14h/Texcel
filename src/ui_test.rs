@@ -3470,6 +3470,24 @@ fn wrap_height_cache_keeps_horizontal_max_until_document_revision_changes() {
 }
 
 #[test]
+// Verify that switching live/source mode lets a row shrink without a new edit.
+fn row_heights_are_measured_again_after_a_display_mode_switch() {
+    let mut layout = GridRowLayout::default();
+    layout.ensure_row_count(4);
+    layout.sync_text_display(CellDisplayMode::View, false);
+    layout.update_row(2, 7, 10, 84.0);
+    layout.sync_text_display(CellDisplayMode::View, false);
+    assert_eq!(layout.row_height(2), 84.0);
+    layout.sync_text_display(CellDisplayMode::Source, false);
+    assert_eq!(layout.row_height(2), ROW_HEIGHT);
+    assert_eq!(layout.update_row(2, 7, 11, ROW_HEIGHT), 0.0);
+    assert_eq!(layout.row_height(2), ROW_HEIGHT);
+    layout.sync_text_display(CellDisplayMode::Source, true);
+    layout.update_row(2, 7, 12, 84.0);
+    assert_eq!(layout.row_height(2), 84.0);
+}
+
+#[test]
 // Verify that CSV layout actions change only the view state.
 fn csv_layout_actions_change_only_the_view_state() {
     let ctx = egui::Context::default();

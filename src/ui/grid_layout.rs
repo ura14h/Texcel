@@ -5,6 +5,8 @@ pub(super) struct GridRowLayout {
     pub(super) row_count: usize,
     pub(super) layout_revision: u64,
     pub(super) display_generation: u64,
+    /// Live/source mode and invisible marks the heights were measured with.
+    pub(super) text_display: Option<(CellDisplayMode, bool)>,
     pub(super) measured_rows: HashMap<usize, (u64, u64, f32)>,
     pub(super) height_deltas: HashMap<usize, f32>,
     /// Grid scale the stored heights were measured at; zero means 100%.
@@ -28,6 +30,18 @@ impl GridRowLayout {
             return;
         }
         self.display_generation = generation;
+        self.measured_rows.clear();
+        self.height_deltas.clear();
+    }
+
+    /// Resets cached row measurements when live/source mode or invisible marks change.
+    /// Heights only grow within one document revision, so a switch must start over.
+    pub(super) fn sync_text_display(&mut self, mode: CellDisplayMode, show_invisibles: bool) {
+        let key = Some((mode, show_invisibles));
+        if self.text_display == key {
+            return;
+        }
+        self.text_display = key;
         self.measured_rows.clear();
         self.height_deltas.clear();
     }
