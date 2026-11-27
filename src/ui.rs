@@ -59,6 +59,7 @@ mod formula_bar;
 mod formula_functions;
 mod grid_focus;
 mod grid_theme;
+#[cfg(any(test, target_os = "macos"))]
 pub(crate) use about_dialog::APP_COPYRIGHT;
 mod input_sequence;
 mod menu_focus;

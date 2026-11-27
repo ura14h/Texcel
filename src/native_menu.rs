@@ -439,7 +439,7 @@ pub(crate) fn translate_windows_message(message: *const std::ffi::c_void) -> boo
     }
     // SAFETY: winit invokes this hook with a pointer to its current Win32 MSG.
     let message = unsafe { &*(message.cast::<MSG>()) };
-    if !is_winit_window(message.hwnd) {
+    if !is_winit_window(message.hwnd) || is_help_window(message.hwnd) {
         return false;
     }
     let hwnd = message.hwnd as isize;
@@ -460,11 +460,40 @@ pub(crate) fn attach_windows_hwnd(menu: &Menu, hwnd: isize) -> Option<isize> {
     // SAFETY: the message hook verifies this is a live Winit HWND on the UI thread.
     if !unsafe { menu.is_visible_on_hwnd(hwnd) } {
         // SAFETY: the message hook verifies this is a live Winit HWND on the UI thread.
-        if unsafe { menu.init_for_hwnd(hwnd) }.is_err() {
-            return None;
+        match unsafe { menu.init_for_hwnd(hwnd) } {
+            Ok(()) => (),
+            // muda keeps a record for every window it was attached to, also after the
+            // window closed. Windows reuses window handles, so a new window can match a
+            // closed one's stale record; drop that record and attach again.
+            Err(muda::Error::AlreadyInitialized) => {
+                // SAFETY: as above; removing only clears muda's record and menu bar.
+                let _ = unsafe { menu.remove_for_hwnd(hwnd) };
+                // SAFETY: as above.
+                unsafe { menu.init_for_hwnd(hwnd) }.ok()?;
+            }
+            Err(_) => return None,
         }
     }
     Some(menu.haccel())
+}
+
+/// Recognizes the Help window by its title, in either language, so it gets no menu bar.
+#[cfg(target_os = "windows")]
+fn is_help_window(hwnd: windows_sys::Win32::Foundation::HWND) -> bool {
+    use windows_sys::Win32::UI::WindowsAndMessaging::GetWindowTextW;
+    let mut title = [0u16; 128];
+    // SAFETY: the buffer is writable and `hwnd` is a live Winit window from the hook.
+    let length = unsafe { GetWindowTextW(hwnd, title.as_mut_ptr(), title.len() as i32) };
+    if length <= 0 {
+        return false;
+    }
+    let title = String::from_utf16_lossy(&title[..length as usize]);
+    [
+        crate::i18n::Language::English,
+        crate::i18n::Language::Japanese,
+    ]
+    .into_iter()
+    .any(|language| crate::i18n::text(language, "help-window-title") == title)
 }
 
 /// Filters message-hook windows to Winit's owned top-level class.
