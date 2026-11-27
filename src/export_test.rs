@@ -1403,3 +1403,30 @@ fn export_preflight_checks_cancellation_between_conversion_steps() {
             .contains("キャンセル")
     );
 }
+
+#[test]
+// Writes Markdown `<br>` line breaks as real line breaks in CSV and TSV output.
+fn markdown_line_break_tags_become_newlines_in_csv_and_tsv() {
+    for (destination, modifiers, expected) in [
+        ("breaks.csv", ModifierOutput::Convert, "value\n\"a\nb\"\n"),
+        ("breaks.csv", ModifierOutput::TextOnly, "value\n\"a\nb\"\n"),
+        ("breaks.tsv", ModifierOutput::Convert, "value\n\"a\nb\"\n"),
+    ] {
+        let mut request = request_for_source(
+            ExportSource::Markdown(markdown_source("| value |\n| --- |\n| a<br>b |\n")),
+            ExportFormat::Csv,
+            FormulaOutput::Formula,
+            modifiers,
+            MarkdownHeader::UseFirstRow,
+            destination,
+        );
+        request.options.scope = ExportScope::Selected(request.tables[0].id);
+        let prepared = prepare_export_cancellable(&request, None, &AtomicBool::new(false))
+            .expect("the line break exports");
+        assert_eq!(
+            std::str::from_utf8(&prepared.artifacts[0].bytes).expect("UTF-8 output"),
+            expected,
+            "{destination} {modifiers:?}"
+        );
+    }
+}

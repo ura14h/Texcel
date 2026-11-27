@@ -150,7 +150,7 @@ Below, "Ctrl/Cmd" means Ctrl on Windows and Linux and Cmd on macOS.
 - Enter confirms and moves down; Tab confirms and moves right. Add Shift to move the other way. ✓ in the formula bar confirms without moving.
 - Esc or ✗ in the formula bar cancels the entry and restores the previous content.
 - While you edit in the formula bar, right-click the text to Undo, Redo, Cut, Copy, Paste, or Select All.
-- Alt+Enter starts a new line inside the cell (saved as `<br>`).
+- Alt+Enter starts a new line inside the cell. In a Markdown document it types `<br>`, which becomes a real line break when saved as CSV or TSV.
 - Delete or Backspace clears the selected cells.
 
 When you start typing on a selected cell, the arrow keys confirm the entry and move to the next cell. When you start with F2 or a double-click, the arrow keys move the text cursor.

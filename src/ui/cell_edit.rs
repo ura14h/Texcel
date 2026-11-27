@@ -387,8 +387,15 @@ impl TexcelApp {
     }
 
     /// Inserts a line break into the active cell edit.
+    /// Markdown cells take the `<br>` tag they are saved with; CSV cells take a real newline.
     pub(super) fn insert_line_break(&mut self, ctx: &egui::Context) {
-        let Some(document_id) = self.workspace.active_document().map(|document| document.id) else {
+        let Some((document_id, inserted)) = self.workspace.active_document().map(|document| {
+            let markdown = matches!(
+                document.source.as_deref(),
+                Some(crate::source::SourceDocument::Markdown(_))
+            );
+            (document.id, if markdown { "<br>" } else { "\n" })
+        }) else {
             return;
         };
         let id = editor_id(document_id, self.edit.session_id);
@@ -404,13 +411,15 @@ impl TexcelApp {
         let char_end = range.end.0;
         let byte_start = byte_index_for_char(&self.edit.buffer, char_start);
         let byte_end = byte_index_for_char(&self.edit.buffer, char_end);
-        self.edit.buffer.replace_range(byte_start..byte_end, "\n");
+        self.edit
+            .buffer
+            .replace_range(byte_start..byte_end, inserted);
         self.edit.mark_buffer_changed();
         if let Some(mut state) = state {
             state
                 .cursor
                 .set_char_range(Some(egui::text::CCursorRange::one(
-                    egui::text::CCursor::new(char_start + 1),
+                    egui::text::CCursor::new(char_start + inserted.chars().count()),
                 )));
             state.store(ctx, id);
         }

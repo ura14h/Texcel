@@ -1868,7 +1868,7 @@ fn kittest_checks_appearance_and_saves_pngs_when_wgpu_is_available() {
 fn invisible_markers_and_font_fallback_order_are_display_only() {
     let source = "A B\t日本\r\nあ\u{00a0}\u{200b}";
     let visible = visualize_invisibles(source, true);
-    assert_eq!(visible, "A·B⇥日本↵\nあ⍽⟂");
+    assert_eq!(visible, "A·B⇥日本↲\nあ⍽⟂");
     assert_eq!(visualize_invisibles(source, false), source);
     assert_eq!(source, "A B\t日本\r\nあ\u{00a0}\u{200b}");
 
@@ -3342,7 +3342,8 @@ fn ime_click_alt_enter_and_manual_scroll_keep_their_event_semantics() {
         ],
     );
     assert!(alt_app.edit.is_editing());
-    assert_eq!(alt_app.edit.buffer, "\n");
+    // A new document is Markdown, so the in-cell break is the `<br>` tag it is saved with.
+    assert_eq!(alt_app.edit.buffer, "<br>");
     assert_eq!(
         alt_app.active_selection().map(|(_, cell)| cell),
         Some(alt_address)

@@ -79,12 +79,12 @@ pub(super) fn visualize_invisibles(text: &str, enabled: bool) -> std::borrow::Co
         match character {
             ' ' => visible.push('·'),
             '\t' => visible.push('⇥'),
-            '\n' => visible.push_str("↵\n"),
+            '\n' => visible.push_str("↲\n"),
             '\r' => {
                 if chars.peek() == Some(&'\n') {
                     chars.next();
                 }
-                visible.push_str("↵\n");
+                visible.push_str("↲\n");
             }
             '\u{00a0}' => visible.push('⍽'),
             '\u{200b}' => visible.push('⟂'),
