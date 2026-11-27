@@ -233,7 +233,12 @@ impl TexcelApp {
             layout
                 .column(address.column)
                 .and_then(|column| column.width)
-                .unwrap_or(DEFAULT_COLUMN_WIDTH_UNITS),
+                .unwrap_or_else(|| {
+                    crate::document::column_width_units_for_pixels(
+                        crate::document::DEFAULT_COLUMN_WIDTH_PIXELS,
+                        self.grid_character_width,
+                    )
+                }),
         );
         self.layout_dialog = Some(LayoutDialogState {
             document_id,

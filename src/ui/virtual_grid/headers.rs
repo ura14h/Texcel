@@ -225,6 +225,7 @@ impl GridViewportFrame<'_> {
                     column: *column,
                     start_width: self.grid.layout.column_width_pixels(*column) as f32,
                     scale: self.grid.layout.scale(),
+                    character_width: self.grid.layout.character_width(),
                 },
                 outcome,
             );
@@ -356,6 +357,8 @@ struct HeaderResizeTarget {
     start_width: f32,
     /// Sheet zoom of the drag, so the stored width stays at 100%.
     scale: f32,
+    /// Width of one column width unit at 100%.
+    character_width: f64,
 }
 
 // Applies one column header drag as a local display layout value.
@@ -372,6 +375,7 @@ fn update_header_resize(
         column,
         start_width,
         scale,
+        character_width,
     } = header;
     if response.hovered() || response.dragged() {
         ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeHorizontal);
@@ -401,9 +405,9 @@ fn update_header_resize(
         )
     {
         let pixels = (drag.width_start + pointer.x - drag.pointer_start).max(1.0) / scale;
-        // Convert pixels to Excel-style character units, as stored in the layout.
+        // Convert pixels to half-width monospace characters, as stored in the layout.
         let width =
-            ((pixels as f64 - 5.0) / 7.0).clamp(0.1, crate::document::MAX_COLUMN_WIDTH_UNITS);
+            crate::document::column_width_units_for_pixels(f64::from(pixels), character_width);
         outcome.resized_layout = Some((
             document_id,
             table_id,

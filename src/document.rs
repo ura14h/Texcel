@@ -67,8 +67,18 @@ pub const MAX_ROWS: usize = 1_048_576;
 pub const MAX_COLUMNS: usize = 16_384;
 pub(super) const MAX_FORMAT_RANGE_CELLS: usize = 50_000;
 pub const DEFAULT_COLUMN_WIDTH_PIXELS: f64 = 112.0;
-pub const DEFAULT_COLUMN_WIDTH_UNITS: f64 = (DEFAULT_COLUMN_WIDTH_PIXELS - 5.0) / 7.0;
-pub(super) const MAX_COLUMN_WIDTH_UNITS: f64 = 255.0;
+/// Room around a sized column's text: the cell's 6-point inset on each side.
+pub const COLUMN_TEXT_PADDING_PIXELS: f64 = 12.0;
+/// One half-width character of the bundled grid monospace font at 100%, the width unit
+/// assumed where the drawn font is unknown.
+pub const REFERENCE_CHARACTER_WIDTH: f64 = 7.0;
+pub const MAX_COLUMN_WIDTH_UNITS: f64 = 255.0;
+
+/// Converts a column's drawn width at 100% to width units: half-width monospace characters.
+pub fn column_width_units_for_pixels(pixels: f64, character_width: f64) -> f64 {
+    ((pixels - COLUMN_TEXT_PADDING_PIXELS) / character_width.max(1.0))
+        .clamp(0.1, MAX_COLUMN_WIDTH_UNITS)
+}
 pub(super) const MERGE_ROW_BLOCK_SIZE: usize = 256;
 
 mod cell;

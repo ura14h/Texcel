@@ -14,12 +14,24 @@ pub(super) const MAX_SHEET_ZOOM: f32 = 4.0;
 pub(super) struct ScaledLayout<'a> {
     layout: &'a TableLayout,
     scale: f32,
+    /// Width of one half-width character of the grid monospace font at 100%.
+    character_width: f64,
 }
 
 impl<'a> ScaledLayout<'a> {
-    /// Views a stored layout at one grid scale.
-    pub(super) fn new(layout: &'a TableLayout, scale: f32) -> Self {
-        Self { layout, scale }
+    /// Views a stored layout at one grid scale, with sized columns measured in characters
+    /// of `character_width`.
+    pub(super) fn new(layout: &'a TableLayout, scale: f32, character_width: f64) -> Self {
+        Self {
+            layout,
+            scale,
+            character_width,
+        }
+    }
+
+    /// Returns the width of one column width unit at 100%.
+    pub(super) fn character_width(&self) -> f64 {
+        self.character_width
     }
 
     /// Returns the factor applied to every grid size.
@@ -29,12 +41,16 @@ impl<'a> ScaledLayout<'a> {
 
     /// Returns one column's zoomed width in points.
     pub(super) fn column_width_pixels(&self, index: usize) -> f64 {
-        self.layout.column_width_pixels(index) * f64::from(self.scale)
+        self.layout
+            .column_width_pixels_with(index, self.character_width)
+            * f64::from(self.scale)
     }
 
     /// Returns the zoomed width of the columns before an index.
     pub(super) fn prefix_column_width_pixels(&self, columns: usize) -> f64 {
-        self.layout.prefix_column_width_pixels(columns) * f64::from(self.scale)
+        self.layout
+            .prefix_column_width_pixels_with(columns, self.character_width)
+            * f64::from(self.scale)
     }
 }
 
@@ -90,3 +106,21 @@ pub(super) fn grid_font_size(scale: f32) -> f32 {
 #[cfg(test)]
 #[path = "grid_scale_test.rs"]
 mod tests;
+
+/// Measures one half-width character of the grid monospace font at 100%, the column width
+/// unit. Falls back to the bundled font's width before the grid fonts are installed.
+pub(super) fn grid_character_width(ctx: &egui::Context) -> f64 {
+    let family = grid_mono_font_family(false);
+    let width = ctx.fonts_mut(|fonts| {
+        if fonts.families().contains(&family) {
+            fonts.glyph_width(&FontId::new(GRID_TEXT_SIZE, family), '0')
+        } else {
+            0.0
+        }
+    });
+    if width > 0.0 {
+        f64::from(width)
+    } else {
+        crate::document::REFERENCE_CHARACTER_WIDTH
+    }
+}

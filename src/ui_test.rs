@@ -22,7 +22,7 @@ fn wrapped_row_cells(
     wrapped_row_cells_for_ranges(
         document,
         table,
-        ScaledLayout::new(layout, 1.0),
+        ScaledLayout::new(layout, 1.0, crate::document::REFERENCE_CHARACTER_WIDTH),
         row,
         &[visible_columns],
         true,
@@ -351,7 +351,11 @@ fn both_mode_and_markdown_breaks_expand_automatic_row_height() {
         GridTable {
             document: &formula_document,
             table: &formula_document.tables[0],
-            layout: ScaledLayout::new(&formula_document.tables[0].layout, 1.0),
+            layout: ScaledLayout::new(
+                &formula_document.tables[0].layout,
+                1.0,
+                crate::document::REFERENCE_CHARACTER_WIDTH,
+            ),
             is_markdown: false,
             markdown_source: None,
             markdown_table_index: None,
@@ -407,7 +411,11 @@ fn both_mode_and_markdown_breaks_expand_automatic_row_height() {
         GridTable {
             document: &markdown_document,
             table: &markdown_document.tables[0],
-            layout: ScaledLayout::new(&markdown_document.tables[0].layout, 1.0),
+            layout: ScaledLayout::new(
+                &markdown_document.tables[0].layout,
+                1.0,
+                crate::document::REFERENCE_CHARACTER_WIDTH,
+            ),
             is_markdown: true,
             markdown_source: Some(&markdown),
             markdown_table_index: Some(0),
@@ -494,7 +502,7 @@ fn appearance_changes_keep_the_active_edit_session_and_selection_state() {
     app.edit.buffer = "編集中の下書き".to_owned();
     let session_id = app.edit.session_id;
     app.font_preset = FontPreset::NotoSansJp;
-    app.ui_font_size = 17.0;
+    app.ui_font_points = 17.0;
     app.theme = ThemeChoice::Dark;
     app.apply_appearance(&ctx);
     let mut output = ctx.run_ui(
@@ -544,7 +552,7 @@ fn zoom_shortcuts_change_the_sheet_zoom_and_leave_cell_edits_untouched() {
     app.grid_row_layouts
         .insert((document_id, table_id), row_layout);
     let ui_zoom = app.ui_zoom();
-    let saved_font_size = app.snapshot_settings().app.ui_font_size;
+    let saved_font_size = app.snapshot_settings().app.ui_font_points;
     let mut frame = eframe::Frame::_new_kittest();
     let mut time = 0.0;
     run_frame(
@@ -561,7 +569,7 @@ fn zoom_shortcuts_change_the_sheet_zoom_and_leave_cell_edits_untouched() {
         (ctx.zoom_factor() - ui_zoom).abs() < 0.001,
         "the UI scale stays"
     );
-    assert_eq!(app.snapshot_settings().app.ui_font_size, saved_font_size);
+    assert_eq!(app.snapshot_settings().app.ui_font_points, saved_font_size);
     let row_layout = &app.grid_row_layouts[&(document_id, table_id)];
     assert_eq!(row_layout.scale, app.grid_scale());
     assert_ne!(
@@ -1754,7 +1762,7 @@ fn kittest_checks_appearance_and_saves_pngs_when_wgpu_is_available() {
         let session_id = app.edit.session_id;
         app.font_preset = FontPreset::NotoSansJp;
         app.theme = ThemeChoice::Dark;
-        app.ui_font_size = 16.0;
+        app.ui_font_points = 16.0;
         let document = &app.workspace.documents[&document_id];
         let view = document.view(table_id).unwrap();
         (

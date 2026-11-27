@@ -42,10 +42,19 @@ pub struct TableLayout {
     columns: BTreeMap<usize, ColumnLayout>,
     merge_geometry: Arc<MergeGeometry>,
     frozen: FrozenPanes,
-    column_width_deltas: BTreeMap<usize, f64>,
+    column_width_sums: BTreeMap<usize, ColumnWidthSum>,
     /// Set when an imported sheet had row heights or hidden rows; only the import report reads it.
     imported_row_layout: bool,
     revision: u64,
+}
+
+/// Fenwick-tree node for sized columns: their width units, how many there are, and how
+/// many are zero wide. Positions follow from these for any character width.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+struct ColumnWidthSum {
+    units: f64,
+    sized: i64,
+    zero: i64,
 }
 
 /// Immutable merge ranges and indexes shared by source and view layouts.
@@ -68,7 +77,6 @@ struct TableLayoutWireRef<'a> {
     merges_by_start_row: &'a BTreeMap<usize, BTreeSet<MergedRange>>,
     merge_row_blocks: &'a BTreeMap<usize, MergeRowBlock>,
     frozen: &'a FrozenPanes,
-    column_width_deltas: &'a BTreeMap<usize, f64>,
     revision: u64,
 }
 
@@ -85,8 +93,6 @@ struct TableLayoutWire {
     #[serde(default)]
     frozen: FrozenPanes,
     #[serde(default)]
-    column_width_deltas: BTreeMap<usize, f64>,
-    #[serde(default)]
     revision: u64,
 }
 
@@ -102,7 +108,6 @@ impl Serialize for TableLayout {
             merges_by_start_row: &self.merge_geometry.merges_by_start_row,
             merge_row_blocks: &self.merge_geometry.merge_row_blocks,
             frozen: &self.frozen,
-            column_width_deltas: &self.column_width_deltas,
             revision: self.revision,
         }
         .serialize(serializer)
@@ -116,6 +121,8 @@ impl<'de> Deserialize<'de> for TableLayout {
         D: serde::Deserializer<'de>,
     {
         let wire = TableLayoutWire::deserialize(deserializer)?;
+        // The width sums are derived data, so they are rebuilt from the columns.
+        let column_width_sums = geometry::column_width_sums(&wire.columns);
         Ok(Self {
             columns: wire.columns,
             merge_geometry: Arc::new(MergeGeometry {
@@ -125,7 +132,7 @@ impl<'de> Deserialize<'de> for TableLayout {
             }),
             frozen: wire.frozen,
             imported_row_layout: false,
-            column_width_deltas: wire.column_width_deltas,
+            column_width_sums,
             revision: wire.revision,
         })
     }

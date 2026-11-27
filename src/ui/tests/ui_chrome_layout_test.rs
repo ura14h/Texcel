@@ -163,7 +163,7 @@ fn detail_button_stays_visible_while_editing_long_source() {
             .view_mut(table_id)
             .unwrap()
             .set_selection(CellRange::single(address));
-        app.ui_font_size = 21.0;
+        app.ui_font_points = 21.0;
         app.apply_appearance(&ctx);
     }
     harness.step();

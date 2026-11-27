@@ -188,6 +188,8 @@ pub struct AutoFitRequest {
     pub font_layout_generation: u64,
     pub minimum_column_width_pixels: f32,
     pub maximum_column_width_pixels: f32,
+    /// Width of one column width unit at 100%: a half-width grid monospace character.
+    pub character_width: f64,
 }
 
 // The kind of async operation, so the UI can show clear progress and errors.

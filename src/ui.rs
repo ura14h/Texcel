@@ -26,9 +26,9 @@ use crate::conversion_report::{ImportReport, ImportReportState};
 use crate::csv_adapter::{CsvCellChange, EncodingChoice};
 use crate::document::{
     CalcStatus, Cell, CellAddress, CellDisplayMode, CellHyperlink, CellInput, CellRange,
-    ColumnLayout, DEFAULT_COLUMN_WIDTH_UNITS, Document, DocumentId, EditMode, EditSession,
-    FrozenPanes, InputAction, InputKey, LayoutTarget, LayoutValue, MAX_COLUMNS, MAX_ROWS,
-    StructureAxis, StructureOperation, TableId, TableLayout, Workspace,
+    ColumnLayout, Document, DocumentId, EditMode, EditSession, FrozenPanes, InputAction, InputKey,
+    LayoutTarget, LayoutValue, MAX_COLUMNS, MAX_ROWS, StructureAxis, StructureOperation, TableId,
+    TableLayout, Workspace,
 };
 use crate::export::{
     ExportFormat, ExportOptions, ExportRequest, ExportScope, ExportSource, ExportTableMeta,
@@ -118,9 +118,11 @@ pub struct TexcelApp {
     language: Language,
     font_preset: FontPreset,
     installed_font_preset: FontPreset,
-    ui_font_size: f32,
+    ui_font_points: f32,
     /// This window's sheet zoom; the UI text size never changes it.
     sheet_zoom: SheetZoom,
+    /// Width of one half-width grid monospace character at 100%, the column width unit.
+    grid_character_width: f64,
     /// What to report when a user command's background job for a document succeeds.
     completion_notices: BTreeMap<DocumentId, (JobToken, Message)>,
     show_invisibles: bool,

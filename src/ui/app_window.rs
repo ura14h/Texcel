@@ -3,7 +3,7 @@ use super::*;
 impl TexcelApp {
     /// Converts the UI text size into egui's scale for every widget outside the sheet.
     pub(super) fn ui_zoom(&self) -> f32 {
-        self.ui_font_size / visual::BODY_SIZE
+        crate::settings::ui_font_points_to_logical(self.ui_font_points) / visual::BODY_SIZE
     }
 
     /// Returns the factor the grid applies on top of the UI scale to show this window's zoom.
@@ -12,15 +12,15 @@ impl TexcelApp {
     }
 
     /// Updates the app-wide UI text size and applies it to every window.
-    pub(super) fn set_ui_font_size(&mut self, ctx: &egui::Context, size: f32) {
+    pub(super) fn set_ui_font_points(&mut self, ctx: &egui::Context, size: f32) {
         let next = size.round().clamp(
-            crate::settings::MIN_UI_FONT_SIZE,
-            crate::settings::MAX_UI_FONT_SIZE,
+            crate::settings::MIN_UI_FONT_POINTS,
+            crate::settings::MAX_UI_FONT_POINTS,
         );
-        if (next - self.ui_font_size).abs() < f32::EPSILON {
+        if (next - self.ui_font_points).abs() < f32::EPSILON {
             return;
         }
-        self.ui_font_size = next;
+        self.ui_font_points = next;
         self.font_layout_generation = self.font_layout_generation.saturating_add(1);
         self.mark_app_preference_change(AppPreferenceField::UiFontSize);
         self.apply_appearance(ctx);

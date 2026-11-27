@@ -8,7 +8,7 @@ fn scaled_layout_multiplies_only_pixel_sizes() {
         LayoutTarget::Column(1),
         LayoutValue::Column(Some(ColumnLayout { width: Some(20.0) })),
     );
-    let scaled = ScaledLayout::new(&layout, 2.0);
+    let scaled = ScaledLayout::new(&layout, 2.0, crate::document::REFERENCE_CHARACTER_WIDTH);
     assert_eq!(
         scaled.column_width_pixels(1),
         layout.column_width_pixels(1) * 2.0
@@ -38,4 +38,21 @@ fn sheet_zoom_is_clamped_to_whole_percents() {
     assert_eq!(clamp_sheet_zoom(5.0), MAX_SHEET_ZOOM);
     assert_eq!(clamp_sheet_zoom(1.234), 1.23);
     assert_eq!(clamp_sheet_zoom(f32::NAN), 1.0);
+}
+
+// The column width unit is one half-width character of the bundled monospace font.
+#[test]
+fn grid_character_width_measures_the_bundled_monospace_font() {
+    let ctx = egui::Context::default();
+    let mut output = ctx.run_ui(egui::RawInput::default(), |_| {});
+    output.textures_delta.clear();
+    assert_eq!(
+        grid_character_width(&ctx),
+        crate::document::REFERENCE_CHARACTER_WIDTH,
+        "the reference width is used before the grid fonts exist"
+    );
+    install_texcel_grid_fonts(&ctx, crate::settings::FontPreset::NotoSansJp);
+    let mut output = ctx.run_ui(egui::RawInput::default(), |_| {});
+    output.textures_delta.clear();
+    assert_eq!(grid_character_width(&ctx), 7.0);
 }

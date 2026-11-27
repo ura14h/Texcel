@@ -59,7 +59,7 @@ pub(super) fn draw_appearance_page(
     font_preset: &mut FontPreset,
     font_preview_details_open: &mut bool,
     theme: &mut ThemeChoice,
-    ui_font_size: &mut f32,
+    ui_font_points: &mut f32,
     show_invisibles: &mut bool,
 ) {
     let LanguageControls {
@@ -89,35 +89,39 @@ pub(super) fn draw_appearance_page(
             let width = control_width(ui);
             ui.set_min_width(width);
             ui.set_max_width(width);
-            egui::ComboBox::from_id_salt("texcel_font_preset")
-                .selected_text(match font_preset {
-                    FontPreset::Auto => text(language, "settings-font-auto"),
-                    FontPreset::Default => text(language, "settings-font-default"),
-                    FontPreset::NotoSansJp => text(language, "settings-font-noto"),
-                })
-                .width(control_width(ui))
-                .show_ui(ui, |ui| {
-                    ui.selectable_value(
-                        font_preset,
-                        FontPreset::Auto,
-                        text(language, "settings-font-auto"),
-                    );
-                    ui.selectable_value(
-                        font_preset,
-                        FontPreset::Default,
-                        text(language, "settings-font-default"),
-                    );
-                    ui.selectable_value(
-                        font_preset,
-                        FontPreset::NotoSansJp,
-                        text(language, "settings-font-noto"),
-                    );
-                });
+            // The text size sits right of the font, as in a word processor's font bar.
+            ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = visual::SPACE_8;
+                let size_width = 84.0_f32.min(width / 3.0);
+                let font_width = (width - size_width - visual::SPACE_8).max(60.0);
+                egui::ComboBox::from_id_salt("texcel_font_preset")
+                    .selected_text(match font_preset {
+                        FontPreset::Auto => text(language, "settings-font-auto"),
+                        FontPreset::Default => text(language, "settings-font-default"),
+                        FontPreset::NotoSansJp => text(language, "settings-font-noto"),
+                    })
+                    .width(font_width)
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(
+                            font_preset,
+                            FontPreset::Auto,
+                            text(language, "settings-font-auto"),
+                        );
+                        ui.selectable_value(
+                            font_preset,
+                            FontPreset::Default,
+                            text(language, "settings-font-default"),
+                        );
+                        ui.selectable_value(
+                            font_preset,
+                            FontPreset::NotoSansJp,
+                            text(language, "settings-font-noto"),
+                        );
+                    });
+                ui_font_points_selector(ui, ui_font_points, size_width, language);
+            });
             font_preview(ui, font_preview_details_open, language);
         });
-    });
-    settings_row(ui, &text(language, "settings-ui-font-size"), |ui| {
-        ui_font_size_slider(ui, ui_font_size);
     });
 
     ui.add_space(visual::SPACE_4);
@@ -131,38 +135,27 @@ pub(super) fn draw_appearance_page(
     );
 }
 
-/// Picks the UI text size in whole points, applying it only when a drag ends.
-///
-/// Applying it while dragging would resize this dialog under the pointer.
-fn ui_font_size_slider(ui: &mut egui::Ui, ui_font_size: &mut f32) {
-    let row_width = control_width(ui);
-    let draft_id = Id::unique("texcel_ui_font_size_draft");
-    let mut draft = ui
-        .data(|data| data.get_temp::<f32>(draft_id))
-        .unwrap_or(*ui_font_size);
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = visual::SPACE_8;
-        let value_width = 52.0;
-        let slider_width = (row_width - value_width - visual::SPACE_8).max(60.0);
-        ui.spacing_mut().slider_width = slider_width;
-        let response = ui.add_sized(
-            [slider_width, CHROME_CONTROL_HEIGHT],
-            egui::Slider::new(
-                &mut draft,
-                crate::settings::MIN_UI_FONT_SIZE..=crate::settings::MAX_UI_FONT_SIZE,
-            )
-            .step_by(1.0)
-            .show_value(false),
-        );
-        if response.dragged() {
-            ui.data_mut(|data| data.insert_temp(draft_id, draft));
-        } else {
-            ui.data_mut(|data| data.remove::<f32>(draft_id));
-            *ui_font_size = draft;
-        }
-        ui.add_sized(
-            [value_width, CHROME_CONTROL_HEIGHT],
-            egui::Label::new(egui::RichText::new(format!("{draft:.0} px")).monospace()),
-        );
-    });
+/// Picks the interface text size in points from the offered list.
+fn ui_font_points_selector(
+    ui: &mut egui::Ui,
+    ui_font_points: &mut f32,
+    width: f32,
+    language: Language,
+) {
+    let label = text(language, "settings-ui-font-size");
+    let points_text = |points: f32| {
+        Message::new("settings-ui-font-points")
+            .with_text("points", format!("{points:.0}"))
+            .resolve(language)
+    };
+    let response = egui::ComboBox::from_id_salt("texcel_ui_font_points")
+        .selected_text(points_text(*ui_font_points))
+        .width(width)
+        .show_ui(ui, |ui| {
+            for points in crate::settings::ui_font_point_choices() {
+                ui.selectable_value(ui_font_points, points, points_text(points));
+            }
+        })
+        .response;
+    response.on_hover_text(label);
 }

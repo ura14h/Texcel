@@ -31,7 +31,11 @@ fn markdown_text_formula_uses_the_calculation_result_for_view_and_accessibility(
             GridTable {
                 document: &document,
                 table,
-                layout: ScaledLayout::new(&table.layout, 1.0),
+                layout: ScaledLayout::new(
+                    &table.layout,
+                    1.0,
+                    crate::document::REFERENCE_CHARACTER_WIDTH
+                ),
                 is_markdown: true,
                 markdown_source: None,
                 markdown_table_index: None,
@@ -47,7 +51,11 @@ fn markdown_text_formula_uses_the_calculation_result_for_view_and_accessibility(
             GridTable {
                 document: &document,
                 table,
-                layout: ScaledLayout::new(&table.layout, 1.0),
+                layout: ScaledLayout::new(
+                    &table.layout,
+                    1.0,
+                    crate::document::REFERENCE_CHARACTER_WIDTH
+                ),
                 is_markdown: true,
                 markdown_source: None,
                 markdown_table_index: None,
@@ -85,7 +93,11 @@ fn markdown_grid_accessibility_keeps_a_literal_apostrophe() {
             GridTable {
                 document: &document,
                 table,
-                layout: ScaledLayout::new(&table.layout, 1.0),
+                layout: ScaledLayout::new(
+                    &table.layout,
+                    1.0,
+                    crate::document::REFERENCE_CHARACTER_WIDTH
+                ),
                 is_markdown: true,
                 markdown_source: Some(&source),
                 markdown_table_index: Some(0),

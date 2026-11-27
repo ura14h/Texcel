@@ -148,7 +148,11 @@ impl TexcelApp {
             pixels_per_point,
             font_layout_generation: self.font_layout_generation,
             minimum_column_width_pixels: 32.0,
-            maximum_column_width_pixels: crate::document::MAX_COLUMN_WIDTH_UNITS as f32 * 7.0 + 5.0,
+            maximum_column_width_pixels: (crate::document::MAX_COLUMN_WIDTH_UNITS
+                * self.grid_character_width
+                + crate::document::COLUMN_TEXT_PADDING_PIXELS)
+                as f32,
+            character_width: self.grid_character_width,
         };
         if self.file_worker.auto_fit(token, request).is_err() {
             self.status = Some(Message::new("status-layout-change-failed"));

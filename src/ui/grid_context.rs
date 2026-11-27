@@ -20,6 +20,7 @@ impl<'a> GridTable<'a> {
         document: &'a Document,
         table: &'a crate::document::Table,
         scale: f32,
+        character_width: f64,
     ) -> Self {
         let markdown_source = match document.source.as_deref() {
             Some(SourceDocument::Markdown(markdown)) => Some(markdown.as_ref()),
@@ -33,6 +34,7 @@ impl<'a> GridTable<'a> {
                     .view(table.id)
                     .map_or(&table.layout, |view| view.layout.as_ref()),
                 scale,
+                character_width,
             ),
             is_markdown: markdown_source.is_some(),
             markdown_source,

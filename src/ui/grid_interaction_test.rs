@@ -479,7 +479,11 @@ fn autofit_all_columns_sets_each_table_column_width() {
     for column in 0..3 {
         let width = layout.column(column).and_then(|column| column.width);
         assert!(
-            width.is_some_and(|width| width < DEFAULT_COLUMN_WIDTH_UNITS),
+            width.is_some_and(|width| width
+                < crate::document::column_width_units_for_pixels(
+                    crate::document::DEFAULT_COLUMN_WIDTH_PIXELS,
+                    harness.state().grid_character_width
+                )),
             "column {column} fits its short values: {width:?}"
         );
     }
@@ -1330,7 +1334,7 @@ fn sheet_zoom_and_ui_text_size_are_independent() {
 
     harness.state_mut().set_sheet_zoom(1.0);
     let ctx = harness.ctx.clone();
-    harness.state_mut().set_ui_font_size(&ctx, 20.0);
+    harness.state_mut().set_ui_font_points(&ctx, 20.0);
     harness.run_steps(3);
     assert!((harness.ctx.zoom_factor() - 20.0 / visual::BODY_SIZE).abs() < 0.001);
     let after_ui_size = cell_physical_width(&harness, "B2");

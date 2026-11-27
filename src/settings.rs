@@ -67,24 +67,52 @@ pub struct AppPreferences {
     pub language: LanguageChoice,
     pub theme: ThemeChoice,
     pub font_preset: FontPreset,
-    /// Text size in points for everything but the sheet: menus, bars, tabs, status, dialogs.
-    pub ui_font_size: f32,
+    /// Text size in typographic points for everything but the sheet: menus, bars, tabs,
+    /// status, dialogs. `ui_font_points_to_logical` turns it into egui's logical points.
+    pub ui_font_points: f32,
     pub show_invisibles: bool,
 }
 
-/// The smallest UI text size the settings accept.
-pub const MIN_UI_FONT_SIZE: f32 = 10.0;
-/// The largest UI text size the settings accept.
-pub const MAX_UI_FONT_SIZE: f32 = 24.0;
+/// The smallest UI text size the settings accept, in points.
+pub const MIN_UI_FONT_POINTS: f32 = 6.0;
+/// The largest UI text size the settings accept, in points.
+pub const MAX_UI_FONT_POINTS: f32 = 24.0;
+/// The text sizes offered in Settings, in points.
+pub const UI_FONT_POINT_CHOICES: [f32; 12] = [
+    6.0, 8.0, 9.0, 10.0, 11.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0,
+];
 
-/// Follows the platform's standard UI text size: 13 on macOS, 12 on Windows, 14 elsewhere.
-pub fn default_ui_font_size() -> f32 {
+/// Follows the platform's standard UI text size: 13 pt on macOS, 9 pt on Windows, 11 pt
+/// elsewhere.
+pub fn default_ui_font_points() -> f32 {
     if cfg!(target_os = "macos") {
         13.0
     } else if cfg!(target_os = "windows") {
-        12.0
+        9.0
     } else {
-        14.0
+        11.0
+    }
+}
+
+/// Lists the offered sizes, adding the platform default (13 pt on macOS) when it is missing.
+pub fn ui_font_point_choices() -> Vec<f32> {
+    let mut choices = UI_FONT_POINT_CHOICES.to_vec();
+    let default = default_ui_font_points();
+    if !choices.contains(&default) {
+        choices.push(default);
+        choices.sort_by(f32::total_cmp);
+    }
+    choices
+}
+
+/// Converts points to egui's logical points. macOS already counts one logical point per
+/// typographic point; Windows and Linux lay out at 96 logical points per inch. The OS display
+/// scale is applied by egui on top, so the size follows DPI and scaling changes by itself.
+pub fn ui_font_points_to_logical(points: f32) -> f32 {
+    if cfg!(target_os = "macos") {
+        points
+    } else {
+        points * 96.0 / 72.0
     }
 }
 
@@ -95,7 +123,7 @@ impl Default for AppPreferences {
             language: LanguageChoice::System,
             theme: ThemeChoice::System,
             font_preset: FontPreset::Auto,
-            ui_font_size: default_ui_font_size(),
+            ui_font_points: default_ui_font_points(),
             show_invisibles: false,
         }
     }
@@ -305,7 +333,7 @@ fn validate_settings(settings: &SettingsFile) -> Result<(), crate::i18n::Message
                 .with_number("version", settings.schema_version as i64),
         );
     }
-    if !(MIN_UI_FONT_SIZE..=MAX_UI_FONT_SIZE).contains(&settings.app.ui_font_size) {
+    if !(MIN_UI_FONT_POINTS..=MAX_UI_FONT_POINTS).contains(&settings.app.ui_font_points) {
         return Err(crate::i18n::Message::new(
             "status-settings-ui-font-size-out-of-range",
         ));

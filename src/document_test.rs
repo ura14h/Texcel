@@ -239,6 +239,49 @@ fn explicit_zero_width_column_has_zero_extent() {
 }
 
 #[test]
+// Verify that a sized column holds that many half-width characters plus the cell inset, and
+// that column positions agree with the widths for any character width.
+fn sized_columns_follow_the_character_width_and_positions_add_up() {
+    let mut layout = TableLayout::default();
+    for (column, width) in [(1, Some(10.0)), (3, Some(0.0)), (4, Some(2.5))] {
+        layout.apply_value(
+            LayoutTarget::Column(column),
+            LayoutValue::Column(Some(ColumnLayout { width })),
+        );
+    }
+    for character_width in [7.0, 8.4] {
+        assert_eq!(
+            layout.column_width_pixels_with(1, character_width),
+            10.0 * character_width + crate::document::COLUMN_TEXT_PADDING_PIXELS
+        );
+        assert_eq!(
+            layout.column_width_pixels_with(0, character_width),
+            crate::document::DEFAULT_COLUMN_WIDTH_PIXELS
+        );
+        for columns in 0..7 {
+            let sum = (0..columns)
+                .map(|column| layout.column_width_pixels_with(column, character_width))
+                .sum::<f64>();
+            let prefix = layout.prefix_column_width_pixels_with(columns, character_width);
+            assert!(
+                (prefix - sum).abs() < 1e-9,
+                "{columns} columns at {character_width}"
+            );
+        }
+    }
+    // Clearing a width brings the column back to the default.
+    layout.apply_value(LayoutTarget::Column(1), LayoutValue::Column(None));
+    assert_eq!(
+        layout.prefix_column_width_pixels_with(2, 8.4),
+        2.0 * crate::document::DEFAULT_COLUMN_WIDTH_PIXELS
+    );
+    assert_eq!(
+        crate::document::column_width_units_for_pixels(10.0 * 8.4 + 12.0, 8.4),
+        10.0
+    );
+}
+
+#[test]
 // Verify that merge row lookup skips unrelated ranges after a tall merged cell.
 fn merge_row_blocks_skip_unrelated_ranges_beyond_a_tall_merge() {
     let mut layout = TableLayout::default();

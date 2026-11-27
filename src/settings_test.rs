@@ -81,14 +81,14 @@ fn settings_roundtrip_preserves_app_and_document_preferences() {
     let mut settings = SettingsFile::default();
     settings.app.language = LanguageChoice::Japanese;
     settings.app.font_preset = FontPreset::NotoSansJp;
-    settings.app.ui_font_size = 16.0;
+    settings.app.ui_font_points = 16.0;
     settings.upsert_document(preferences);
     save_settings(&path, settings).expect("save settings");
 
     let loaded = load_settings(&path).expect("load settings");
     assert_eq!(loaded.app.language, LanguageChoice::Japanese);
     assert_eq!(loaded.app.font_preset, FontPreset::NotoSansJp);
-    assert_eq!(loaded.app.ui_font_size, 16.0);
+    assert_eq!(loaded.app.ui_font_points, 16.0);
     let saved_document = loaded.document(&key).expect("matching identity");
     assert_eq!(
         saved_document.display_mode,
@@ -282,4 +282,30 @@ fn settings_path_normalization_is_lexical() {
         normalize_settings_path(Path::new("/tmp/a/../b/./file.csv")),
         PathBuf::from("/tmp/b/file.csv")
     );
+}
+
+#[test]
+/// Offers the requested point sizes plus the platform default, and converts points to egui's
+/// logical units per platform.
+fn ui_font_points_offer_the_platform_default_and_convert_per_platform() {
+    let choices = ui_font_point_choices();
+    for points in UI_FONT_POINT_CHOICES {
+        assert!(choices.contains(&points));
+    }
+    assert!(choices.contains(&default_ui_font_points()));
+    assert!(choices.windows(2).all(|pair| pair[0] < pair[1]));
+    let expected = if cfg!(target_os = "macos") {
+        12.0
+    } else {
+        16.0
+    };
+    assert_eq!(ui_font_points_to_logical(12.0), expected);
+}
+
+#[test]
+/// Ignores the old pixel-based text size so it is not read as points.
+fn old_pixel_text_size_is_not_read_as_points() {
+    let preferences: AppPreferences =
+        serde_json::from_str(r#"{"ui_font_size": 20.0}"#).expect("old settings still parse");
+    assert_eq!(preferences.ui_font_points, default_ui_font_points());
 }

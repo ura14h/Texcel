@@ -3,11 +3,12 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
+use super::ColumnWidthSum;
 use crate::document::frozen_prefix;
 use crate::document::{
-    CellAddress, ColumnLayout, DEFAULT_COLUMN_WIDTH_PIXELS, FrozenPanes, LayoutTarget, LayoutValue,
-    MAX_COLUMN_WIDTH_UNITS, MAX_COLUMNS, MAX_ROWS, MERGE_ROW_BLOCK_SIZE, StructureAxis,
-    StructurePlan, TableLayout,
+    COLUMN_TEXT_PADDING_PIXELS, CellAddress, ColumnLayout, DEFAULT_COLUMN_WIDTH_PIXELS,
+    FrozenPanes, LayoutTarget, LayoutValue, MAX_COLUMN_WIDTH_UNITS, MAX_COLUMNS, MAX_ROWS,
+    MERGE_ROW_BLOCK_SIZE, StructureAxis, StructurePlan, TableLayout,
 };
 use crate::i18n::Message;
 
@@ -42,25 +43,36 @@ impl TableLayout {
         self.revision
     }
 
-    /// Returns the visible width of a column in pixels.
+    /// Returns the visible width of a column at 100%, with the reference character width.
+    #[cfg(test)]
     pub fn column_width_pixels(&self, index: usize) -> f64 {
-        self.column(index)
-            .unwrap_or_default()
-            .width
-            .filter(|width| width.is_finite() && *width >= 0.0)
-            .map_or(DEFAULT_COLUMN_WIDTH_PIXELS, |width| {
-                if width == 0.0 {
-                    0.0
-                } else {
-                    xlsx_width_pixels(width)
-                }
-            })
+        self.column_width_pixels_with(index, crate::document::REFERENCE_CHARACTER_WIDTH)
     }
 
-    /// Returns the total width before a column index.
+    /// Returns the total width before a column index, with the reference character width.
+    #[cfg(test)]
     pub fn prefix_column_width_pixels(&self, columns: usize) -> f64 {
-        columns.min(MAX_COLUMNS) as f64 * DEFAULT_COLUMN_WIDTH_PIXELS
-            + fenwick_prefix(&self.column_width_deltas, columns.min(MAX_COLUMNS))
+        self.prefix_column_width_pixels_with(columns, crate::document::REFERENCE_CHARACTER_WIDTH)
+    }
+
+    /// Returns a column's width at 100% when one width unit is `character_width` wide.
+    /// Unsized columns keep the default width; sized ones hold that many characters.
+    pub fn column_width_pixels_with(&self, index: usize, character_width: f64) -> f64 {
+        match sized_width(self.column(index).unwrap_or_default()) {
+            None => DEFAULT_COLUMN_WIDTH_PIXELS,
+            Some(0.0) => 0.0,
+            Some(units) => units * character_width + COLUMN_TEXT_PADDING_PIXELS,
+        }
+    }
+
+    /// Returns the total width before a column index when one unit is `character_width` wide.
+    pub fn prefix_column_width_pixels_with(&self, columns: usize, character_width: f64) -> f64 {
+        let columns = columns.min(MAX_COLUMNS);
+        let sums = fenwick_prefix(&self.column_width_sums, columns);
+        let unsized_columns = columns as i64 - sums.sized - sums.zero;
+        unsized_columns as f64 * DEFAULT_COLUMN_WIDTH_PIXELS
+            + sums.units * character_width
+            + sums.sized as f64 * COLUMN_TEXT_PADDING_PIXELS
     }
 
     /// Reads one layout value for an undo target.
@@ -84,9 +96,9 @@ impl TableLayout {
                     return;
                 }
                 update_fenwick(
-                    &mut self.column_width_deltas,
+                    &mut self.column_width_sums,
                     index,
-                    column_delta(next) - column_delta(previous),
+                    width_sum(next).minus(width_sum(previous)),
                     MAX_COLUMNS,
                 );
                 if next == ColumnLayout::default() {
@@ -177,34 +189,86 @@ impl TableLayout {
     }
 }
 
-/// Converts an XLSX column width to pixels.
-fn xlsx_width_pixels(width: f64) -> f64 {
-    width.clamp(0.1, MAX_COLUMN_WIDTH_UNITS) * 7.0 + 5.0
-}
-
-/// Returns the column width change from the default width.
-fn column_delta(layout: ColumnLayout) -> f64 {
+/// Returns a column's set width in units, zero for a zero-wide column, or none when unsized.
+fn sized_width(layout: ColumnLayout) -> Option<f64> {
     layout
         .width
         .filter(|width| width.is_finite() && *width >= 0.0)
-        .map_or(0.0, |width| {
+        .map(|width| {
             if width == 0.0 {
-                -DEFAULT_COLUMN_WIDTH_PIXELS
+                0.0
             } else {
-                xlsx_width_pixels(width) - DEFAULT_COLUMN_WIDTH_PIXELS
+                width.clamp(0.1, MAX_COLUMN_WIDTH_UNITS)
             }
         })
 }
 
+/// Describes one column's contribution to the width sums.
+fn width_sum(layout: ColumnLayout) -> ColumnWidthSum {
+    match sized_width(layout) {
+        None => ColumnWidthSum::default(),
+        Some(0.0) => ColumnWidthSum {
+            zero: 1,
+            ..ColumnWidthSum::default()
+        },
+        Some(units) => ColumnWidthSum {
+            units,
+            sized: 1,
+            zero: 0,
+        },
+    }
+}
+
+/// Builds the width sums for a set of stored columns.
+pub(super) fn column_width_sums(
+    columns: &BTreeMap<usize, ColumnLayout>,
+) -> BTreeMap<usize, ColumnWidthSum> {
+    let mut tree = BTreeMap::new();
+    for (index, layout) in columns {
+        update_fenwick(&mut tree, *index, width_sum(*layout), MAX_COLUMNS);
+    }
+    tree
+}
+
+impl ColumnWidthSum {
+    // Add two partial sums.
+    fn plus(self, other: Self) -> Self {
+        Self {
+            units: self.units + other.units,
+            sized: self.sized + other.sized,
+            zero: self.zero + other.zero,
+        }
+    }
+
+    // Subtract one partial sum from another.
+    fn minus(self, other: Self) -> Self {
+        Self {
+            units: self.units - other.units,
+            sized: self.sized - other.sized,
+            zero: self.zero - other.zero,
+        }
+    }
+
+    // Report a node that holds nothing, so the tree can drop it.
+    fn is_empty(self) -> bool {
+        self.units.abs() < 0.000_001 && self.sized == 0 && self.zero == 0
+    }
+}
+
 /// Updates one value in the prefix-sum tree.
-fn update_fenwick(tree: &mut BTreeMap<usize, f64>, index: usize, delta: f64, limit: usize) {
-    if delta.abs() < 0.000_001 {
+fn update_fenwick(
+    tree: &mut BTreeMap<usize, ColumnWidthSum>,
+    index: usize,
+    delta: ColumnWidthSum,
+    limit: usize,
+) {
+    if delta.is_empty() {
         return;
     }
     let mut node = index + 1;
     while node <= limit {
-        let value = tree.get(&node).copied().unwrap_or_default() + delta;
-        if value.abs() < 0.000_001 {
+        let value = tree.get(&node).copied().unwrap_or_default().plus(delta);
+        if value.is_empty() {
             tree.remove(&node);
         } else {
             tree.insert(node, value);
@@ -213,12 +277,12 @@ fn update_fenwick(tree: &mut BTreeMap<usize, f64>, index: usize, delta: f64, lim
     }
 }
 
-/// Sums the stored changes before an index.
-fn fenwick_prefix(tree: &BTreeMap<usize, f64>, count: usize) -> f64 {
+/// Sums the stored column widths before an index.
+fn fenwick_prefix(tree: &BTreeMap<usize, ColumnWidthSum>, count: usize) -> ColumnWidthSum {
     let mut node = count;
-    let mut total = 0.0;
+    let mut total = ColumnWidthSum::default();
     while node > 0 {
-        total += tree.get(&node).copied().unwrap_or_default();
+        total = total.plus(tree.get(&node).copied().unwrap_or_default());
         node &= node - 1;
     }
     total

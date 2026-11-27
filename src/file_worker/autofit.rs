@@ -167,11 +167,16 @@ fn measure_auto_fit(
                     job.wrap.max_rows = 256;
                 }
                 let size = fonts.layout_job(job).size();
-                measured = measured.max((size.x + 12.0).min(request.maximum_column_width_pixels));
+                measured = measured.max(
+                    (size.x + crate::document::COLUMN_TEXT_PADDING_PIXELS as f32)
+                        .min(request.maximum_column_width_pixels),
+                );
             }
-            // Convert pixels to Excel-style character units, as stored in the layout.
-            let width =
-                ((measured as f64 - 5.0) / 7.0).clamp(0.1, crate::document::MAX_COLUMN_WIDTH_UNITS);
+            // Convert pixels to half-width monospace characters, as stored in the layout.
+            let width = crate::document::column_width_units_for_pixels(
+                f64::from(measured),
+                request.character_width,
+            );
             widths.push((column, width));
         }
         Ok(widths)

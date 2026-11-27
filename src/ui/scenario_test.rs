@@ -518,7 +518,7 @@ fn settings_reset_restores_the_app_defaults() {
     assert_eq!(app.font_preset, defaults.font_preset);
     assert_eq!(app.language_choice, defaults.language);
     assert_eq!(app.show_invisibles, defaults.show_invisibles);
-    assert_eq!(app.ui_font_size, defaults.ui_font_size);
+    assert_eq!(app.ui_font_points, defaults.ui_font_points);
 }
 
 #[test]

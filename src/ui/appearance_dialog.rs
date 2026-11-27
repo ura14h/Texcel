@@ -16,11 +16,11 @@ impl TexcelApp {
             return;
         }
         let before_font = self.font_preset;
-        let before_font_size = self.ui_font_size;
+        let before_font_size = self.ui_font_points;
         let before_theme = self.theme;
         let before_language = self.language_choice;
         let before_invisibles = self.show_invisibles;
-        let mut next_font_size = self.ui_font_size;
+        let mut next_font_size = self.ui_font_points;
         let language = self.language;
         let content = ctx.content_rect();
         let max_width = (content.width() - 56.0).clamp(180.0, SETTINGS_MAX_WIDTH);
@@ -92,13 +92,13 @@ impl TexcelApp {
             self.language_choice = defaults.language;
             self.theme = defaults.theme;
             self.font_preset = defaults.font_preset;
-            next_font_size = defaults.ui_font_size;
+            next_font_size = defaults.ui_font_points;
             self.show_invisibles = defaults.show_invisibles;
         }
         close_requested |= close_key;
         self.settings_window_open = !close_requested;
         if (next_font_size - before_font_size).abs() > 0.001 {
-            self.set_ui_font_size(ctx, next_font_size);
+            self.set_ui_font_points(ctx, next_font_size);
         }
         if self.font_preset != before_font {
             self.mark_app_preference_change(AppPreferenceField::FontPreset);

@@ -51,7 +51,7 @@ impl TexcelApp {
             AppPreferenceField::Language => self.app_preference_changes.language = true,
             AppPreferenceField::Theme => self.app_preference_changes.theme = true,
             AppPreferenceField::FontPreset => self.app_preference_changes.font_preset = true,
-            AppPreferenceField::UiFontSize => self.app_preference_changes.ui_font_size = true,
+            AppPreferenceField::UiFontSize => self.app_preference_changes.ui_font_points = true,
             AppPreferenceField::ShowInvisibles => {
                 self.app_preference_changes.show_invisibles = true;
             }
@@ -70,7 +70,7 @@ impl TexcelApp {
             self.language,
             self.font_preset,
             self.theme,
-            self.ui_font_size,
+            self.ui_font_points,
             self.show_invisibles,
         );
         self.language_choice = preferences.language;
@@ -78,8 +78,8 @@ impl TexcelApp {
         if self.font_preset != preferences.font_preset {
             self.font_preset = preferences.font_preset;
         }
-        if (self.ui_font_size - preferences.ui_font_size).abs() > f32::EPSILON {
-            self.ui_font_size = preferences.ui_font_size;
+        if (self.ui_font_points - preferences.ui_font_points).abs() > f32::EPSILON {
+            self.ui_font_points = preferences.ui_font_points;
             self.font_layout_generation = self.font_layout_generation.saturating_add(1);
         }
         self.theme = preferences.theme;
@@ -89,7 +89,7 @@ impl TexcelApp {
             || before.1 != self.language
             || before.2 != self.font_preset
             || before.3 != self.theme
-            || (before.4 - self.ui_font_size).abs() > f32::EPSILON
+            || (before.4 - self.ui_font_points).abs() > f32::EPSILON
             || before.5 != self.show_invisibles;
         if changed {
             self.invalidate_shared_window_appearance(ctx);
@@ -298,10 +298,10 @@ impl TexcelApp {
             } else {
                 loaded.font_preset
             },
-            ui_font_size: if self.app_preference_changes.ui_font_size {
-                self.ui_font_size
+            ui_font_points: if self.app_preference_changes.ui_font_points {
+                self.ui_font_points
             } else {
-                loaded.ui_font_size
+                loaded.ui_font_points
             },
             show_invisibles: if self.app_preference_changes.show_invisibles {
                 self.show_invisibles

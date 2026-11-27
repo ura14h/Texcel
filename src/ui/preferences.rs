@@ -28,7 +28,7 @@ pub(super) struct AppPreferenceChanges {
     pub(super) language: bool,
     pub(super) theme: bool,
     pub(super) font_preset: bool,
-    pub(super) ui_font_size: bool,
+    pub(super) ui_font_points: bool,
     pub(super) show_invisibles: bool,
 }
 

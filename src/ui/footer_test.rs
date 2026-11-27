@@ -583,8 +583,8 @@ fn zoom_button_applies_a_preset_from_the_dialog() {
     assert!(harness.state().sheet_zoom_dialog.is_none());
     assert_eq!(harness.state().sheet_zoom.0, 0.5);
     assert_eq!(
-        harness.state().snapshot_settings().app.ui_font_size,
-        crate::settings::default_ui_font_size(),
+        harness.state().snapshot_settings().app.ui_font_points,
+        crate::settings::default_ui_font_points(),
         "the sheet zoom is not an app setting"
     );
     assert!(
