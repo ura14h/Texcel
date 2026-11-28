@@ -15,6 +15,8 @@ mod tests;
 pub(super) struct MarkdownViewStyle {
     /// Body text size; headings, gaps, and indents scale with it.
     pub(super) body_size: f32,
+    /// Leaves each table as an empty box for the caller to label, instead of drawing cells.
+    pub(super) table_placeholders: bool,
 }
 
 /// Where the drawn tables landed, in document order.
@@ -123,6 +125,13 @@ fn show_block(
                         Stroke::new(2.0, ui.visuals().weak_text_color()),
                     );
                 });
+        }
+        Block::Table { rows, .. } if style.table_placeholders => {
+            // The box grows with the row count up to a few rows, so tables keep their shape.
+            let height = size * 1.4 * rows.len().clamp(2, 8) as f32;
+            let (rect, _) =
+                ui.allocate_exact_size(Vec2::new(ui.available_width(), height), Sense::hover());
+            output.table_rects.push(rect);
         }
         Block::Table { alignments, rows } => {
             let rect = show_table(ui, alignments, rows, size, index);

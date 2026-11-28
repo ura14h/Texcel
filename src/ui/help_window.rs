@@ -72,6 +72,7 @@ impl TexcelApp {
                                     &blocks,
                                     MarkdownViewStyle {
                                         body_size: visual::BODY_SIZE,
+                                        table_placeholders: false,
                                     },
                                 );
                             });

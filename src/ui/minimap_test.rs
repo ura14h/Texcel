@@ -57,33 +57,14 @@ fn markdown_file_minimap_switches_tables() {
         second.id
     );
 
-    // An unsaved cell edit reaches the minimap after its background parse.
-    let first_table = harness.state().workspace.documents[&document_id].tables[0].id;
-    harness
-        .state_mut()
-        .workspace
-        .documents
-        .get_mut(&document_id)
-        .unwrap()
-        .set_cell(
-            first_table,
-            CellAddress { row: 1, column: 0 },
-            Some(Cell::text("minimap-edit")),
-        )
-        .expect("the cell accepts text");
-    let mut seen = false;
-    for _ in 0..200 {
-        harness.step();
-        seen = harness
-            .query_all(By::new().label_contains("minimap-edit"))
+    // Tables are boxes with their names; their cells are not drawn.
+    assert!(
+        harness
+            .query_all(By::new().label("user_id"))
             .next()
-            .is_some();
-        if seen {
-            break;
-        }
-        std::thread::sleep(std::time::Duration::from_millis(5));
-    }
-    assert!(seen, "the minimap shows the unsaved edit");
+            .is_none(),
+        "the minimap does not draw table cells"
+    );
 }
 
 #[test]

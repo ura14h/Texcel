@@ -1,5 +1,5 @@
-//! The minimap of a Markdown file: a small rendering of the whole file beside the sheet,
-//! with each table as a button that switches to it.
+//! The minimap of a Markdown file: a small rendering of the whole file beside the sheet.
+//! Each table is a box with its name instead of its cells, and switches to that table.
 
 use super::markdown_view::{Block, MarkdownViewStyle, parse_markdown, show_markdown};
 use super::*;
@@ -84,6 +84,8 @@ impl TexcelApp {
                             &blocks,
                             MarkdownViewStyle {
                                 body_size: MINIMAP_TEXT_SIZE,
+                                // Each table is a box with its name; its cells are not drawn.
+                                table_placeholders: true,
                             },
                         );
                         // Markdown tables are the document's tables in the same order.
@@ -99,7 +101,8 @@ impl TexcelApp {
     }
 
     /// Returns parsed blocks for the current revision, starting a background parse when the
-    /// document changed. Unsaved cell edits are applied to the source in that background step.
+    /// document changed. Cell edits only change what the boxes would hide, and structure
+    /// edits rewrite the source itself, so the saved source is enough.
     fn minimap_blocks(
         &mut self,
         ctx: &egui::Context,
@@ -113,7 +116,6 @@ impl TexcelApp {
             .as_ref()
             .is_some_and(|cache| cache.document_id == document_id && cache.revision == revision);
         if !current {
-            let changes = minimap_cell_changes(document);
             let previous = self.minimap_cache.as_ref().and_then(|cache| {
                 (cache.document_id == document_id)
                     .then(|| {
@@ -129,11 +131,7 @@ impl TexcelApp {
             let target = Arc::clone(&blocks);
             let repaint = ctx.clone();
             std::thread::spawn(move || {
-                let updated = source.apply_changes(&changes).ok();
-                let bytes = updated
-                    .as_ref()
-                    .map_or_else(|| source.source_bytes(), |updated| updated.source_bytes());
-                let text = String::from_utf8_lossy(bytes);
+                let text = String::from_utf8_lossy(source.source_bytes());
                 let _ = target.set(Arc::new(parse_markdown(&text)));
                 repaint.request_repaint();
             });
@@ -152,28 +150,6 @@ impl TexcelApp {
                 .or_else(|| cache.previous.clone())
         })
     }
-}
-
-/// Lists the cells edited since the source was last written, as Markdown cell changes.
-fn minimap_cell_changes(
-    document: &crate::document::Document,
-) -> Vec<crate::markdown_adapter::MarkdownCellChange> {
-    document
-        .changed_cell_snapshot()
-        .into_iter()
-        .filter_map(|(table_id, address, cell)| {
-            let table = document
-                .tables
-                .iter()
-                .position(|table| table.id == table_id)?;
-            Some(crate::markdown_adapter::MarkdownCellChange {
-                table,
-                row: address.row,
-                column: address.column,
-                value: cell.map_or_else(String::new, |cell| cell.input.source_text()),
-            })
-        })
-        .collect()
 }
 
 /// Covers one drawn table with a button named after the table.

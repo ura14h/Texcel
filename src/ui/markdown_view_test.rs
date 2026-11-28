@@ -57,7 +57,14 @@ fn long_table_cells_wrap_within_the_available_width() {
     let mut table = None;
     let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
         ui.set_max_width(200.0);
-        let drawn = show_markdown(ui, &blocks, MarkdownViewStyle { body_size: 6.0 });
+        let drawn = show_markdown(
+            ui,
+            &blocks,
+            MarkdownViewStyle {
+                body_size: 6.0,
+                table_placeholders: false,
+            },
+        );
         table = drawn.table_rects.first().copied();
     });
     output.textures_delta.clear();
@@ -85,7 +92,14 @@ fn drawn_text(markdown: &str, width: f32) -> (Vec<(String, Rect)>, Rect) {
     let mut table = Rect::NOTHING;
     let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
         ui.set_max_width(width);
-        let drawn = show_markdown(ui, &blocks, MarkdownViewStyle { body_size: 6.0 });
+        let drawn = show_markdown(
+            ui,
+            &blocks,
+            MarkdownViewStyle {
+                body_size: 6.0,
+                table_placeholders: false,
+            },
+        );
         table = drawn.table_rects.first().copied().unwrap_or(Rect::NOTHING);
     });
     output.textures_delta.clear();
