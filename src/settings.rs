@@ -19,7 +19,9 @@ pub use self::document_preferences::{DocumentKey, DocumentPreferences, TablePref
 mod path_serde;
 use self::path_serde::recent_paths_serde;
 
-const SETTINGS_VERSION: u32 = 1;
+/// Version 2 saves only column widths the user chose. Version 1 files also hold widths fitted
+/// on opening that cannot be told apart, so they are not read and the defaults start over.
+const SETTINGS_VERSION: u32 = 2;
 const MAX_SETTINGS_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_DOCUMENT_ENTRIES: usize = 128;
 

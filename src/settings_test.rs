@@ -130,7 +130,7 @@ fn recent_and_document_paths_roundtrip_non_utf8_os_bytes() {
     assert_eq!(decoded.documents[0].key.path, path);
 
     let plain: SettingsFile =
-        serde_json::from_str(r#"{"schema_version":1,"app":{},"recent_files":["/tmp/plain.csv"]}"#)
+        serde_json::from_str(r#"{"schema_version":2,"app":{},"recent_files":["/tmp/plain.csv"]}"#)
             .expect("UTF-8 recent paths are stored as plain strings");
     assert_eq!(plain.recent_files, [PathBuf::from("/tmp/plain.csv")]);
 }
@@ -154,6 +154,14 @@ fn missing_corrupt_and_unknown_version_settings_never_replace_source_data() {
             .contains("invalid")
     );
     assert_eq!(fs::read(&path).expect("corrupt settings kept"), b"not-json");
+
+    // Version 1 saved widths fitted on opening as if the user chose them, so it is not read.
+    fs::write(&path, br#"{"schema_version":1,"app":{},"documents":[]}"#)
+        .expect("write version 1 settings");
+    assert!(
+        load_settings(&path).is_err(),
+        "version 1 settings are not read"
+    );
 
     fs::write(&path, br#"{"schema_version":99,"app":{},"documents":[]}"#)
         .expect("write unknown schema");
