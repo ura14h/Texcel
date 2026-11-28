@@ -439,7 +439,10 @@ pub(crate) fn translate_windows_message(message: *const std::ffi::c_void) -> boo
     }
     // SAFETY: winit invokes this hook with a pointer to its current Win32 MSG.
     let message = unsafe { &*(message.cast::<MSG>()) };
-    if !is_winit_window(message.hwnd) || is_help_window(message.hwnd) {
+    // Only document windows carry the menu bar; Help and the progress window do not.
+    if !is_winit_window(message.hwnd)
+        || window_role(message.hwnd) != crate::native_window::WindowRole::Document
+    {
         return false;
     }
     let hwnd = message.hwnd as isize;
@@ -477,17 +480,33 @@ pub(crate) fn attach_windows_hwnd(menu: &Menu, hwnd: isize) -> Option<isize> {
     Some(menu.haccel())
 }
 
-/// Recognizes the Help window by its title, in either language, so it gets no menu bar.
+/// Name of the window property that stores a Texcel window's role. A property lives and dies
+/// with its window, so a window handle Windows reuses never inherits an old role.
 #[cfg(target_os = "windows")]
-fn is_help_window(hwnd: windows_sys::Win32::Foundation::HWND) -> bool {
-    use windows_sys::Win32::UI::WindowsAndMessaging::GetWindowTextW;
-    let mut title = [0u16; 128];
-    // SAFETY: the buffer is writable and `hwnd` is a live Winit window from the hook.
-    let length = unsafe { GetWindowTextW(hwnd, title.as_mut_ptr(), title.len() as i32) };
-    if length <= 0 {
-        return false;
+const ROLE_PROPERTY: &str = "Texcel.WindowRole";
+
+/// Returns a Winit window's role, giving a window seen for the first time the role announced
+/// for the window eframe just created (the first window, made before any announcement, is a
+/// document window).
+#[cfg(target_os = "windows")]
+fn window_role(hwnd: windows_sys::Win32::Foundation::HWND) -> crate::native_window::WindowRole {
+    use crate::native_window::WindowRole;
+    use windows_sys::Win32::UI::WindowsAndMessaging::{GetPropW, SetPropW};
+    let roles = [WindowRole::Document, WindowRole::Help, WindowRole::Progress];
+    let property = ROLE_PROPERTY
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect::<Vec<_>>();
+    // SAFETY: `hwnd` is a live Winit window from the hook; the name is NUL-terminated.
+    let stored = unsafe { GetPropW(hwnd, property.as_ptr()) } as usize;
+    if let Some(role) = stored.checked_sub(1).and_then(|index| roles.get(index)) {
+        return *role;
     }
-    crate::i18n::is_help_window_title(&String::from_utf16_lossy(&title[..length as usize]))
+    let role = crate::native_window::take_expected_role().unwrap_or(WindowRole::Document);
+    let index = roles.iter().position(|known| *known == role).unwrap_or(0);
+    // SAFETY: as above; the property holds a small number, not a pointer.
+    unsafe { SetPropW(hwnd, property.as_ptr(), (index + 1) as _) };
+    role
 }
 
 /// Filters message-hook windows to Winit's owned top-level class.

@@ -9,6 +9,9 @@ mod file_results;
 mod placement;
 #[path = "app_host/root_window.rs"]
 mod root_window;
+#[path = "app_host/viewports.rs"]
+mod viewports;
+use viewports::ChildWindow;
 
 static NEXT_HOST_ID: AtomicU64 = AtomicU64::new(1);
 
@@ -38,6 +41,8 @@ struct HostRuntime {
     last_placement: Option<placement::WindowPlacement>,
     /// Where the opening progress window appeared, kept while it shows.
     opening_position: Option<egui::Pos2>,
+    /// Which child windows exist, and the one being created and identified.
+    window_creation: viewports::WindowCreation,
 }
 
 impl TexcelAppHost {
@@ -65,6 +70,7 @@ impl TexcelAppHost {
                     last_focused_viewport: None,
                     last_placement: None,
                     opening_position: None,
+                    window_creation: viewports::WindowCreation::default(),
                 },
             );
         });
@@ -180,7 +186,7 @@ impl eframe::App for TexcelAppHost {
     /// Draws the root and registers deferred child viewports for other documents.
     fn ui(&mut self, root: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = root.ctx().clone();
-        let (children, retired) = with_host(self.id, |host| {
+        let plan = with_host(self.id, |host| {
             host.settle_root_window(&ctx);
             let viewport = host.root_viewport;
             let document = host.root_document;
@@ -195,14 +201,9 @@ impl eframe::App for TexcelAppHost {
                 host.request_close_all_windows(&ctx);
             }
             host.close_empty_root_if_needed(&ctx);
-            (
-                host.child_viewports(),
-                std::mem::take(&mut host.retired_viewports),
-            )
+            host.plan_viewports(&ctx)
         });
-        draw_child_viewports(self.id, &ctx, children, retired);
-        draw_help_viewport(self.id, &ctx);
-        draw_opening_viewport(self.id, &ctx);
+        viewports::show_viewports(self.id, &ctx, plan);
     }
 }
 
@@ -346,84 +347,6 @@ impl HostRuntime {
         };
         format!("{}{marker} — Texcel", document.name)
     }
-}
-
-/// One child window to register this frame.
-struct ChildWindow {
-    document_id: DocumentId,
-    viewport: egui::ViewportId,
-    title: String,
-    placement: Option<placement::WindowPlacement>,
-}
-
-/// Registers child windows after releasing the host registry borrow.
-fn draw_child_viewports(
-    host_id: u64,
-    ctx: &egui::Context,
-    children: Vec<ChildWindow>,
-    retired: BTreeSet<egui::ViewportId>,
-) {
-    for ChildWindow {
-        document_id,
-        viewport,
-        title,
-        placement,
-    } in children
-    {
-        // The place only applies when the window is created; later moves are the user's.
-        let mut builder = egui::ViewportBuilder::default()
-            .with_title(title)
-            .with_inner_size(placement.map_or(placement::DEFAULT_WINDOW_SIZE, |place| place.size))
-            .with_min_inner_size([760.0, 500.0])
-            .with_drag_and_drop(true);
-        if let Some(place) = placement {
-            builder = builder.with_position(place.position);
-        }
-        ctx.show_viewport_deferred(viewport, builder, move |ui, _class| {
-            draw_document_viewport(host_id, viewport, document_id, ui);
-        });
-    }
-    for viewport in retired {
-        ctx.show_viewport_deferred(
-            viewport,
-            egui::ViewportBuilder::default().with_visible(false),
-            move |ui, _class| {
-                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
-            },
-        );
-    }
-}
-
-/// Shows the app-wide Help window while it is open.
-fn draw_help_viewport(host_id: u64, ctx: &egui::Context) {
-    let Some(builder) = with_host(host_id, |host| {
-        host.app
-            .help_viewport_open
-            .then(|| host.app.help_viewport_builder())
-    }) else {
-        return;
-    };
-    ctx.show_viewport_deferred(
-        help_window::help_viewport_id(),
-        builder,
-        move |ui, _class| {
-            with_host(host_id, |host| host.app.draw_help_window_contents(ui));
-        },
-    );
-}
-
-/// Shows the opening progress window while a file has been opening for a while.
-fn draw_opening_viewport(host_id: u64, ctx: &egui::Context) {
-    let Some(builder) = with_host(host_id, |host| host.opening_viewport_builder(ctx)) else {
-        return;
-    };
-    ctx.show_viewport_deferred(
-        opening_progress::opening_viewport_id(),
-        builder,
-        move |ui, _class| {
-            with_host(host_id, |host| host.app.draw_opening_progress_contents(ui));
-        },
-    );
 }
 
 /// Handles one child viewport with the same input and close path in tests and the app.

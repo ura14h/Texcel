@@ -22,8 +22,9 @@ use objc2_foundation::{
     NSString,
 };
 
-#[path = "macos_app/help_input.rs"]
-mod help_input;
+#[path = "macos_app/window_identity.rs"]
+mod window_identity;
+pub(crate) use window_identity::identify_new_window;
 
 // Pinned winit 0.30.13 uses this private class; review the hook on upgrades.
 const WINIT_DELEGATE_CLASS: &str = "WinitApplicationDelegate";
@@ -157,7 +158,7 @@ pub(crate) fn register(context: eframe::egui::Context) {
     APP_CONTEXT.with(|slot| *slot.borrow_mut() = Some(context));
     install_terminate_method(winit_class);
     install_open_file_methods(main_thread);
-    help_input::install();
+    window_identity::install(main_thread);
 }
 
 /// Updates saved-state dots on the NSWindows that belong to open documents.
