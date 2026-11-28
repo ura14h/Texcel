@@ -115,6 +115,8 @@ impl TexcelApp {
         blocked: bool,
         state: &mut TopActionState,
     ) {
+        // Menu rows match the context menus: compact height and no gaps.
+        visual::prepare_context_menu(ui);
         for entry in entries {
             match entry {
                 MenuEntry::Action(action) => {
@@ -139,6 +141,7 @@ impl TexcelApp {
         ui.menu_button(
             crate::i18n::context_text(ui.ctx(), "menu-window-open"),
             |ui| {
+                visual::prepare_context_menu(ui);
                 for (document_id, label, active) in self.window_menu_items(ui.ctx()) {
                     if ui.selectable_label(active, label).clicked() {
                         state.focus_document = Some(document_id);
@@ -154,6 +157,7 @@ impl TexcelApp {
         ui.menu_button(
             crate::i18n::context_text(ui.ctx(), "menu-file-open-recent"),
             |ui| {
+                visual::prepare_context_menu(ui);
                 if self.recent_files.is_empty() {
                     ui.add_enabled(
                         false,

@@ -36,7 +36,9 @@ pub(crate) fn shortcut_text(ctx: &egui::Context, shortcut: MenuShortcut) -> Stri
         MenuShortcut::Replace => (Key::H, ctx.os().is_mac()),
         MenuShortcut::Redo if !ctx.os().is_mac() => (Key::Y, false),
         MenuShortcut::Redo => (Key::Z, true),
-        MenuShortcut::ZoomIn => return ctx.format_shortcut(&egui::gui_zoom::kb_shortcuts::ZOOM_IN),
+        MenuShortcut::ZoomIn => {
+            return key_symbols(ctx.format_shortcut(&egui::gui_zoom::kb_shortcuts::ZOOM_IN));
+        }
         MenuShortcut::PasteSpecial => {
             let modifiers = if ctx.os().is_mac() {
                 egui::Modifiers::MAC_CMD | egui::Modifiers::CTRL
@@ -64,7 +66,19 @@ pub(crate) fn shortcut_text(ctx: &egui::Context, shortcut: MenuShortcut) -> Stri
         } else {
             egui::Modifiers::NONE
         };
-    ctx.format_shortcut(&egui::KeyboardShortcut::new(modifiers, key))
+    key_symbols(ctx.format_shortcut(&egui::KeyboardShortcut::new(modifiers, key)))
+}
+
+/// Shows punctuation keys as their symbols, as menus usually do: "Ctrl+/" rather than
+/// egui's "Ctrl+Slash".
+#[cfg(any(test, not(any(target_os = "macos", target_os = "windows"))))]
+fn key_symbols(text: String) -> String {
+    for (name, symbol) in [("Slash", "/"), ("Plus", "+"), ("Minus", "-")] {
+        if let Some(prefix) = text.strip_suffix(name) {
+            return format!("{prefix}{symbol}");
+        }
+    }
+    text
 }
 
 /// Walks nested entries while preserving the order shown to users.

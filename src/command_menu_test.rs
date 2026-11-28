@@ -128,3 +128,22 @@ fn has_message(source: &str, key: &str) -> bool {
             .is_some_and(|(candidate, _)| candidate.trim() == key)
     })
 }
+
+/// Shows punctuation shortcuts with their symbols, not egui's key names.
+#[test]
+fn punctuation_shortcuts_use_symbols() {
+    let ctx = egui::Context::default();
+    // Formatting a shortcut checks the fonts, which exist after the first frame.
+    ctx.run_ui(egui::RawInput::default(), |_| ())
+        .textures_delta
+        .clear();
+    for (shortcut, symbol) in [
+        (MenuShortcut::Command('/'), "/"),
+        (MenuShortcut::Command('-'), "-"),
+        (MenuShortcut::ZoomIn, "+"),
+    ] {
+        let text = shortcut_text(&ctx, shortcut);
+        assert!(text.ends_with(symbol), "{text} ends with {symbol}");
+        assert!(!text.contains("Slash") && !text.contains("Minus") && !text.contains("Plus"));
+    }
+}
