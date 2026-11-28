@@ -77,7 +77,10 @@ impl TexcelApp {
                     .collect::<BTreeMap<_, _>>()
             })
             .unwrap_or_default();
+        // Bring the active table into view when it changed since the minimap last showed it.
+        let reveal = self.minimap_shown_table != Some((document_id, active_table));
         let mut chosen = None;
+        let mut shown = None;
         let palette = GridThemePalette::from_visuals(root.visuals());
         egui::Panel::right("texcel_minimap")
             .resizable(false)
@@ -114,9 +117,19 @@ impl TexcelApp {
                             if table_box(ui, *rect, label, active).is_some_and(|r| r.clicked()) {
                                 chosen = label.map(|(id, _)| id);
                             }
+                            if active && reveal {
+                                // A box already in sight stays put, such as one just clicked.
+                                if !ui.clip_rect().contains_rect(*rect) {
+                                    ui.scroll_to_rect(*rect, Some(egui::Align::Center));
+                                }
+                                shown = Some((document_id, active_table));
+                            }
                         }
                     });
             });
+        if shown.is_some() {
+            self.minimap_shown_table = shown;
+        }
         chosen
     }
 

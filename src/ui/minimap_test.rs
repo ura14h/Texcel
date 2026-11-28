@@ -247,3 +247,42 @@ fn minimap_names_every_table_of_a_file_with_a_byte_order_mark() {
         "the boxes follow the tables' order in the file: {boxes:?}"
     );
 }
+
+#[test]
+/// Choosing a table off the minimap's screen from a sheet tab scrolls the minimap so that
+/// table's box is in view, near the middle.
+fn choosing_a_table_from_a_tab_scrolls_the_minimap_to_it() {
+    let directory = ScenarioDirectory::new();
+    let path = directory.0.join("long.md");
+    let filler = "Filler line.\n\n".repeat(150);
+    let table = "| Key |\n| --- |\n| 1 |\n\n";
+    std::fs::write(
+        &path,
+        format!(
+            "## First\n\n{table}{filler}## Second\n\n{table}{filler}## Third\n\n{table}{filler}"
+        ),
+    )
+    .expect("write the fixture");
+    let mut harness = open_with_minimap(path);
+    assert!(minimap_box(&harness, "First").is_some());
+    let document_id = harness.state().workspace.active_document.unwrap();
+    let third = harness.state().workspace.documents[&document_id].tables[2].id;
+    let before = minimap_box(&harness, "Third").expect("the third box exists");
+    assert!(
+        before.top() > 620.0,
+        "the third box starts out of view: {before:?}"
+    );
+
+    // The same switch a sheet tab makes.
+    harness.state_mut().select_table_from_chrome(third);
+    for _ in 0..10 {
+        harness.step();
+    }
+    let after = minimap_box(&harness, "Third").expect("the third box exists");
+    let first = minimap_box(&harness, "First").expect("the first box exists");
+    assert!(
+        (180.0..440.0).contains(&after.center().y),
+        "the third box is near the middle of the window: {after:?}"
+    );
+    assert!(first.bottom() < 0.0, "the minimap scrolled down: {first:?}");
+}

@@ -40,6 +40,7 @@ define_window_state! {
     settings_window_open: bool,
     about_dialog_open: bool,
     minimap_open: bool,
+    minimap_shown_table: Option<(DocumentId, TableId)>,
     pending_accesskit_focus: Option<(DocumentId, u64, CellAddress)>,
     request_scroll_to_address: Option<(DocumentId, u64, CellAddress)>,
     font_layout_generation: u64,
