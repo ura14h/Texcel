@@ -22,12 +22,8 @@ impl MarkdownDocument {
             ));
         }
         let text = std::str::from_utf8(&bytes).map_err(|_| MarkdownError::InvalidUtf8)?;
-        let parser_offset = usize::from(text.starts_with('\u{feff}')) * '\u{feff}'.len_utf8();
-        let parser_text = text.get(parser_offset..).unwrap_or(text);
-        let options = Options::ENABLE_TABLES
-            | Options::ENABLE_STRIKETHROUGH
-            | Options::ENABLE_TASKLISTS
-            | Options::ENABLE_GFM;
+        let (parser_text, parser_offset) = markdown_body(text);
+        let options = MARKDOWN_OPTIONS;
         let mut table_builder: Option<TableBuilder> = None;
         let mut raw_tables = Vec::<(
             usize,

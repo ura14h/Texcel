@@ -194,3 +194,56 @@ fn minimap_text_cannot_be_selected() {
         });
     assert!(!selected, "the minimap paragraph is not selected");
 }
+
+/// Opens a Markdown file, shows its minimap, and steps until the background parse is drawn.
+fn open_with_minimap(path: PathBuf) -> egui_kittest::Harness<'static, TexcelApp> {
+    let directory = ScenarioDirectory::new();
+    let mut harness = scenario_harness(directory.0.join("settings.json"));
+    queue_open_and_wait(&mut harness, path);
+    harness.state_mut().minimap_open = true;
+    for _ in 0..60 {
+        harness.step();
+        std::thread::sleep(std::time::Duration::from_millis(3));
+    }
+    harness
+}
+
+/// Returns where the minimap drew the box named `name`; sheet tabs with the same name sit
+/// at the bottom left, outside the minimap panel on the right.
+fn minimap_box(harness: &egui_kittest::Harness<'_, TexcelApp>, name: &str) -> Option<Rect> {
+    harness
+        .query_all(By::new().role(egui::Role::Button).label(name))
+        .map(|node| node.rect())
+        .find(|rect| rect.left() >= 600.0)
+}
+
+#[test]
+/// Names every table box of a file that starts with a byte-order mark. The minimap's own
+/// parse used to read the mark as text, lose the first table, and shift the names.
+fn minimap_names_every_table_of_a_file_with_a_byte_order_mark() {
+    let directory = ScenarioDirectory::new();
+    let path = directory.0.join("bom-tables.md");
+    std::fs::copy(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("samples")
+            .join("bom-tables.md"),
+        &path,
+    )
+    .expect("copy the sample");
+    let harness = open_with_minimap(path);
+    let document_id = harness.state().workspace.active_document.unwrap();
+    let names = harness.state().workspace.documents[&document_id]
+        .tables
+        .iter()
+        .map(|table| table.name.clone())
+        .collect::<Vec<_>>();
+    assert_eq!(names.len(), 3);
+    let boxes = names
+        .iter()
+        .map(|name| minimap_box(&harness, name).unwrap_or_else(|| panic!("a box for {name}")))
+        .collect::<Vec<_>>();
+    assert!(
+        boxes.windows(2).all(|pair| pair[0].top() < pair[1].top()),
+        "the boxes follow the tables' order in the file: {boxes:?}"
+    );
+}

@@ -1,6 +1,7 @@
 //! Turns GitHub-flavored Markdown into a small block tree for drawing.
 
-use pulldown_cmark::{Alignment, Event, HeadingLevel, Options, Parser, Tag, TagEnd};
+use crate::markdown_adapter::{MARKDOWN_OPTIONS, markdown_body};
+use pulldown_cmark::{Alignment, Event, HeadingLevel, Parser, Tag, TagEnd};
 
 /// One run of inline text with its marks.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -30,6 +31,9 @@ pub(crate) enum Block {
     Quote(Vec<Block>),
     /// A table: column alignments and rows, the first row being the header.
     Table {
+        /// Byte offset where the table starts in the parsed text, to match it with a
+        /// document table by position rather than by order.
+        source_start: usize,
         alignments: Vec<Alignment>,
         rows: Vec<Vec<Inline>>,
     },
@@ -45,16 +49,17 @@ enum Frame {
 }
 
 /// Parses Markdown text into blocks. Raw HTML other than `<br>` is kept as plain text.
+/// It reads the text the way the document's own parser does (byte-order mark and GFM
+/// extensions), so both find the same tables at the same offsets.
 pub(crate) fn parse_markdown(text: &str) -> Vec<Block> {
-    let options =
-        Options::ENABLE_TABLES | Options::ENABLE_STRIKETHROUGH | Options::ENABLE_TASKLISTS;
+    let (body, body_offset) = markdown_body(text);
     let mut stack = vec![Frame::Blocks(Vec::new())];
     let mut inline: Option<Inline> = None;
     let mut marks = Span::default();
     let mut heading = None;
     let mut code: Option<String> = None;
-    let mut table: Option<(Vec<Alignment>, Vec<Vec<Inline>>)> = None;
-    for event in Parser::new_ext(text, options) {
+    let mut table: Option<(usize, Vec<Alignment>, Vec<Vec<Inline>>)> = None;
+    for (event, range) in Parser::new_ext(body, MARKDOWN_OPTIONS).into_offset_iter() {
         match event {
             Event::Start(Tag::Paragraph) => inline = Some(Vec::new()),
             Event::End(TagEnd::Paragraph) => {
@@ -104,21 +109,30 @@ pub(crate) fn parse_markdown(text: &str) -> Vec<Block> {
                     Block::Code(text.trim_end_matches('\n').to_owned()),
                 );
             }
-            Event::Start(Tag::Table(alignments)) => table = Some((alignments, Vec::new())),
+            Event::Start(Tag::Table(alignments)) => {
+                table = Some((range.start + body_offset, alignments, Vec::new()))
+            }
             Event::End(TagEnd::Table) => {
-                if let Some((alignments, rows)) = table.take() {
-                    push_block(&mut stack, Block::Table { alignments, rows });
+                if let Some((source_start, alignments, rows)) = table.take() {
+                    push_block(
+                        &mut stack,
+                        Block::Table {
+                            source_start,
+                            alignments,
+                            rows,
+                        },
+                    );
                 }
             }
             Event::Start(Tag::TableHead | Tag::TableRow) => {
-                if let Some((_, rows)) = table.as_mut() {
+                if let Some((_, _, rows)) = table.as_mut() {
                     rows.push(Vec::new());
                 }
             }
             Event::Start(Tag::TableCell) => inline = Some(Vec::new()),
             Event::End(TagEnd::TableCell) => {
                 let content = inline.take().unwrap_or_default();
-                if let Some(row) = table.as_mut().and_then(|(_, rows)| rows.last_mut()) {
+                if let Some(row) = table.as_mut().and_then(|(_, _, rows)| rows.last_mut()) {
                     row.push(content);
                 }
             }

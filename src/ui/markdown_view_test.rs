@@ -30,7 +30,10 @@ fn parse_markdown_builds_blocks_for_the_supported_syntax() {
             .any(|block| matches!(block, Block::List { start: Some(1), .. }))
     );
     assert_eq!(blocks[3], Block::Code("x = 1".to_owned()));
-    let Block::Table { alignments, rows } = &blocks[4] else {
+    let Block::Table {
+        alignments, rows, ..
+    } = &blocks[4]
+    else {
         panic!("a table follows");
     };
     assert_eq!(alignments.len(), 2);
@@ -65,7 +68,7 @@ fn long_table_cells_wrap_within_the_available_width() {
                 table_placeholders: false,
             },
         );
-        table = drawn.table_rects.first().copied();
+        table = drawn.table_rects.first().map(|(_, rect)| *rect);
     });
     output.textures_delta.clear();
     let table = table.expect("the table is drawn");
@@ -100,7 +103,10 @@ fn drawn_text(markdown: &str, width: f32) -> (Vec<(String, Rect)>, Rect) {
                 table_placeholders: false,
             },
         );
-        table = drawn.table_rects.first().copied().unwrap_or(Rect::NOTHING);
+        table = drawn
+            .table_rects
+            .first()
+            .map_or(Rect::NOTHING, |(_, rect)| *rect);
     });
     output.textures_delta.clear();
     let texts = output

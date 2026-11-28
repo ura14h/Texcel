@@ -7,6 +7,19 @@ use std::ops::Range;
 
 use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 
+/// The GFM extensions every reader of a Markdown file uses, so they all find the same tables.
+pub(crate) const MARKDOWN_OPTIONS: Options = Options::ENABLE_TABLES
+    .union(Options::ENABLE_STRIKETHROUGH)
+    .union(Options::ENABLE_TASKLISTS)
+    .union(Options::ENABLE_GFM);
+
+/// Splits a leading byte-order mark off Markdown text, returning the parsed body and the
+/// byte offset of that body in the text.
+pub(crate) fn markdown_body(text: &str) -> (&str, usize) {
+    let offset = usize::from(text.starts_with('\u{feff}')) * '\u{feff}'.len_utf8();
+    (text.get(offset..).unwrap_or(text), offset)
+}
+
 use crate::document::{Cell, CellAddress, CellInput, Document, DocumentId, StructurePlan};
 
 mod alignment;

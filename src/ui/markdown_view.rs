@@ -22,7 +22,8 @@ pub(super) struct MarkdownViewStyle {
 /// Where the drawn tables landed, in document order.
 #[derive(Default)]
 pub(super) struct MarkdownViewOutput {
-    pub(super) table_rects: Vec<Rect>,
+    /// Each table's starting byte offset in the parsed text and where it was drawn.
+    pub(super) table_rects: Vec<(usize, Rect)>,
     /// Each top-level heading's block index and where it was drawn.
     pub(super) heading_rects: Vec<(usize, Rect)>,
 }
@@ -133,16 +134,22 @@ fn show_block(
                     );
                 });
         }
-        Block::Table { rows, .. } if style.table_placeholders => {
+        Block::Table {
+            source_start, rows, ..
+        } if style.table_placeholders => {
             // The box grows with the row count up to a few rows, so tables keep their shape.
             let height = size * 1.4 * rows.len().clamp(2, 8) as f32;
             let (rect, _) =
                 ui.allocate_exact_size(Vec2::new(ui.available_width(), height), Sense::hover());
-            output.table_rects.push(rect);
+            output.table_rects.push((*source_start, rect));
         }
-        Block::Table { alignments, rows } => {
+        Block::Table {
+            source_start,
+            alignments,
+            rows,
+        } => {
             let rect = show_table(ui, alignments, rows, size, index);
-            output.table_rects.push(rect);
+            output.table_rects.push((*source_start, rect));
         }
         Block::Rule => {
             ui.separator();
