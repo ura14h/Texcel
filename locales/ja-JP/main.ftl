@@ -815,7 +815,6 @@ status-export-csv-write-failed = CSVデータを書き込めませんでした: 
 status-export-csv-finish-failed = CSV出力を完了できませんでした: { $detail }
 status-settings-file-invalid = 設定ファイルを読み取れません: { $detail }
 status-settings-size-limit = 設定ファイルのサイズが上限を超えています。
-status-settings-version-unsupported = 設定ファイルのバージョン{ $version }には対応していません。
 status-settings-ui-font-size-out-of-range = 保存されたUIの文字サイズが対応範囲外です。
 status-settings-directory-missing = 設定の保存先フォルダーがありません。
 status-file-format-mismatch = 選択した形式は{ $expected}ですが、ファイルの内容は{ $actual}です。形式に合うファイルを選んでください。

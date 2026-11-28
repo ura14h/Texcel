@@ -816,7 +816,6 @@ status-export-csv-write-failed = CSV data could not be written: { $detail }
 status-export-csv-finish-failed = The CSV output could not be completed: { $detail }
 status-settings-file-invalid = The settings file is invalid: { $detail }
 status-settings-size-limit = The settings file exceeds the supported size limit.
-status-settings-version-unsupported = Settings version { $version } is not supported.
 status-settings-ui-font-size-out-of-range = The saved interface text size is outside the supported range.
 status-settings-directory-missing = The settings folder is unavailable.
 status-file-format-mismatch = This file is { $actual}, but the selected format is { $expected}. Choose the matching file format.

@@ -108,7 +108,7 @@ fn recent_paths_roundtrip_non_utf8_os_bytes() {
 
 #[test]
 // Verify that invalid settings files do not alter application source data.
-fn missing_corrupt_and_unknown_version_settings_never_replace_source_data() {
+fn missing_corrupt_and_other_version_settings_never_replace_source_data() {
     let directory = TestDirectory::new();
     let path = directory.0.join("settings.json");
     let missing = load_settings(&path).expect("missing settings are defaults");
@@ -125,22 +125,20 @@ fn missing_corrupt_and_unknown_version_settings_never_replace_source_data() {
     );
     assert_eq!(fs::read(&path).expect("corrupt settings kept"), b"not-json");
 
-    // Version 1 kept per-file view settings, so it is not read.
-    fs::write(&path, br#"{"schema_version":1,"app":{},"documents":[]}"#)
-        .expect("write version 1 settings");
-    assert!(
-        load_settings(&path).is_err(),
-        "version 1 settings are not read"
-    );
-
-    fs::write(&path, br#"{"schema_version":99,"app":{},"documents":[]}"#)
-        .expect("write unknown schema");
-    assert!(
-        load_settings(&path)
-            .unwrap_err()
-            .resolve(crate::i18n::Language::English)
-            .contains("not supported")
-    );
+    // Another version is not read and gives the defaults without an error, so nothing is
+    // reported; the file stays until the next save writes the current format.
+    for version in [1, 99] {
+        let other = format!(r#"{{"schema_version":{version},"app":{{"theme":"dark"}}}}"#);
+        fs::write(&path, &other).expect("write settings of another version");
+        let loaded = load_settings(&path).expect("another version gives the defaults");
+        assert_eq!(loaded.schema_version, SETTINGS_VERSION);
+        assert_eq!(
+            loaded.app.theme,
+            ThemeChoice::System,
+            "version {version} is not read"
+        );
+        assert_eq!(fs::read_to_string(&path).expect("file kept"), other);
+    }
 }
 
 #[test]

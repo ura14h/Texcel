@@ -15,7 +15,8 @@ mod path_serde;
 use self::path_serde::recent_paths_serde;
 
 /// Version 2 keeps no per-file view settings: Markdown and CSV cannot carry them, so a file
-/// opens the same way every time. Version 1 files held them and are not read.
+/// opens the same way every time. A file of another version, such as version 1 that held
+/// them, is not read.
 const SETTINGS_VERSION: u32 = 2;
 const MAX_SETTINGS_BYTES: u64 = 16 * 1024 * 1024;
 
@@ -314,21 +315,29 @@ fn load_settings(path: &Path) -> Result<SettingsFile, crate::i18n::Message> {
     if bytes.len() as u64 > MAX_SETTINGS_BYTES {
         return Err(crate::i18n::Message::new("status-settings-size-limit"));
     }
-    let settings: SettingsFile = serde_json::from_slice(&bytes).map_err(|error| {
+    let invalid = |error: serde_json::Error| {
         crate::i18n::Message::new("status-settings-file-invalid").with_text("detail", error)
-    })?;
+    };
+    // Before 1.0.0 the format keeps no compatibility, so a file of another version is not read:
+    // the defaults start quietly and the next save writes the current format. Clearing the
+    // settings by hand is what the reset scripts are for.
+    let version: SettingsVersion = serde_json::from_slice(&bytes).map_err(invalid)?;
+    if version.schema_version != SETTINGS_VERSION {
+        return Ok(SettingsFile::default());
+    }
+    let settings: SettingsFile = serde_json::from_slice(&bytes).map_err(invalid)?;
     validate_settings(&settings)?;
     Ok(settings)
 }
 
+/// The format version alone, read before the rest so another version is never parsed.
+#[derive(Deserialize)]
+struct SettingsVersion {
+    schema_version: u32,
+}
+
 /// Rejects invalid setting values before they are saved.
 fn validate_settings(settings: &SettingsFile) -> Result<(), crate::i18n::Message> {
-    if settings.schema_version != SETTINGS_VERSION {
-        return Err(
-            crate::i18n::Message::new("status-settings-version-unsupported")
-                .with_number("version", settings.schema_version as i64),
-        );
-    }
     if !(MIN_UI_FONT_POINTS..=MAX_UI_FONT_POINTS).contains(&settings.app.ui_font_points) {
         return Err(crate::i18n::Message::new(
             "status-settings-ui-font-size-out-of-range",
