@@ -302,6 +302,9 @@ pub struct TexcelApp {
     markdown_cell_displays: BTreeMap<MarkdownCellDisplayKey, CachedMarkdownCellDisplay>,
     pending_markdown_displays: BTreeMap<MarkdownCellDisplayKey, PendingMarkdownCellDisplay>,
     pending_auto_fits: BTreeMap<DocumentId, autofit::PendingAutoFit>,
+    /// Loaded documents whose first column fit has not finished, with when they loaded and
+    /// whether the fit was requested.
+    initial_auto_fits: BTreeMap<DocumentId, (Instant, bool)>,
     deferred_auto_fits: BTreeMap<DocumentId, autofit::DeferredAutoFit>,
     calculation_worker: CalculationWorker,
     pending_calculations: BTreeMap<DocumentId, JobToken>,
@@ -521,6 +524,9 @@ mod header_selection_tests;
 #[cfg(test)]
 #[path = "ui/freeze_view_test.rs"]
 mod freeze_view_tests;
+#[cfg(test)]
+#[path = "ui/initial_autofit_test.rs"]
+mod initial_autofit_tests;
 #[cfg(test)]
 #[path = "ui/minimap_test.rs"]
 mod minimap_tests;

@@ -424,14 +424,15 @@ fn choose_csv_encoding(harness: &mut Harness<'_, TexcelApp>, next: EncodingChoic
         .next()
         .expect("the encoding choice is shown")
         .click();
-    harness.run();
+    // The worker wakes the UI for each preview, so frames do not settle at a fixed count.
+    harness.run_steps(6);
     let next_label = csv_encoding_label(&harness.ctx, next);
     harness
         .query_all(By::new().role(egui::Role::Button).label(&next_label))
         .next()
         .expect("the next encoding is available")
         .click();
-    harness.run();
+    harness.run_steps(6);
 }
 
 /// Confirms CP932 before loading and keeps its bytes and CRLF on save.
@@ -1134,9 +1135,13 @@ fn click_csv_load(harness: &mut Harness<'_, TexcelApp>) {
 
 /// Waits until the custom CSV load result is installed in the workspace.
 fn wait_for_csv_load(harness: &mut Harness<'_, TexcelApp>, document_id: DocumentId) {
-    for _ in 0..80 {
+    for _ in 0..400 {
         harness.step();
-        if !harness.state().pending_csv_opens.contains_key(&document_id) {
+        // The loaded document shows once its first column fit is done.
+        let app = harness.state();
+        if !app.pending_csv_opens.contains_key(&document_id)
+            && !app.initial_auto_fits.contains_key(&document_id)
+        {
             return;
         }
         std::thread::sleep(std::time::Duration::from_millis(5));

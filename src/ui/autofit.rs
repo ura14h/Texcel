@@ -4,6 +4,7 @@ pub(super) struct DeferredAutoFit {
     table_id: TableId,
     columns: Vec<usize>,
     layout_revision: u64,
+    row_limit: Option<usize>,
 }
 
 pub(super) struct PendingAutoFit {
@@ -28,6 +29,11 @@ fn document_cell_display_mode(mode: crate::document::DocumentDisplayMode) -> Cel
         crate::document::DocumentDisplayMode::Source => CellDisplayMode::Source,
     }
 }
+
+/// How long a newly loaded document's window waits for its first column fit.
+const INITIAL_AUTO_FIT_WAIT: Duration = Duration::from_secs(2);
+/// Rows measured by the fit on opening; a long file's later rows are not read for it.
+const INITIAL_AUTO_FIT_ROWS: usize = 1_000;
 
 impl TexcelApp {
     /// Returns the columns a header edge action applies to: every selected whole column when
@@ -88,13 +94,26 @@ impl TexcelApp {
         self.request_columns_auto_fit(ctx, document_id, table_id, (0..=last_column).collect());
     }
 
-    /// Submits the given columns for one background width measurement.
+    /// Submits the given columns for one background width measurement over every row.
     pub(super) fn request_columns_auto_fit(
         &mut self,
         ctx: &egui::Context,
         document_id: DocumentId,
         table_id: TableId,
         columns: Vec<usize>,
+    ) {
+        self.request_columns_auto_fit_within(ctx, document_id, table_id, columns, None);
+    }
+
+    /// Submits the given columns for one background width measurement, optionally over the
+    /// first `row_limit` rows only.
+    fn request_columns_auto_fit_within(
+        &mut self,
+        ctx: &egui::Context,
+        document_id: DocumentId,
+        table_id: TableId,
+        columns: Vec<usize>,
+        row_limit: Option<usize>,
     ) {
         let Some(document) = self.workspace.documents.get(&document_id) else {
             return;
@@ -119,6 +138,7 @@ impl TexcelApp {
                     table_id,
                     columns,
                     layout_revision,
+                    row_limit,
                 },
             );
             return;
@@ -181,6 +201,7 @@ impl TexcelApp {
                 + crate::document::COLUMN_TEXT_PADDING_PIXELS)
                 as f32,
             character_width: self.grid_character_width,
+            row_limit,
         };
         if self.file_worker.auto_fit(token, request).is_err() {
             self.status = Some(Message::new("status-layout-change-failed"));
@@ -204,6 +225,62 @@ impl TexcelApp {
             },
         );
         ctx.request_repaint();
+    }
+
+    /// Fits the active table of a newly loaded document once, before its window is shown:
+    /// every used column that has no saved width. Returns once the fit is done, could not
+    /// start, or took too long, so the window then appears.
+    pub(super) fn advance_initial_auto_fit(
+        &mut self,
+        ctx: &egui::Context,
+        document_id: DocumentId,
+    ) {
+        let Some((loaded_at, requested)) = self.initial_auto_fits.get(&document_id).copied() else {
+            return;
+        };
+        if loaded_at.elapsed() > INITIAL_AUTO_FIT_WAIT {
+            self.initial_auto_fits.remove(&document_id);
+            return;
+        }
+        self.start_ready_auto_fits(ctx);
+        let running = self.pending_auto_fits.contains_key(&document_id)
+            || self.deferred_auto_fits.contains_key(&document_id);
+        if requested {
+            if !running {
+                self.initial_auto_fits.remove(&document_id);
+            }
+            return;
+        }
+        let Some(document) = self.workspace.documents.get(&document_id) else {
+            self.initial_auto_fits.remove(&document_id);
+            return;
+        };
+        let table_id = document.active_table;
+        let columns = document
+            .tables
+            .iter()
+            .find(|table| table.id == table_id)
+            .zip(document.view(table_id))
+            .map(|(table, view)| {
+                (0..=table.extent_end().column)
+                    .filter(|column| view.layout.column(*column).is_none())
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        if columns.is_empty() || running {
+            self.initial_auto_fits.remove(&document_id);
+            return;
+        }
+        if let Some(entry) = self.initial_auto_fits.get_mut(&document_id) {
+            entry.1 = true;
+        }
+        self.request_columns_auto_fit_within(
+            ctx,
+            document_id,
+            table_id,
+            columns,
+            Some(INITIAL_AUTO_FIT_ROWS),
+        );
     }
 
     /// Starts deferred measurements after the visible calculation root is published.
@@ -233,7 +310,12 @@ impl TexcelApp {
                 .is_some_and(|(revision, _)| *revision == document.calculation_revision);
             if !calculation_is_pending {
                 if has_current_root {
-                    ready.push((*document_id, deferred.table_id, deferred.columns.clone()));
+                    ready.push((
+                        *document_id,
+                        deferred.table_id,
+                        deferred.columns.clone(),
+                        deferred.row_limit,
+                    ));
                 } else {
                     discard.push(*document_id);
                 }
@@ -242,9 +324,9 @@ impl TexcelApp {
         for document_id in discard {
             self.deferred_auto_fits.remove(&document_id);
         }
-        for (document_id, table_id, columns) in ready {
+        for (document_id, table_id, columns, row_limit) in ready {
             self.deferred_auto_fits.remove(&document_id);
-            self.request_columns_auto_fit(ctx, document_id, table_id, columns);
+            self.request_columns_auto_fit_within(ctx, document_id, table_id, columns, row_limit);
         }
     }
 

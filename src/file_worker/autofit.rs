@@ -101,6 +101,9 @@ fn measure_auto_fit(
             let mut measured = request.minimum_column_width_pixels;
             let cells = table.stored_cells_in_column(column);
             for (address, cell) in cells {
+                if request.row_limit.is_some_and(|limit| address.row >= limit) {
+                    continue;
+                }
                 if cancelled.load(Ordering::Acquire) {
                     return Err(Message::new("status-autofit-cancelled"));
                 }

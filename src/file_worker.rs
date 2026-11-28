@@ -190,6 +190,8 @@ pub struct AutoFitRequest {
     pub maximum_column_width_pixels: f32,
     /// Width of one column width unit at 100%: a half-width grid monospace character.
     pub character_width: f64,
+    /// Measures only rows before this one, so the fit on opening a large file stays quick.
+    pub row_limit: Option<usize>,
 }
 
 // The kind of async operation, so the UI can show clear progress and errors.

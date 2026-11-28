@@ -102,6 +102,7 @@ impl eframe::App for TexcelAppHost {
                 || last_document_window_closed;
             host.process_file_results(ctx);
             host.settle_root_window(ctx);
+            host.advance_initial_auto_fits(ctx);
             let document = host.root_document;
             let no_document_windows = host.app.workspace.documents.is_empty();
             #[cfg(any(target_os = "macos", target_os = "windows"))]
@@ -258,6 +259,10 @@ impl HostRuntime {
         let Some(document_id) = self.app.pending_document_focus else {
             return;
         };
+        // A window waiting for its first column fit does not exist yet.
+        if self.app.initial_auto_fits.contains_key(&document_id) {
+            return;
+        }
         if let Some(viewport) = self.document_viewports.get(&document_id).copied() {
             ctx.send_viewport_cmd_to(viewport, egui::ViewportCommand::Focus);
             self.app.pending_document_focus = None;
@@ -310,7 +315,11 @@ impl HostRuntime {
     fn child_viewports(&self) -> Vec<ChildWindow> {
         self.document_viewports
             .iter()
-            .filter(|(_, viewport)| **viewport != self.root_viewport)
+            // A new window opens once its first column fit is done.
+            .filter(|(document_id, viewport)| {
+                **viewport != self.root_viewport
+                    && !self.app.initial_auto_fits.contains_key(document_id)
+            })
             .map(|(document_id, viewport)| ChildWindow {
                 document_id: *document_id,
                 viewport: *viewport,

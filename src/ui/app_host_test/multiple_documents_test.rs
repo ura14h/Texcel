@@ -546,3 +546,62 @@ fn second_window_follows_the_first_one_step_down_and_right() {
     assert_eq!(placement.position, root_outer.min + Vec2::splat(24.0));
     assert_eq!(placement.size, root_inner.size());
 }
+
+#[test]
+/// Creates a newly opened document's window only after its first column fit, so it never
+/// shows the default widths first.
+fn new_window_waits_for_its_first_column_fit() {
+    let directory = crate::ui::tests::TestDirectory::new();
+    let samples = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples");
+    let settings_path = directory.0.join("settings.json");
+    let mut harness = Harness::builder()
+        .with_size([1000.0, 700.0])
+        .allow_missing_glyphs()
+        .build_eframe(move |creation| {
+            creation.egui_ctx.set_embed_viewports(false);
+            let app = TexcelApp::new_with_settings_path(creation, Some(settings_path));
+            TexcelAppHost::new(app, creation.egui_ctx.viewport_id())
+        });
+    harness.step();
+    open_in_host(
+        &mut harness,
+        &fs::canonicalize(samples.join("tables.md")).unwrap(),
+    );
+    let readme = fs::canonicalize(samples.join("README.md")).unwrap();
+    with_host(harness.state().id, |host| {
+        host.app.queue_open_paths([readme.clone()])
+    });
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let mut saw_waiting_window = false;
+    loop {
+        harness.step();
+        let (document, waiting, listed) = with_host(harness.state().id, |host| {
+            let document = host
+                .app
+                .file_backings
+                .iter()
+                .find_map(|(id, backing)| (backing.path == readme).then_some(*id));
+            let waiting = document.is_some_and(|id| host.app.initial_auto_fits.contains_key(&id));
+            let listed = document.is_some_and(|id| {
+                host.child_viewports()
+                    .iter()
+                    .any(|child| child.document_id == id)
+            });
+            (document, waiting, listed)
+        });
+        assert!(
+            !(waiting && listed),
+            "a window waiting for its fit is not created"
+        );
+        saw_waiting_window |= waiting;
+        if document.is_some() && listed {
+            break;
+        }
+        assert!(Instant::now() < deadline, "README.md gets its window");
+        std::thread::sleep(Duration::from_millis(2));
+    }
+    assert!(
+        saw_waiting_window,
+        "the new document waited for its first fit"
+    );
+}

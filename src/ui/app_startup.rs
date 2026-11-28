@@ -265,6 +265,7 @@ impl TexcelApp {
             pending_markdown_displays: BTreeMap::new(),
             pending_auto_fits: BTreeMap::new(),
             deferred_auto_fits: BTreeMap::new(),
+            initial_auto_fits: BTreeMap::new(),
             pending_calculations: BTreeMap::new(),
             pending_initial_calculations: BTreeMap::new(),
             calculation_initial_snapshots: BTreeMap::new(),
