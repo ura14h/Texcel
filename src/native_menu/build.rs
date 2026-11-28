@@ -309,11 +309,9 @@ fn application_submenu(
     let about_metadata = muda::AboutMetadata {
         name: Some("Texcel".to_owned()),
         version: Some(env!("CARGO_PKG_VERSION").to_owned()),
-        short_version: Some(format!(
-            "{}.{}",
-            env!("CARGO_PKG_VERSION_MAJOR"),
-            env!("CARGO_PKG_VERSION_MINOR")
-        )),
+        // The same value for the build number makes AppKit show "Version 0.3.0" without a
+        // parenthesized build after it.
+        short_version: Some(env!("CARGO_PKG_VERSION").to_owned()),
         copyright: Some(crate::ui::APP_COPYRIGHT.to_owned()),
         ..Default::default()
     };
