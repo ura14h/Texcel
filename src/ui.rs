@@ -134,6 +134,7 @@ pub struct TexcelApp {
     /// App-wide: one Help window serves every document window.
     help_viewport_open: bool,
     help_blocks: help_window::HelpBlocks,
+    help_outline: help_window::HelpOutline,
     /// Whether this window shows the Markdown minimap instead of the table list.
     minimap_open: bool,
     minimap_cache: Option<minimap::MinimapCache>,

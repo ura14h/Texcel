@@ -23,6 +23,8 @@ pub(super) struct MarkdownViewStyle {
 #[derive(Default)]
 pub(super) struct MarkdownViewOutput {
     pub(super) table_rects: Vec<Rect>,
+    /// Each top-level heading's block index and where it was drawn.
+    pub(super) heading_rects: Vec<(usize, Rect)>,
 }
 
 /// Draws parsed Markdown blocks top to bottom at the available width.
@@ -36,7 +38,12 @@ pub(super) fn show_markdown(
     // Table rows and list markers follow the text size, not the size of buttons.
     ui.spacing_mut().interact_size.y = style.body_size * 1.3;
     for (index, block) in blocks.iter().enumerate() {
+        let top = ui.cursor().top();
         show_block(ui, block, style, &mut output, index);
+        if matches!(block, Block::Heading(..)) {
+            let rect = Rect::from_x_y_ranges(ui.max_rect().x_range(), top..=ui.cursor().top());
+            output.heading_rects.push((index, rect));
+        }
     }
     output
 }

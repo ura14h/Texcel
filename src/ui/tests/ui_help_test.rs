@@ -83,6 +83,40 @@ fn help_opens_the_built_in_guide_in_its_own_window() {
         let _ = std::fs::create_dir_all(&directory);
         let _ = image.save(directory.join("help-window-ja.png"));
     }
+
+    // The outline at the left lists the headings; choosing one scrolls the guide to it.
+    let appendix = "付録：使える関数";
+    let heading_top = |harness: &Harness<'_, TexcelApp>| {
+        harness
+            .query_all(By::new().role(egui::Role::Label).label(appendix))
+            .next()
+            .map(|node| node.rect().top())
+    };
+    let outline_entry = harness
+        .query_all(By::new().role(egui::Role::Button).label(appendix))
+        .next()
+        .expect("the outline lists the appendix")
+        .rect();
+    let before = heading_top(&harness).unwrap_or(f32::MAX);
+    harness.event(egui::Event::PointerMoved(outline_entry.center()));
+    harness.event(egui::Event::PointerButton {
+        pos: outline_entry.center(),
+        button: egui::PointerButton::Primary,
+        pressed: true,
+        modifiers: egui::Modifiers::NONE,
+    });
+    harness.event(egui::Event::PointerButton {
+        pos: outline_entry.center(),
+        button: egui::PointerButton::Primary,
+        pressed: false,
+        modifiers: egui::Modifiers::NONE,
+    });
+    harness.run_steps(30);
+    let after = heading_top(&harness).expect("the appendix heading is drawn");
+    assert!(
+        after < before && after < 150.0,
+        "the appendix heading moves to the top: {before} -> {after}"
+    );
 }
 
 /// Shows the app name, version, and copyright in the About dialog.

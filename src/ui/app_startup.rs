@@ -97,6 +97,7 @@ impl TexcelApp {
             about_dialog_open: false,
             help_viewport_open: false,
             help_blocks: None,
+            help_outline: help_window::HelpOutline::default(),
             minimap_open: false,
             minimap_cache: None,
             settings_worker,
