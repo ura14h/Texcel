@@ -197,43 +197,64 @@ impl TexcelApp {
         let show_shared_menu = shared_menu_bar_for_test(ctx);
         #[cfg(all(not(test), any(target_os = "macos", target_os = "windows")))]
         let show_shared_menu = false;
-        egui::Panel::top("texcel_header").show(root, |ui| {
-            ui.spacing_mut().item_spacing = Vec2::new(8.0, 0.0);
-            ui.spacing_mut().button_padding = Vec2::new(8.0, 2.0);
-            egui::Frame::new()
-                .inner_margin(egui::Margin::symmetric(CHROME_EDGE_INSET, 0))
-                .show(ui, |ui| {
-                    if show_shared_menu {
-                        ui.scope(|ui| {
-                            ui.horizontal_wrapped(|_ui| {
-                                #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-                                self.draw_shared_menu_bar(_ui, navigation_blocked, &mut state);
-                                #[cfg(all(test, any(target_os = "macos", target_os = "windows")))]
-                                self.draw_shared_menu_bar(_ui, navigation_blocked, &mut state);
+        // The bars reach both window edges; only the Linux menu row keeps an inset.
+        let header_frame =
+            egui::Frame::side_top_panel(root.style()).inner_margin(egui::Margin::symmetric(0, 2));
+        egui::Panel::top("texcel_header")
+            .frame(header_frame)
+            .show(root, |ui| {
+                ui.spacing_mut().item_spacing = Vec2::new(8.0, 0.0);
+                ui.spacing_mut().button_padding = Vec2::new(8.0, 2.0);
+                egui::Frame::new()
+                    .inner_margin(egui::Margin::symmetric(CHROME_EDGE_INSET * 2, 0))
+                    .show(ui, |ui| {
+                        if show_shared_menu {
+                            ui.scope(|ui| {
+                                ui.horizontal_wrapped(|_ui| {
+                                    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+                                    self.draw_shared_menu_bar(_ui, navigation_blocked, &mut state);
+                                    #[cfg(all(
+                                        test,
+                                        any(target_os = "macos", target_os = "windows")
+                                    ))]
+                                    self.draw_shared_menu_bar(_ui, navigation_blocked, &mut state);
+                                });
                             });
-                        });
-                        ui.separator();
-                    }
+                            ui.separator();
+                        }
+                    });
+                let formula_bar_blocked = navigation_blocked && !formula_ime_active
+                    || self.workspace.active_document().is_some_and(|document| {
+                        self.cell_edit_locked(document.id)
+                            || self.close_after_save.contains(&document.id)
+                    });
+                // The formula bar takes the width left of the narrow live/source bar.
+                let mode_bar_width = self.display_mode_bar_width(ui);
+                let bars = ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 0.0;
+                    ui.scope(|ui| {
+                        ui.set_max_width((ui.available_width() - mode_bar_width).max(0.0));
+                        self.draw_formula_bar(ui, formula_bar_blocked);
+                    });
+                    (mode_bar_width > 0.0).then(|| {
+                        let line_x = ui.cursor().left();
+                        ui.add_space(display_mode_bar::DISPLAY_MODE_BAR_GAP);
+                        self.draw_display_mode_bar(ui, navigation_blocked);
+                        line_x
+                    })
                 });
-            let formula_bar_blocked = navigation_blocked && !formula_ime_active
-                || self.workspace.active_document().is_some_and(|document| {
-                    self.cell_edit_locked(document.id)
-                        || self.close_after_save.contains(&document.id)
-                });
-            // The formula bar takes the width left of the narrow live/source bar.
-            let mode_bar_width = self.display_mode_bar_width(ui);
-            ui.horizontal(|ui| {
-                ui.spacing_mut().item_spacing.x = 0.0;
-                ui.scope(|ui| {
-                    ui.set_max_width((ui.available_width() - mode_bar_width).max(0.0));
-                    self.draw_formula_bar(ui, formula_bar_blocked);
-                });
-                if mode_bar_width > 0.0 {
-                    ui.add_space(display_mode_bar::DISPLAY_MODE_BAR_GAP);
-                    self.draw_display_mode_bar(ui, navigation_blocked);
+                // A faint line separates the formula bar from the live/source switch.
+                if let Some(line_x) = bars.inner {
+                    ui.painter().vline(
+                        line_x + display_mode_bar::DISPLAY_MODE_BAR_GAP * 0.5,
+                        bars.response.rect.y_range(),
+                        Stroke::new(
+                            display_mode_bar::DISPLAY_MODE_BAR_GAP,
+                            ui.visuals().widgets.noninteractive.bg_stroke.color,
+                        ),
+                    );
                 }
             });
-        });
 
         self.restore_modal_menu_focus_this_frame = false;
         if navigation_blocked && state.preserve_text_focus {

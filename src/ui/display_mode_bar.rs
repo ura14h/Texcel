@@ -6,8 +6,8 @@ use crate::document::DocumentDisplayMode;
 #[path = "display_mode_bar_test.rs"]
 mod tests;
 
-/// Space between the formula bar and the live/source switch.
-pub(super) const DISPLAY_MODE_BAR_GAP: f32 = 6.0;
+/// Width of the faint line between the formula bar and the live/source switch.
+pub(super) const DISPLAY_MODE_BAR_GAP: f32 = 1.0;
 
 /// The button label for each mode, and the tooltip naming the mode a click switches to.
 fn mode_keys(mode: DocumentDisplayMode) -> (&'static str, &'static str) {
