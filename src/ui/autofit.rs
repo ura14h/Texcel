@@ -133,6 +133,7 @@ impl TexcelApp {
             columns: columns.clone(),
             layout: view.layout.as_ref().clone(),
             wrap_text,
+            header_row: document.header_row(table_id),
         };
         let Some(request) = self.auto_fit_request(
             ctx,

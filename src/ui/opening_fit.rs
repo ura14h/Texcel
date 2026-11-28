@@ -119,6 +119,7 @@ impl TexcelApp {
                     columns,
                     layout: view.layout.as_ref().clone(),
                     wrap_text: view.wrap_text,
+                    header_row: document.header_row(table.id),
                 })
             })
             .collect()

@@ -145,3 +145,45 @@ fn reopening_keeps_saved_widths_and_fits_the_rest() {
         "column B is fitted: {fitted:?}"
     );
 }
+
+#[test]
+// Measures the header row in the bold it is drawn with, so a heading wider than the cells
+// below it is not clipped. Bold Latin text comes from another font and is wider.
+fn opening_fit_measures_the_header_row_in_bold() {
+    let heading = "Shelf Count Note Item abcdefghijklmnopqrstuvwxyz";
+    let directory = ScenarioDirectory::new();
+    let path = directory.0.join("fit.md");
+    std::fs::write(&path, format!("| {heading} |\n| --- |\n| x |\n")).expect("write the input");
+    let mut harness = scenario_harness(directory.0.join("settings.json"));
+    queue_open_and_wait(&mut harness, path);
+    let app = harness.state();
+    let document = app.workspace.active_document().unwrap();
+    let width = document
+        .view(document.active_table)
+        .unwrap()
+        .layout
+        .column_width_pixels_with(0, app.grid_character_width);
+    let style = CellTextStyle::default();
+    let (mut job, _) = cell_layout_job(
+        heading,
+        CellTextFormat {
+            style: &style,
+            color: Color32::BLACK,
+            width: f32::INFINITY,
+            show_invisibles: false,
+            scale: 1.0,
+        },
+    );
+    apply_grid_bold(&mut job);
+    let bold = f64::from(
+        harness
+            .ctx
+            .fonts_mut(|fonts| fonts.layout_job(job))
+            .size()
+            .x,
+    );
+    assert!(
+        width >= bold + crate::document::COLUMN_TEXT_PADDING_PIXELS,
+        "the column ({width}) holds the bold heading ({bold}) and its padding"
+    );
+}

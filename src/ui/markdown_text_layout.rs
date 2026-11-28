@@ -105,6 +105,18 @@ pub(crate) fn apply_grid_monospace(job: &mut egui::text::LayoutJob) {
     }
 }
 
+/// Switches every text run to the bold grid fonts, keeping monospace runs monospace.
+pub(crate) fn apply_grid_bold(job: &mut egui::text::LayoutJob) {
+    for section in &mut job.sections {
+        let family = &mut section.format.font_id.family;
+        if *family == grid_font_family(false) {
+            *family = grid_font_family(true);
+        } else if *family == grid_mono_font_family(false) {
+            *family = grid_mono_font_family(true);
+        }
+    }
+}
+
 /// Returns the font family for general grid text.
 pub(crate) fn grid_font_family(bold: bool) -> FontFamily {
     FontFamily::Name(if bold {

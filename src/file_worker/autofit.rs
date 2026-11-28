@@ -185,8 +185,11 @@ fn measure_table(
                     },
                 )
             };
+            // The same font steps as painting: monospace for source, bold for the header row.
             if request.display_mode == crate::document::CellDisplayMode::Source {
                 crate::ui::auto_fit_apply_grid_monospace(&mut job);
+            } else if target.header_row == Some(address.row) {
+                crate::ui::auto_fit_apply_grid_bold(&mut job);
             }
             if text.contains('\n') {
                 job.wrap.max_rows = 256;

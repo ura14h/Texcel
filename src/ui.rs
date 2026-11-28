@@ -434,6 +434,7 @@ pub(crate) use self::cell_paint::{CellTextStyle, HorizontalAlignment};
 pub(crate) use self::edit_text::cell_view_text as auto_fit_cell_view_text;
 pub(crate) use self::markdown_cell_layout::markdown_cell_layout_job as auto_fit_markdown_cell_layout_job;
 pub(crate) use self::markdown_text_layout::CellTextFormat;
+pub(crate) use self::markdown_text_layout::apply_grid_bold as auto_fit_apply_grid_bold;
 pub(crate) use self::markdown_text_layout::apply_grid_monospace as auto_fit_apply_grid_monospace;
 pub(crate) use self::markdown_text_layout::cell_layout_job as auto_fit_cell_layout_job;
 

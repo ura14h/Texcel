@@ -159,18 +159,6 @@ pub(super) fn paint_cell_text(
     }
 }
 
-/// Switches every text run to the bold grid fonts, keeping monospace runs monospace.
-fn apply_grid_bold(job: &mut egui::text::LayoutJob) {
-    for section in &mut job.sections {
-        let family = &mut section.format.font_id.family;
-        if *family == grid_font_family(false) {
-            *family = grid_font_family(true);
-        } else if *family == grid_mono_font_family(false) {
-            *family = grid_mono_font_family(true);
-        }
-    }
-}
-
 /// Marks text that cannot fit inside the visible cell instead of clipping it silently.
 fn constrain_cell_text_layout(
     ctx: &egui::Context,

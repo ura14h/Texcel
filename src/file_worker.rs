@@ -202,6 +202,8 @@ pub struct AutoFitTarget {
     pub columns: Vec<usize>,
     pub layout: crate::document::TableLayout,
     pub wrap_text: bool,
+    /// The row live editing draws in bold, measured in bold too.
+    pub header_row: Option<usize>,
 }
 
 // The kind of async operation, so the UI can show clear progress and errors.
