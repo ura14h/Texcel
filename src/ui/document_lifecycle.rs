@@ -204,6 +204,7 @@ impl TexcelApp {
             .remove(&document_id);
         self.document_preference_changes.remove(&document_id);
         self.settings_applied_documents.remove(&document_id);
+        self.minimap_caches.remove(&document_id);
         self.forget_accesskit_document(document_id);
         if self
             .save_conflict_dialog

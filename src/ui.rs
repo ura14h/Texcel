@@ -139,7 +139,7 @@ pub struct TexcelApp {
     help_outline: help_window::HelpOutline,
     /// Whether this window shows the Markdown minimap instead of the table list.
     minimap_open: bool,
-    minimap_cache: Option<minimap::MinimapCache>,
+    minimap_caches: BTreeMap<DocumentId, minimap::MinimapCache>,
     settings_worker: Option<SettingsWorker>,
     settings_file: SettingsFile,
     settings_loaded: bool,

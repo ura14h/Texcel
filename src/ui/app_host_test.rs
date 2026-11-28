@@ -6,6 +6,8 @@ use std::time::{Duration, Instant};
 
 #[path = "app_host_test/app_exit_test.rs"]
 mod app_exit;
+#[path = "app_host_test/minimap_windows_test.rs"]
+mod minimap_windows;
 #[path = "app_host_test/multiple_documents_test.rs"]
 mod multiple_documents;
 
@@ -488,4 +490,29 @@ fn newly_opened_document_window_is_brought_forward() {
             )))
         );
     });
+}
+
+/// Opens one file through the host's queue and waits until its document exists.
+fn open_in_host(harness: &mut Harness<'_, TexcelAppHost>, path: &Path) -> DocumentId {
+    with_host(harness.state().id, |host| {
+        host.app.queue_open_paths([path.to_path_buf()]);
+    });
+    let deadline = Instant::now() + Duration::from_secs(5);
+    loop {
+        harness.step();
+        // The document is ready once its columns are fitted and it has its window.
+        let loaded = with_host(harness.state().id, |host| {
+            host.app
+                .file_backings
+                .iter()
+                .find_map(|(id, backing)| (backing.path == path).then_some(*id))
+                .filter(|id| !host.app.opening_fits.contains_key(id))
+        });
+        if let Some(id) = loaded {
+            harness.step();
+            return id;
+        }
+        assert!(Instant::now() < deadline, "{} opens", path.display());
+        std::thread::sleep(Duration::from_millis(5));
+    }
 }

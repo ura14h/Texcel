@@ -10,9 +10,9 @@ pub(super) const MINIMAP_MAX_BYTES: usize = 512 * 1024;
 /// Body text size of the minimap: small, but the words can still be made out.
 const MINIMAP_TEXT_SIZE: f32 = 4.5;
 
-/// Blocks parsed off the UI thread for one revision of one document.
+/// Blocks parsed off the UI thread for one revision of a document. Each document keeps its
+/// own, so windows showing different files never replace each other's parse.
 pub(super) struct MinimapCache {
-    document_id: DocumentId,
     revision: u64,
     blocks: Arc<OnceLock<Arc<Vec<Block>>>>,
     /// The last finished blocks, shown until the newer parse finishes.
@@ -112,46 +112,39 @@ impl TexcelApp {
         document_id: DocumentId,
         source: Arc<crate::markdown_adapter::MarkdownDocument>,
     ) -> Option<Arc<Vec<Block>>> {
-        let document = self.workspace.documents.get(&document_id)?;
-        let revision = document.revision;
-        let current = self
-            .minimap_cache
-            .as_ref()
-            .is_some_and(|cache| cache.document_id == document_id && cache.revision == revision);
-        if !current {
-            let previous = self.minimap_cache.as_ref().and_then(|cache| {
-                (cache.document_id == document_id)
-                    .then(|| {
-                        cache
-                            .blocks
-                            .get()
-                            .cloned()
-                            .or_else(|| cache.previous.clone())
-                    })
-                    .flatten()
-            });
+        let revision = self.workspace.documents.get(&document_id)?.revision;
+        let cache = self.minimap_caches.get(&document_id);
+        if cache.is_none_or(|cache| cache.revision != revision) {
+            let previous = cache.and_then(MinimapCache::finished);
             let blocks = Arc::new(OnceLock::new());
             let target = Arc::clone(&blocks);
+            // Wake the window that asked; a bare repaint from this thread would reach the root.
             let repaint = ctx.clone();
+            let viewport = ctx.viewport_id();
             std::thread::spawn(move || {
                 let text = String::from_utf8_lossy(source.source_bytes());
                 let _ = target.set(Arc::new(parse_markdown(&text)));
-                repaint.request_repaint();
+                repaint.request_repaint_of(viewport);
             });
-            self.minimap_cache = Some(MinimapCache {
+            self.minimap_caches.insert(
                 document_id,
-                revision,
-                blocks,
-                previous,
-            });
+                MinimapCache {
+                    revision,
+                    blocks,
+                    previous,
+                },
+            );
         }
-        self.minimap_cache.as_ref().and_then(|cache| {
-            cache
-                .blocks
-                .get()
-                .cloned()
-                .or_else(|| cache.previous.clone())
-        })
+        self.minimap_caches
+            .get(&document_id)
+            .and_then(MinimapCache::finished)
+    }
+}
+
+impl MinimapCache {
+    /// Returns the newest finished blocks: this revision's, or the last ones until it is done.
+    fn finished(&self) -> Option<Arc<Vec<Block>>> {
+        self.blocks.get().cloned().or_else(|| self.previous.clone())
     }
 }
 

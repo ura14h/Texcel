@@ -101,7 +101,7 @@ impl TexcelApp {
             help_blocks: None,
             help_outline: help_window::HelpOutline::default(),
             minimap_open: false,
-            minimap_cache: None,
+            minimap_caches: BTreeMap::new(),
             settings_worker,
             settings_file: SettingsFile::default(),
             settings_loaded: false,

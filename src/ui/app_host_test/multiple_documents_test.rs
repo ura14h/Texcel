@@ -353,31 +353,6 @@ fn root_pass_between_child_frames_keeps_the_preedit() {
     }
 }
 
-/// Opens one file through the host's queue and waits until its document exists.
-fn open_in_host(harness: &mut Harness<'_, TexcelAppHost>, path: &Path) -> DocumentId {
-    with_host(harness.state().id, |host| {
-        host.app.queue_open_paths([path.to_path_buf()]);
-    });
-    let deadline = Instant::now() + Duration::from_secs(5);
-    loop {
-        harness.step();
-        // The document is ready once its columns are fitted and it has its window.
-        let loaded = with_host(harness.state().id, |host| {
-            host.app
-                .file_backings
-                .iter()
-                .find_map(|(id, backing)| (backing.path == path).then_some(*id))
-                .filter(|id| !host.app.opening_fits.contains_key(id))
-        });
-        if let Some(id) = loaded {
-            harness.step();
-            return id;
-        }
-        assert!(Instant::now() < deadline, "{} opens", path.display());
-        std::thread::sleep(Duration::from_millis(5));
-    }
-}
-
 #[test]
 /// Opens README.md and then the CP932 sample, answering its encoding prompt. README.md
 /// replaces the start-up document in the root window, the prompt appears there, and the CSV
