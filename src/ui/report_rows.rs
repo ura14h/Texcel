@@ -52,7 +52,7 @@ pub(super) fn group_reason(group: &ConversionGroup, language: Language) -> Strin
 }
 
 /// The text inset at the left of each report list row and its column headings.
-const REPORT_ROW_INSET: f32 = 8.0;
+pub(super) const REPORT_ROW_INSET: f32 = 8.0;
 
 /// Lays out the import report as result and location columns beside the selected details.
 pub(super) fn import_report_panes(
@@ -200,7 +200,7 @@ fn report_group_row(
 }
 
 /// Measures one line of body text for column widths.
-fn text_width(ui: &egui::Ui, text: &str) -> f32 {
+pub(super) fn text_width(ui: &egui::Ui, text: &str) -> f32 {
     ui.painter()
         .layout_no_wrap(
             text.to_owned(),
@@ -212,7 +212,7 @@ fn text_width(ui: &egui::Ui, text: &str) -> f32 {
 }
 
 /// Places column headings on one row of shared height, each starting at its column's offset.
-fn column_headings(ui: &mut egui::Ui, headings: &[(f32, &str)]) {
+pub(super) fn column_headings(ui: &mut egui::Ui, headings: &[(f32, &str)]) {
     let height = ui.fonts_mut(|fonts| {
         fonts.row_height(&egui::FontId::proportional(visual::SECTION_TITLE_SIZE))
     }) + visual::SPACE_8;

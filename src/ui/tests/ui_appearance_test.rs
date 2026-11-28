@@ -118,7 +118,18 @@ fn render_modal_confirmation_and_input_representatives() {
                 app.theme = ThemeChoice::Light;
                 crate::i18n::set_context_language(&ctx, language);
                 match kind {
-                    "confirmation" => app.app_close_dialog_open = true,
+                    "confirmation" => {
+                        // An edited document is what the dialog lists.
+                        let document = app
+                            .workspace
+                            .active_document_mut()
+                            .expect("the default document is active");
+                        let table_id = document.active_table().expect("a table is active").id;
+                        document
+                            .set_cell(table_id, CellAddress::default(), Some(Cell::text("x")))
+                            .expect("the cell accepts text");
+                        app.app_close_dialog_open = true;
+                    }
                     "input" => {
                         let document = app
                             .workspace

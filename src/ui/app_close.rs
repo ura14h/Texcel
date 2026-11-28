@@ -7,6 +7,10 @@ mod save_batch;
 #[path = "app_close/window_edits.rs"]
 mod window_edits;
 
+#[cfg(test)]
+#[path = "app_close_test.rs"]
+mod tests;
+
 enum AppCloseAction {
     Save,
     Discard,
@@ -169,7 +173,8 @@ impl TexcelApp {
         }
     }
 
-    /// Draws only the documents that need a choice before exit.
+    /// Lists only the documents that need a choice before exit, with the same headed
+    /// columns and plain rows as the import report.
     fn draw_app_close_document_rows(&self, ui: &mut egui::Ui, action: &mut Option<AppCloseAction>) {
         ui.label(context_text(ui.ctx(), "dialog-app-close-help"));
         if self.app_close_save_failed {
@@ -178,24 +183,89 @@ impl TexcelApp {
                 context_text(ui.ctx(), "dialog-app-close-save-failed"),
             );
         }
-        for document_id in &self.workspace.order {
-            let Some(document) = self.workspace.documents.get(document_id) else {
-                continue;
-            };
-            ui.group(|ui| {
-                ui.horizontal_wrapped(|ui| {
-                    ui.strong(&document.name);
-                    if self.pending_recovered_cell_edits.contains_key(document_id) {
-                        ui.label(context_text(ui.ctx(), "dialog-app-close-draft"));
-                        if ui
-                            .button(context_text(ui.ctx(), "action-resolve-draft"))
-                            .clicked()
-                        {
-                            *action = Some(AppCloseAction::ResolveDraft(*document_id));
-                        }
-                    }
-                });
-            });
+        let rows = self
+            .workspace
+            .order
+            .iter()
+            .filter_map(|document_id| {
+                let document = self.workspace.documents.get(document_id)?;
+                let draft = self.pending_recovered_cell_edits.contains_key(document_id);
+                let changed = self.document_has_unsaved_changes(*document_id)
+                    || self.pending_saves.contains_key(document_id)
+                    || self.app_close_window_has_changed_edit(*document_id);
+                (draft || changed).then(|| (*document_id, document.name.clone(), draft))
+            })
+            .collect::<Vec<_>>();
+        if rows.is_empty() {
+            return;
+        }
+        ui.add_space(visual::SPACE_8);
+        let document_heading = context_text(ui.ctx(), "dialog-app-close-column-document");
+        let status_heading = context_text(ui.ctx(), "dialog-app-close-column-status");
+        let changed = context_text(ui.ctx(), "dialog-app-close-changed");
+        let draft = context_text(ui.ctx(), "dialog-app-close-draft");
+        // The name column is as wide as its widest name, so the statuses line up after it.
+        let name_width = rows
+            .iter()
+            .map(|(_, name, _)| name.as_str())
+            .chain(std::iter::once(document_heading.as_str()))
+            .map(|name| report_rows::text_width(ui, name))
+            .fold(0.0_f32, f32::max)
+            .min(ui.available_width() * 0.5)
+            + visual::SPACE_16;
+        let inset = report_rows::REPORT_ROW_INSET;
+        report_rows::column_headings(
+            ui,
+            &[
+                (inset, document_heading.as_str()),
+                (inset + name_width, status_heading.as_str()),
+            ],
+        );
+        for (document_id, name, needs_draft_choice) in rows {
+            let status = if needs_draft_choice { &draft } else { &changed };
+            let (rect, response) = ui.allocate_exact_size(
+                egui::vec2(ui.available_width(), visual::BUTTON_HEIGHT),
+                Sense::hover(),
+            );
+            let summary = format!("{name} {status}");
+            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, &summary));
+            let font = FontId::proportional(visual::BODY_SIZE);
+            let color = ui.visuals().text_color();
+            let name_rect = Rect::from_min_max(
+                rect.min,
+                egui::pos2(
+                    rect.left() + inset + name_width - visual::SPACE_8,
+                    rect.max.y,
+                ),
+            );
+            ui.painter()
+                .with_clip_rect(name_rect.intersect(ui.clip_rect()))
+                .text(
+                    egui::pos2(rect.left() + inset, rect.center().y),
+                    egui::Align2::LEFT_CENTER,
+                    name,
+                    font.clone(),
+                    color,
+                );
+            ui.painter().text(
+                egui::pos2(rect.left() + inset + name_width, rect.center().y),
+                egui::Align2::LEFT_CENTER,
+                status,
+                font,
+                color,
+            );
+            if needs_draft_choice {
+                // The draft's own choice sits at the right end of its row.
+                let label = context_text(ui.ctx(), "action-resolve-draft");
+                let button_width = report_rows::text_width(ui, &label) + 24.0;
+                let button_rect = Rect::from_min_max(
+                    egui::pos2(rect.right() - button_width, rect.top()),
+                    rect.max,
+                );
+                if ui.put(button_rect, egui::Button::new(label)).clicked() {
+                    *action = Some(AppCloseAction::ResolveDraft(document_id));
+                }
+            }
         }
     }
 
