@@ -39,6 +39,9 @@ pub(super) fn configure_text_roles(ctx: &Context) {
             style.spacing.button_padding = Vec2::new(12.0, 6.0);
             style.spacing.interact_size.y = BUTTON_HEIGHT;
             style.spacing.icon_spacing = SPACE_8;
+            // Scroll areas stop at their ends. egui holds a rubber-band overscroll while it
+            // thinks a finger rests on the trackpad, which looked frozen before snapping back.
+            style.spacing.scroll.kinetic.rubber_band = false;
         });
     }
 }
