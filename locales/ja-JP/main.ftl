@@ -78,7 +78,6 @@ menu-data-duplicates = 重複
 menu-table-rows = 行
 menu-table-columns = 列
 menu-table-fill = フィル
-menu-view-zoom = 拡大・縮小
 menu-window = ウィンドウ
 menu-window-open = 開いているウィンドウ
 window-minimize = しまう

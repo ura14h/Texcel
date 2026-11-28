@@ -52,11 +52,6 @@ const VIEW_FREEZE_COLUMNS: MenuAction = action(
 );
 const VIEW_UNFREEZE: MenuAction = action("view.unfreeze", "view-unfreeze", NoKey, MenuCheck::None);
 
-const ZOOM: MenuSubmenu = submenu(
-    "menu.view.zoom",
-    "menu-view-zoom",
-    &[A(&VIEW_ZOOM_IN), A(&VIEW_ZOOM_OUT), A(&VIEW_ZOOM_RESET)],
-);
 const WRAP: MenuSubmenu = submenu(
     "menu.view.wrap",
     "menu-view-wrap",
@@ -75,7 +70,10 @@ const FREEZE: MenuSubmenu = submenu(
 pub(super) const VIEW: &[MenuEntry] = &[
     A(&VIEW_TOGGLE_MODE),
     Sep,
-    S(&ZOOM),
+    A(&VIEW_ZOOM_IN),
+    A(&VIEW_ZOOM_OUT),
+    A(&VIEW_ZOOM_RESET),
+    Sep,
     S(&WRAP),
     Sep,
     A(&VIEW_COLUMN_WIDTH),

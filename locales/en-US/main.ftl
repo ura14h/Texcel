@@ -78,7 +78,6 @@ menu-data-duplicates = Duplicates
 menu-table-rows = Rows
 menu-table-columns = Columns
 menu-table-fill = Fill
-menu-view-zoom = Zoom
 menu-window = Window
 menu-window-open = Open Windows
 window-minimize = Minimize
