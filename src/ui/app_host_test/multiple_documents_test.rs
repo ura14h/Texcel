@@ -313,18 +313,17 @@ fn csv_encoding_prompt_allows_editing_and_saving_in_another_window() {
 }
 
 #[test]
-/// Keeps a child window's IME preedit when the empty root window draws between its frames.
-/// The root keeps drawing after its own document closed, and raw input prepared right after
-/// that read the root's focus, so the child's preedit was cancelled and redrawn each time.
+/// Keeps a child window's IME preedit when the root window draws between its frames. Raw
+/// input prepared right after the root's pass read the root's focus, so the child's preedit
+/// was cancelled and redrawn each time.
 fn root_pass_between_child_frames_keeps_the_preedit() {
     let directory = crate::ui::tests::TestDirectory::new();
     let (mut harness, paths) = host_with_three_documents(&directory.0);
-    let child = host_document_ids(&harness, &paths)[1];
-    assert_eq!(
-        with_host(harness.state().id, |host| host.root_document),
-        None,
-        "every document has its own window and the root has none"
-    );
+    let root_document = with_host(harness.state().id, |host| host.root_document);
+    let child = host_document_ids(&harness, &paths)
+        .into_iter()
+        .find(|id| Some(*id) != root_document)
+        .expect("a document has a window of its own");
     click_host_cell(&mut harness, child);
     let mut preedit = String::new();
     for _ in 0..3 {
@@ -354,78 +353,153 @@ fn root_pass_between_child_frames_keeps_the_preedit() {
     }
 }
 
-#[test]
-/// Shows the CSV settings prompt of a file opened while the only document window holds
-/// another file. The empty root window starts queued loads and owned their prompts, but it
-/// stays hidden, so nothing appeared; the prompt now belongs to the document window.
-fn queued_open_prompt_appears_in_the_document_window() {
-    let directory = crate::ui::tests::TestDirectory::new();
-    let samples = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples");
-    let readme = fs::canonicalize(samples.join("README.md")).expect("the sample exists");
-    let cp932 = fs::canonicalize(samples.join("cp932-inventory.csv")).expect("the sample exists");
-    let settings_path = directory.0.join("settings.json");
-    let first = readme.clone();
-    let mut harness = Harness::builder()
-        .with_size([1000.0, 700.0])
-        .allow_missing_glyphs()
-        .build_eframe(move |creation| {
-            creation.egui_ctx.set_embed_viewports(false);
-            let mut app = TexcelApp::new_with_settings_path(creation, Some(settings_path));
-            app.queue_open_paths([first]);
-            TexcelAppHost::new(app, creation.egui_ctx.viewport_id())
-        });
+/// Opens one file through the host's queue and waits until its document exists.
+fn open_in_host(harness: &mut Harness<'_, TexcelAppHost>, path: &Path) -> DocumentId {
+    with_host(harness.state().id, |host| {
+        host.app.queue_open_paths([path.to_path_buf()]);
+    });
     let deadline = Instant::now() + Duration::from_secs(5);
-    let readme_id = loop {
+    loop {
         harness.step();
         let loaded = with_host(harness.state().id, |host| {
             host.app
                 .file_backings
                 .iter()
-                .find_map(|(id, backing)| (backing.path == readme).then_some(*id))
+                .find_map(|(id, backing)| (backing.path == path).then_some(*id))
         });
         if let Some(id) = loaded {
-            break id;
+            harness.step();
+            return id;
         }
-        assert!(Instant::now() < deadline, "README.md opens");
+        assert!(Instant::now() < deadline, "{} opens", path.display());
         std::thread::sleep(Duration::from_millis(5));
-    };
-    harness.step();
-    assert_eq!(
-        with_host(harness.state().id, |host| host.root_document),
-        None
-    );
+    }
+}
 
-    with_host(harness.state().id, |host| {
-        host.app.queue_open_paths([cp932])
+#[test]
+/// Opens README.md and then the CP932 sample, answering its encoding prompt. README.md
+/// replaces the start-up document in the root window, the prompt appears there, and the CSV
+/// gets a window of its own that the root registers. The root used to hide once README.md
+/// moved to a window of its own, and a hidden root never created the CSV's window.
+fn readme_then_cp932_opens_the_csv_in_a_window_of_its_own() {
+    let directory = crate::ui::tests::TestDirectory::new();
+    let samples = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples");
+    let readme = fs::canonicalize(samples.join("README.md")).expect("the sample exists");
+    let cp932 = fs::canonicalize(samples.join("cp932-inventory.csv")).expect("the sample exists");
+    let settings_path = directory.0.join("settings.json");
+    let mut harness = Harness::builder()
+        .with_size([1000.0, 700.0])
+        .allow_missing_glyphs()
+        .build_eframe(move |creation| {
+            creation.egui_ctx.set_embed_viewports(false);
+            let app = TexcelApp::new_with_settings_path(creation, Some(settings_path));
+            TexcelAppHost::new(app, creation.egui_ctx.viewport_id())
+        });
+    harness.step();
+    let readme_id = open_in_host(&mut harness, &readme);
+    let root = with_host(harness.state().id, |host| {
+        assert_eq!(
+            host.root_document,
+            Some(readme_id),
+            "README.md is in the root window"
+        );
+        host.root_viewport
     });
-    let readme_viewport = with_host(harness.state().id, |host| {
-        host.document_viewports[&readme_id]
+
+    // The encoding prompt appears in the visible root window.
+    with_host(harness.state().id, |host| {
+        host.app.queue_open_paths([cp932.clone()])
     });
     let title = crate::i18n::context_text(&harness.ctx, "dialog-csv-settings-title");
     let deadline = Instant::now() + Duration::from_secs(5);
-    loop {
-        // The hidden root draws first, then the README window.
+    let csv_id = loop {
         harness.step();
-        let output = host_window_frame(&mut harness, readme_id, []);
-        let prompt_shown = output.shapes.iter().any(|clipped| {
+        let prompt_shown = harness.output().shapes.iter().any(|clipped| {
             matches!(&clipped.shape, egui::epaint::Shape::Text(text)
                 if text.galley.job.text == title)
         });
-        if prompt_shown {
+        let pending = with_host(harness.state().id, |host| {
+            host.app.pending_csv_opens.keys().next().copied()
+        });
+        if prompt_shown && let Some(id) = pending {
+            assert_eq!(
+                with_host(harness.state().id, |host| host.app.load_request_viewports
+                    [&id]),
+                root
+            );
+            break id;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "the CSV prompt appears in the root window"
+        );
+        std::thread::sleep(Duration::from_millis(5));
+    };
+
+    // Choosing Shift_JIS loads the CSV into a new window the root draws.
+    with_host(harness.state().id, |host| {
+        host.app.with_window_state(root, Some(readme_id), |app| {
+            let pending = app
+                .pending_csv_opens
+                .get_mut(&csv_id)
+                .expect("the load waits");
+            pending.encoding = crate::csv_adapter::EncodingChoice::ShiftJis;
+            pending.delimiter = Some(',');
+            app.submit_csv_load(csv_id).expect("the load is submitted");
+        });
+    });
+    let deadline = Instant::now() + Duration::from_secs(5);
+    loop {
+        harness.step();
+        let (csv_window, readme_open) = with_host(harness.state().id, |host| {
+            (
+                host.child_viewports()
+                    .into_iter()
+                    .find(|(id, _, _)| *id == csv_id)
+                    .map(|(_, viewport, _)| viewport),
+                host.app.workspace.documents.contains_key(&readme_id),
+            )
+        });
+        if let Some(viewport) = csv_window {
+            assert_ne!(viewport, root);
+            assert!(readme_open, "README.md stays open");
             break;
         }
         assert!(
             Instant::now() < deadline,
-            "the CSV prompt appears in the README window; owners={:?}",
-            with_host(harness.state().id, |host| host
-                .app
-                .load_request_viewports
-                .clone())
+            "the CSV gets a window of its own"
         );
         std::thread::sleep(Duration::from_millis(5));
     }
-    let owners = with_host(harness.state().id, |host| {
-        host.app.load_request_viewports.clone()
+}
+
+#[test]
+/// Moves another open document into the root window when the root's own document closes,
+/// so the root keeps drawing the other windows instead of hiding.
+fn root_takes_over_another_document_when_its_own_closes() {
+    let directory = crate::ui::tests::TestDirectory::new();
+    let (mut harness, paths) = host_with_three_documents(&directory.0);
+    let ids = host_document_ids(&harness, &paths);
+    let (root, first) = with_host(harness.state().id, |host| {
+        (
+            host.root_viewport,
+            host.root_document.expect("the root shows a document"),
+        )
     });
-    assert!(owners.values().all(|owner| *owner == readme_viewport));
+    with_host(harness.state().id, |host| {
+        host.app
+            .with_window_state(root, Some(first), |app| app.request_close_document(first));
+    });
+    harness.run_steps(3);
+    with_host(harness.state().id, |host| {
+        let adopted = host.root_document.expect("the root took over a document");
+        assert_ne!(adopted, first);
+        assert!(ids.contains(&adopted));
+        assert_eq!(host.document_viewports[&adopted], root);
+        assert_eq!(
+            host.child_viewports().len(),
+            1,
+            "one other document keeps its window"
+        );
+    });
 }

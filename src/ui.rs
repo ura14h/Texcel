@@ -95,8 +95,6 @@ pub struct TexcelApp {
     native_menu_events_for_test: Vec<crate::native_menu::NativeMenuEvent>,
     workspace: Workspace,
     window_states: BTreeMap<egui::ViewportId, window_state::WindowState>,
-    /// The document window that last had keyboard focus; queued opens start there.
-    last_document_viewport: Option<egui::ViewportId>,
     current_viewport: Option<egui::ViewportId>,
     multi_window_mode: bool,
     host_result_dispatch: bool,

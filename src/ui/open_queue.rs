@@ -98,25 +98,6 @@ impl TexcelApp {
         }
     }
 
-    /// Returns the document window that should show a load's prompts when the window drawing
-    /// now has no document: the one last focused, or else any window with a document.
-    pub(super) fn load_prompt_window(&self) -> Option<egui::ViewportId> {
-        if !self.multi_window_mode || self.workspace.active_document.is_some() {
-            return None;
-        }
-        let has_document = |viewport: &egui::ViewportId| {
-            Some(*viewport) != self.current_viewport
-                && self
-                    .window_states
-                    .get(viewport)
-                    .and_then(|state| state.document_id)
-                    .is_some_and(|document_id| self.workspace.documents.contains_key(&document_id))
-        };
-        self.last_document_viewport
-            .filter(has_document)
-            .or_else(|| self.window_states.keys().copied().find(has_document))
-    }
-
     /// Retains the latest queued input error until the whole batch has finished.
     pub(super) fn record_queued_open_failure(&mut self) {
         if let Some(message) = self.status.clone() {

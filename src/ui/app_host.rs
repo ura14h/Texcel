@@ -5,6 +5,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 #[path = "app_host/file_results.rs"]
 mod file_results;
+#[path = "app_host/root_window.rs"]
+mod root_window;
 
 static NEXT_HOST_ID: AtomicU64 = AtomicU64::new(1);
 
@@ -70,7 +72,6 @@ impl eframe::App for TexcelAppHost {
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         with_host(self.id, |host| {
             let viewport = host.root_viewport;
-            let document = host.root_document;
             let close_requested = ctx.input(|input| input.viewport().close_requested());
             if host.app.app_exit_ready {
                 host.request_close_all_windows(ctx);
@@ -90,6 +91,8 @@ impl eframe::App for TexcelAppHost {
                 || native_terminate_pending
                 || last_document_window_closed;
             host.process_file_results(ctx);
+            host.settle_root_window(ctx);
+            let document = host.root_document;
             let no_document_windows = host.app.workspace.documents.is_empty();
             #[cfg(any(target_os = "macos", target_os = "windows"))]
             let global_menu_events = if no_document_windows {
@@ -164,13 +167,13 @@ impl eframe::App for TexcelAppHost {
     fn ui(&mut self, root: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = root.ctx().clone();
         let (children, retired) = with_host(self.id, |host| {
-            host.sync_document_viewports();
+            host.settle_root_window(&ctx);
             let viewport = host.root_viewport;
             let document = host.root_document;
             host.app.with_window_state(viewport, document, |app| {
                 app.draw_contents(root);
             });
-            host.sync_document_viewports();
+            host.settle_root_window(&ctx);
             host.deliver_pending_document_focus(&ctx);
             if host.app.app_exit_ready {
                 host.request_close_all_windows(&ctx);
@@ -249,7 +252,8 @@ impl HostRuntime {
         }
     }
 
-    /// Hides the permanent root viewport after its document window has closed.
+    /// Hides the root window once no document is left (or closes the app outside macOS).
+    /// While documents remain, the root has already taken one over.
     fn close_empty_root_if_needed(&self, ctx: &egui::Context) {
         let close_dialog_open =
             self.app
@@ -388,7 +392,7 @@ fn draw_document_viewport(
                 }
                 app.draw_contents(ui);
             });
-        host.sync_document_viewports();
+        host.settle_root_window(&ctx);
         host.deliver_pending_document_focus(&ctx);
         if host.app.app_exit_ready {
             host.request_close_all_windows(&ctx);

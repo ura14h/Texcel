@@ -64,7 +64,6 @@ impl TexcelApp {
             native_menu_events_for_test: Vec::new(),
             workspace: Workspace::default(),
             window_states: BTreeMap::new(),
-            last_document_viewport: None,
             current_viewport: None,
             multi_window_mode: false,
             host_result_dispatch: false,

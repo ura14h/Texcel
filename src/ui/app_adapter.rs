@@ -305,11 +305,6 @@ impl TexcelApp {
         self.text_dialog_open_previous_frame = text_dialog_open;
         self.last_modal_text_input_focus = self.active_modal_text_input_focus;
         self.update_viewport_title(&ctx);
-        if self.workspace.active_document.is_some()
-            && ctx.input(|input| input.viewport().focused == Some(true))
-        {
-            self.last_document_viewport = self.current_viewport;
-        }
         self.advance_queued_open(&ctx);
         self.schedule_recovery();
     }
