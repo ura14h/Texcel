@@ -353,3 +353,79 @@ fn root_pass_between_child_frames_keeps_the_preedit() {
         );
     }
 }
+
+#[test]
+/// Shows the CSV settings prompt of a file opened while the only document window holds
+/// another file. The empty root window starts queued loads and owned their prompts, but it
+/// stays hidden, so nothing appeared; the prompt now belongs to the document window.
+fn queued_open_prompt_appears_in_the_document_window() {
+    let directory = crate::ui::tests::TestDirectory::new();
+    let samples = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples");
+    let readme = fs::canonicalize(samples.join("README.md")).expect("the sample exists");
+    let cp932 = fs::canonicalize(samples.join("cp932-inventory.csv")).expect("the sample exists");
+    let settings_path = directory.0.join("settings.json");
+    let first = readme.clone();
+    let mut harness = Harness::builder()
+        .with_size([1000.0, 700.0])
+        .allow_missing_glyphs()
+        .build_eframe(move |creation| {
+            creation.egui_ctx.set_embed_viewports(false);
+            let mut app = TexcelApp::new_with_settings_path(creation, Some(settings_path));
+            app.queue_open_paths([first]);
+            TexcelAppHost::new(app, creation.egui_ctx.viewport_id())
+        });
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let readme_id = loop {
+        harness.step();
+        let loaded = with_host(harness.state().id, |host| {
+            host.app
+                .file_backings
+                .iter()
+                .find_map(|(id, backing)| (backing.path == readme).then_some(*id))
+        });
+        if let Some(id) = loaded {
+            break id;
+        }
+        assert!(Instant::now() < deadline, "README.md opens");
+        std::thread::sleep(Duration::from_millis(5));
+    };
+    harness.step();
+    assert_eq!(
+        with_host(harness.state().id, |host| host.root_document),
+        None
+    );
+
+    with_host(harness.state().id, |host| {
+        host.app.queue_open_paths([cp932])
+    });
+    let readme_viewport = with_host(harness.state().id, |host| {
+        host.document_viewports[&readme_id]
+    });
+    let title = crate::i18n::context_text(&harness.ctx, "dialog-csv-settings-title");
+    let deadline = Instant::now() + Duration::from_secs(5);
+    loop {
+        // The hidden root draws first, then the README window.
+        harness.step();
+        let output = host_window_frame(&mut harness, readme_id, []);
+        let prompt_shown = output.shapes.iter().any(|clipped| {
+            matches!(&clipped.shape, egui::epaint::Shape::Text(text)
+                if text.galley.job.text == title)
+        });
+        if prompt_shown {
+            break;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "the CSV prompt appears in the README window; owners={:?}",
+            with_host(harness.state().id, |host| host
+                .app
+                .load_request_viewports
+                .clone())
+        );
+        std::thread::sleep(Duration::from_millis(5));
+    }
+    let owners = with_host(harness.state().id, |host| {
+        host.app.load_request_viewports.clone()
+    });
+    assert!(owners.values().all(|owner| *owner == readme_viewport));
+}

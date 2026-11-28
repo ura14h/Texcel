@@ -122,10 +122,12 @@ impl TexcelApp {
         }
     }
 
-    /// Keeps each asynchronous load prompt in the viewport that started it.
+    /// Keeps each asynchronous load prompt in the viewport that started it. A window without
+    /// a document (the root once its document closed) is hidden, so its prompts go to a
+    /// document window instead of appearing nowhere.
     pub(super) fn remember_load_request_viewport(&mut self, document_id: DocumentId) {
         if self.multi_window_mode
-            && let Some(viewport) = self.current_viewport
+            && let Some(viewport) = self.load_prompt_window().or(self.current_viewport)
         {
             self.load_request_viewports.insert(document_id, viewport);
         }
