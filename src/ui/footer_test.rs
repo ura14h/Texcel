@@ -601,3 +601,41 @@ fn zoom_button_applies_a_preset_from_the_dialog() {
             .is_some()
     );
 }
+
+#[test]
+/// Keeps a sheet tab the same height while the pointer is over it.
+fn hovered_sheet_tab_keeps_its_height() {
+    let mut harness = Harness::builder()
+        .with_size([900.0, 620.0])
+        .build_eframe(|creation| TexcelApp::new_with_settings_path(creation, None));
+    harness
+        .state_mut()
+        .workspace
+        .add_document("Tabs", &["First", "Second"]);
+    harness.run_steps(2);
+    let tab = button_rect(&harness, "Second");
+    harness.event(egui::Event::PointerMoved(tab.center()));
+    harness.run_steps(2);
+    // The hover fill covers the whole height of the tab band, leaving no gap above or below.
+    let band_height = CHROME_TAB_HEIGHT;
+    let fill_height = harness
+        .output()
+        .shapes
+        .iter()
+        .filter_map(|clipped| match &clipped.shape {
+            egui::Shape::Rect(rect)
+                if rect.rect.contains(tab.center())
+                    && rect.fill.a() > 0
+                    && rect.rect.width() <= tab.width() + 0.5 =>
+            {
+                Some(rect.rect.height())
+            }
+            _ => None,
+        })
+        .fold(0.0_f32, f32::max);
+    assert!(
+        (fill_height - band_height).abs() < 0.01 && (tab.height() - band_height).abs() < 0.01,
+        "the hovered tab fill is {fill_height} tall in a {} tall tab; the band is {band_height}",
+        tab.height()
+    );
+}

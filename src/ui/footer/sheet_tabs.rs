@@ -50,6 +50,11 @@ pub(super) fn draw_sheet_band(
             ui.set_min_height(CHROME_TAB_HEIGHT);
             ui.spacing_mut().item_spacing.x = 0.0;
             ui.spacing_mut().interact_size.y = CHROME_TAB_HEIGHT;
+            // Controls in the band keep their size when hovered or pressed.
+            let widgets = &mut ui.visuals_mut().widgets;
+            for widget in [&mut widgets.hovered, &mut widgets.active, &mut widgets.open] {
+                widget.expansion = 0.0;
+            }
             ui.horizontal(|ui| {
                 let zoom_label = format!(
                     "{}%",

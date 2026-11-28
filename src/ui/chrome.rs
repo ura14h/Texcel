@@ -32,6 +32,8 @@ pub(super) fn sheet_tab_button(ui: &mut egui::Ui, selected: bool, label: &str) -
             };
             set_sheet_button_fills(ui, base);
             ui.visuals_mut().selection.bg_fill = base;
+            // No vertical padding, so the bold selected label does not make its tab taller.
+            ui.spacing_mut().button_padding.y = 0.0;
             ui.add_sized(
                 [width, CHROME_TAB_HEIGHT],
                 egui::Button::selectable(selected, text)
@@ -131,6 +133,10 @@ fn set_sheet_button_fills(ui: &mut egui::Ui, base: Color32) {
     visuals.widgets.hovered.corner_radius = egui::CornerRadius::ZERO;
     visuals.widgets.active.corner_radius = egui::CornerRadius::ZERO;
     visuals.widgets.open.corner_radius = egui::CornerRadius::ZERO;
+    // egui grows a hovered or pressed button by a pixel; tabs keep one fixed size instead.
+    visuals.widgets.hovered.expansion = 0.0;
+    visuals.widgets.active.expansion = 0.0;
+    visuals.widgets.open.expansion = 0.0;
 }
 
 /// Keeps the display mode visible and switchable at the end of the sheet band.
@@ -140,14 +146,18 @@ pub(super) fn mode_tab_button(
     visible_label: &str,
     action_label: &str,
 ) -> egui::Response {
-    ui.add(
-        egui::Button::selectable(selected, visible_label.to_owned())
-            .frame_when_inactive(false)
-            .min_size(Vec2::new(
-                mode_tab_width(ui, visible_label),
-                CHROME_TAB_HEIGHT,
-            )),
-    )
+    let width = mode_tab_width(ui, visible_label);
+    ui.scope(|ui| {
+        // No vertical padding: the default would make the band taller than the tabs, and a
+        // hovered tab would then not fill the band's height.
+        ui.spacing_mut().button_padding = Vec2::new(CHROME_TEXT_PADDING, 0.0);
+        ui.add(
+            egui::Button::selectable(selected, visible_label.to_owned())
+                .frame_when_inactive(false)
+                .min_size(Vec2::new(width, CHROME_TAB_HEIGHT)),
+        )
+    })
+    .inner
     .accessible_name(action_label.to_owned())
 }
 
