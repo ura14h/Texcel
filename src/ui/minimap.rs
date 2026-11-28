@@ -79,6 +79,9 @@ impl TexcelApp {
                     .id_salt(("texcel_minimap_scroll", document_id))
                     .auto_shrink([false, false])
                     .show(ui, |ui| {
+                        // The minimap is a picture of the file to navigate by, not text to
+                        // copy, so dragging over it selects nothing.
+                        ui.style_mut().interaction.selectable_labels = false;
                         let output = show_markdown(
                             ui,
                             &blocks,

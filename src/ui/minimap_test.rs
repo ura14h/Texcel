@@ -129,3 +129,68 @@ fn minimap_stays_left_aligned_as_columns_are_inserted() {
         "the sheet ({sheet_right}) stays left of the minimap ({after})"
     );
 }
+
+#[test]
+/// Dragging over the minimap's text selects nothing.
+fn minimap_text_cannot_be_selected() {
+    let directory = ScenarioDirectory::new();
+    let path = directory.0.join("tables.md");
+    std::fs::copy(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("samples")
+            .join("tables.md"),
+        &path,
+    )
+    .expect("copy the sample");
+    let mut harness = scenario_harness(directory.0.join("settings.json"));
+    queue_open_and_wait(&mut harness, path);
+    harness.state_mut().minimap_open = true;
+    let paragraph = "この文章はセル編集で変化しない";
+    let mut rect = None;
+    for _ in 0..200 {
+        harness.step();
+        rect = harness
+            .query_all(By::new().label_contains(paragraph))
+            .next()
+            .map(|node| node.rect());
+        if rect.is_some() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    let rect = rect.expect("the minimap shows the paragraph");
+    let (start, end) = (rect.left_center(), rect.right_center());
+    super::scenario_tests::send_batch(
+        &mut harness,
+        [
+            egui::Event::PointerMoved(start),
+            egui::Event::PointerButton {
+                pos: start,
+                button: egui::PointerButton::Primary,
+                pressed: true,
+                modifiers: egui::Modifiers::NONE,
+            },
+        ],
+    );
+    super::scenario_tests::send_batch(&mut harness, [egui::Event::PointerMoved(end)]);
+    super::scenario_tests::send_batch(
+        &mut harness,
+        [egui::Event::PointerButton {
+            pos: end,
+            button: egui::PointerButton::Primary,
+            pressed: false,
+            modifiers: egui::Modifiers::NONE,
+        }],
+    );
+    super::scenario_tests::send_batch(&mut harness, [egui::Event::Copy]);
+    let selected = harness
+        .output()
+        .platform_output
+        .commands
+        .iter()
+        .any(|command| {
+            matches!(command, egui::OutputCommand::TextSelectionSettled(text)
+                if text.contains("この文章"))
+        });
+    assert!(!selected, "the minimap paragraph is not selected");
+}
