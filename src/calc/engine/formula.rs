@@ -334,39 +334,41 @@ pub(crate) fn node_is_supported(
     }
 }
 
+/// Functions the calculation adapter evaluates; the Help appendix describes each one.
+pub(crate) const SUPPORTED_FUNCTIONS: [&str; 28] = [
+    "SUM",
+    "AVERAGE",
+    "MIN",
+    "MAX",
+    "COUNT",
+    "COUNTA",
+    "COUNTIF",
+    "SUMIF",
+    "IF",
+    "IFERROR",
+    "AND",
+    "OR",
+    "NOT",
+    "ABS",
+    "ROUND",
+    "ROUNDUP",
+    "ROUNDDOWN",
+    "LEN",
+    "LEFT",
+    "RIGHT",
+    "MID",
+    "TRIM",
+    "CONCATENATE",
+    "VALUE",
+    "DATE",
+    "YEAR",
+    "MONTH",
+    "DAY",
+];
+
 /// Checks whether a function is supported by the calculation adapter.
 pub(crate) fn is_supported_function(name: &str) -> bool {
-    matches!(
-        name,
-        "SUM"
-            | "AVERAGE"
-            | "MIN"
-            | "MAX"
-            | "COUNT"
-            | "COUNTA"
-            | "COUNTIF"
-            | "SUMIF"
-            | "IF"
-            | "IFERROR"
-            | "AND"
-            | "OR"
-            | "NOT"
-            | "ABS"
-            | "ROUND"
-            | "ROUNDUP"
-            | "ROUNDDOWN"
-            | "LEN"
-            | "LEFT"
-            | "RIGHT"
-            | "MID"
-            | "TRIM"
-            | "CONCATENATE"
-            | "VALUE"
-            | "DATE"
-            | "YEAR"
-            | "MONTH"
-            | "DAY"
-    )
+    SUPPORTED_FUNCTIONS.contains(&name)
 }
 
 /// Reads a calculated value and maps it to the document result type.

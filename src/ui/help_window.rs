@@ -50,22 +50,31 @@ impl TexcelApp {
                 blocks
             }
         };
+        // The scroll bar runs along the window edge; the text keeps its margin inside it.
         egui::Frame::new()
             .fill(ui.visuals().panel_fill)
-            .inner_margin(egui::Margin::symmetric(24, 16))
             .show(ui, |ui| {
                 ui.set_min_size(ui.available_size());
                 egui::ScrollArea::vertical()
                     .id_salt("texcel_help_body")
                     .auto_shrink([false, false])
                     .show(ui, |ui| {
-                        show_markdown(
-                            ui,
-                            &blocks,
-                            MarkdownViewStyle {
-                                body_size: visual::BODY_SIZE,
-                            },
-                        );
+                        egui::Frame::new()
+                            .inner_margin(egui::Margin {
+                                left: 28,
+                                right: 28,
+                                top: 20,
+                                bottom: 28,
+                            })
+                            .show(ui, |ui| {
+                                show_markdown(
+                                    ui,
+                                    &blocks,
+                                    MarkdownViewStyle {
+                                        body_size: visual::BODY_SIZE,
+                                    },
+                                );
+                            });
                     });
             });
     }

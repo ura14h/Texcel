@@ -43,7 +43,7 @@ Content that starts with `=` is a formula, such as `=B2*C2` or `=SUM(D2:D3)`.
 - To enter text that starts with `=`, put `'` in front of it.
 - Text with leading zeros, such as `00123`, stays text. Totals such as SUM ignore it.
 
-Functions include arithmetic, comparison, and text joining, and SUM, AVERAGE, MIN, MAX, COUNT, COUNTA, COUNTIF, SUMIF, IF, IFERROR, AND, OR, NOT, ABS, ROUND, ROUNDUP, ROUNDDOWN, LEN, LEFT, RIGHT, MID, TRIM, CONCATENATE, VALUE, DATE, YEAR, MONTH, and DAY.
+Formulas can use arithmetic (`+ - * / ^ %`), comparison, and text joining (`&`). The functions they calculate are listed with descriptions in "Appendix: Functions" at the end.
 
 ## Fill
 
@@ -93,3 +93,38 @@ Ctrl+Z undoes and Ctrl+Shift+Z redoes (Ctrl+Y also redoes on Windows). Each docu
 
 - Edit > Search… (Ctrl+F) and Replace… (Ctrl+H, or Cmd+Shift+H on macOS) search and replace.
 - The Data menu sorts, trims spaces, splits and joins columns, transposes, and finds or removes duplicate rows. Each of these can be undone in one step.
+
+## Appendix: Functions
+
+Formulas calculate with the functions below. The **fx** list shows more function names, but only these are calculated; a formula that uses another function keeps its text as entered. Arguments in `[ ]` can be left out.
+
+| Group | Syntax | Description |
+| --- | --- | --- |
+| Totals | `SUM(value1, …)` | Adds numbers. Text in a range is ignored |
+| Totals | `AVERAGE(value1, …)` | Returns the average of numbers |
+| Totals | `MIN(value1, …)` | Returns the smallest number |
+| Totals | `MAX(value1, …)` | Returns the largest number |
+| Totals | `COUNT(value1, …)` | Counts the cells that hold numbers |
+| Totals | `COUNTA(value1, …)` | Counts the cells that are not empty |
+| Totals | `COUNTIF(range, criteria)` | Counts the cells that meet a condition, such as `">=10"` |
+| Totals | `SUMIF(range, criteria, [sum_range])` | Adds the values in the rows that meet a condition |
+| Logic | `IF(condition, if_true, [if_false])` | Returns one of two values depending on a condition |
+| Logic | `IFERROR(value, if_error)` | Returns another value when the value is an error |
+| Logic | `AND(condition1, …)` | TRUE when every condition is true |
+| Logic | `OR(condition1, …)` | TRUE when any condition is true |
+| Logic | `NOT(condition)` | Turns TRUE into FALSE and FALSE into TRUE |
+| Numbers | `ABS(number)` | Returns the absolute value |
+| Numbers | `ROUND(number, digits)` | Rounds to the given number of digits |
+| Numbers | `ROUNDUP(number, digits)` | Rounds away from zero |
+| Numbers | `ROUNDDOWN(number, digits)` | Rounds toward zero |
+| Text | `LEN(text)` | Returns the number of characters |
+| Text | `LEFT(text, [count])` | Returns characters from the start |
+| Text | `RIGHT(text, [count])` | Returns characters from the end |
+| Text | `MID(text, start, count)` | Returns characters from the middle |
+| Text | `TRIM(text)` | Removes spaces at both ends and shortens runs of spaces to one |
+| Text | `CONCATENATE(text1, …)` | Joins text, like `&` |
+| Text | `VALUE(text)` | Turns text that shows a number into a number |
+| Dates | `DATE(year, month, day)` | Makes a date from a year, month, and day |
+| Dates | `YEAR(date)` | Returns the year of a date |
+| Dates | `MONTH(date)` | Returns the month of a date, 1 to 12 |
+| Dates | `DAY(date)` | Returns the day of a date, 1 to 31 |

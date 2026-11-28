@@ -114,3 +114,33 @@ fn about_shows_the_name_version_and_copyright() {
         );
     }
 }
+
+/// Describes exactly the functions that formulas calculate, in both languages.
+#[test]
+fn help_appendix_lists_every_calculated_function() {
+    for (guide, heading) in [
+        (
+            include_str!("../../../assets/help/help.en.md"),
+            "## Appendix",
+        ),
+        (include_str!("../../../assets/help/help.ja.md"), "## 付録"),
+    ] {
+        let appendix = &guide[guide.find(heading).expect("the guide has the appendix")..];
+        let mut listed = appendix
+            .lines()
+            .filter_map(|line| line.split('`').nth(1))
+            .filter_map(|syntax| syntax.split_once('('))
+            .map(|(name, _)| name.to_owned())
+            .collect::<Vec<_>>();
+        listed.sort();
+        let mut supported = crate::calc::SUPPORTED_FUNCTIONS
+            .iter()
+            .map(|name| (*name).to_owned())
+            .collect::<Vec<_>>();
+        supported.sort();
+        assert_eq!(
+            listed, supported,
+            "{heading} lists the calculated functions"
+        );
+    }
+}

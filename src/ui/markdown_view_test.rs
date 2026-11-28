@@ -64,3 +64,15 @@ fn long_table_cells_wrap_within_the_available_width() {
     let table = table.expect("the table is drawn");
     assert!(table.width() <= 200.5, "the table fits: {table:?}");
 }
+
+#[test]
+// Keeps narrow columns at their natural width and wraps only the widest ones.
+fn table_columns_shrink_only_when_they_do_not_fit() {
+    assert_eq!(fit_column_widths(&[40.0, 80.0], 300.0, 4.0), [40.0, 80.0]);
+    assert_eq!(fit_column_widths(&[40.0, 500.0], 300.0, 4.0), [40.0, 260.0]);
+    assert_eq!(
+        fit_column_widths(&[400.0, 500.0], 300.0, 4.0),
+        [150.0, 150.0]
+    );
+    assert_eq!(fit_column_widths(&[10.0, 10.0], 0.0, 4.0), [4.0, 4.0]);
+}

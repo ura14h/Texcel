@@ -487,13 +487,7 @@ fn is_help_window(hwnd: windows_sys::Win32::Foundation::HWND) -> bool {
     if length <= 0 {
         return false;
     }
-    let title = String::from_utf16_lossy(&title[..length as usize]);
-    [
-        crate::i18n::Language::English,
-        crate::i18n::Language::Japanese,
-    ]
-    .into_iter()
-    .any(|language| crate::i18n::text(language, "help-window-title") == title)
+    crate::i18n::is_help_window_title(&String::from_utf16_lossy(&title[..length as usize]))
 }
 
 /// Filters message-hook windows to Winit's owned top-level class.

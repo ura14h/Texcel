@@ -125,10 +125,20 @@ fn show_block(
                 });
         }
         Block::Table { alignments, rows } => {
-            // Long cells wrap at an even share of the width so the table stays in view.
+            // Columns keep their natural width when the table fits; otherwise the widest
+            // columns wrap so the table stays in view.
             let columns = rows.iter().map(Vec::len).max().unwrap_or(1).max(1);
-            let cell_width =
-                ((ui.available_width() - size * (columns as f32 + 1.0)) / columns as f32).max(size);
+            let mut natural = vec![0.0_f32; columns];
+            for (row_index, row) in rows.iter().enumerate() {
+                for (column, cell) in row.iter().enumerate() {
+                    let mut job = inline_job(ui, cell, size, row_index == 0);
+                    job.wrap.max_width = f32::INFINITY;
+                    let width = ui.painter().layout_job(job).size().x;
+                    natural[column] = natural[column].max(width);
+                }
+            }
+            let room = ui.available_width() - size * (columns as f32 - 1.0) - size * 0.6 - 1.0;
+            let widths = fit_column_widths(&natural, room, size);
             let response = egui::Frame::new()
                 .stroke(Stroke::new(
                     0.5,
@@ -144,7 +154,7 @@ fn show_block(
                             for (row_index, row) in rows.iter().enumerate() {
                                 for (column, cell) in row.iter().enumerate() {
                                     let mut job = inline_job(ui, cell, size, row_index == 0);
-                                    job.wrap.max_width = cell_width;
+                                    job.wrap.max_width = widths[column];
                                     job.halign = match alignments.get(column) {
                                         Some(pulldown_cmark::Alignment::Center) => {
                                             egui::Align::Center
@@ -169,6 +179,22 @@ fn show_block(
             ui.separator();
         }
     }
+}
+
+/// Gives narrow columns their natural width and splits the remaining room evenly among
+/// the wider ones, never below `minimum`.
+pub(super) fn fit_column_widths(natural: &[f32], room: f32, minimum: f32) -> Vec<f32> {
+    let mut order = (0..natural.len()).collect::<Vec<_>>();
+    order.sort_by(|left, right| natural[*left].total_cmp(&natural[*right]));
+    let mut widths = vec![0.0; natural.len()];
+    let mut remaining = room.max(0.0);
+    for (placed, column) in order.iter().enumerate() {
+        let share = remaining / (natural.len() - placed) as f32;
+        let width = natural[*column].min(share).max(minimum);
+        widths[*column] = width;
+        remaining -= width;
+    }
+    widths
 }
 
 // Lay out inline runs with their marks at one text size.

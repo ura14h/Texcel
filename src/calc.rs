@@ -11,6 +11,8 @@ use crate::document::{CalcStatus, CalcValue, Cell, CellAddress, CellInput, Docum
 use crate::file_worker::JobToken;
 #[cfg(test)]
 pub(crate) use crate::numeric_text::parse_ascii_decimal as ascii_number;
+#[cfg(test)]
+pub(crate) use engine::formula::SUPPORTED_FUNCTIONS;
 pub(crate) use engine::formula_source;
 #[cfg(test)]
 use ironcalc_base::Model;

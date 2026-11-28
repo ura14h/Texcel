@@ -307,6 +307,14 @@ pub fn text(language: Language, key: &str) -> String {
     LOCALES.lookup(language.identifier(), key)
 }
 
+/// Tells whether a native window title is the Help window's title in either language.
+#[cfg(any(target_os = "macos", target_os = "windows"))]
+pub(crate) fn is_help_window_title(title: &str) -> bool {
+    [Language::English, Language::Japanese]
+        .into_iter()
+        .any(|language| text(language, "help-window-title") == title)
+}
+
 /// Stores one app's language in its own egui context for helper widgets.
 pub fn set_context_language(ctx: &egui::Context, language: Language) {
     let id = egui::Id::NULL.with("texcel_language");
