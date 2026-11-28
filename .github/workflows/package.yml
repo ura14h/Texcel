@@ -1,6 +1,6 @@
 # Builds the macOS and Windows zips when a semantic-version tag is pushed and attaches them
-# to a GitHub Release for that tag. Each zip holds the app, its licenses folder, and the
-# English and Japanese user manuals.
+# to a GitHub Release for that tag. Each zip holds the app, its licenses folder, the
+# English and Japanese user manuals, and the script that resets the settings.
 name: Package
 
 on:
