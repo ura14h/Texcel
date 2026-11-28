@@ -43,7 +43,7 @@ fn view_menu_changes_document_mode_without_changing_history_or_dirty_state() {
         let target = harness.state().native_action_target(&harness.ctx, false);
         harness.state_mut().native_menu_events_for_test =
             vec![crate::native_menu::NativeMenuEvent {
-                id: "view.source".to_owned(),
+                id: "view.toggle_mode".to_owned(),
                 recent_path: None,
                 target,
             }];
@@ -59,11 +59,11 @@ fn view_menu_changes_document_mode_without_changing_history_or_dirty_state() {
             .expect("the View menu is visible")
             .click_accesskit();
         harness.run_steps(2);
-        let source_label = crate::i18n::context_text(&harness.ctx, "view-source");
+        let source_label = crate::i18n::context_text(&harness.ctx, "view-switch-to-source");
         harness
             .query_all(By::new().label(&source_label))
             .next()
-            .expect("the View menu offers Source")
+            .expect("the View menu offers the switch to Source Editing")
             .click();
         harness.run_steps(2);
     }
@@ -111,11 +111,11 @@ fn mode_bar_and_shortcut_change_display_mode_without_editing_the_document() {
         )
     };
 
-    let show_source = crate::i18n::context_text(&harness.ctx, "view-source");
+    let mode_switch = crate::i18n::context_text(&harness.ctx, "view-live");
     harness
-        .query_all(By::new().role(egui::Role::Button).label(&show_source))
+        .query_all(By::new().role(egui::Role::Button).label(&mode_switch))
         .next()
-        .expect("the bar beside the formula bar can switch to Source")
+        .expect("the switch beside the formula bar can switch to Source")
         .click();
     harness.step();
     assert_eq!(
@@ -217,7 +217,7 @@ fn live_and_source_accessibility_values_follow_markdown_content() {
         let target = harness.state().native_action_target(&harness.ctx, false);
         harness.state_mut().native_menu_events_for_test =
             vec![crate::native_menu::NativeMenuEvent {
-                id: "view.source".to_owned(),
+                id: "view.toggle_mode".to_owned(),
                 recent_path: None,
                 target,
             }];
@@ -233,11 +233,11 @@ fn live_and_source_accessibility_values_follow_markdown_content() {
             .expect("the View menu is visible")
             .click_accesskit();
         harness.run_steps(2);
-        let source_label = crate::i18n::context_text(&harness.ctx, "view-source");
+        let source_label = crate::i18n::context_text(&harness.ctx, "view-switch-to-source");
         harness
             .query_all(By::new().label(&source_label))
             .next()
-            .expect("the View menu offers Source")
+            .expect("the View menu offers the switch to Source Editing")
             .click();
         harness.run_steps(2);
     }
@@ -245,6 +245,23 @@ fn live_and_source_accessibility_values_follow_markdown_content() {
     assert_eq!(
         harness.state().workspace.documents[&document_id].display_mode,
         crate::document::DocumentDisplayMode::Source
+    );
+    // The menu item now names the switch back, which Cmd+/ performs next.
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    assert_eq!(
+        harness
+            .state()
+            .native_menu_states_for_frame(
+                crate::ui::top::TopActionState::default(),
+                false,
+                &harness.ctx,
+            )
+            .get("view.toggle_mode")
+            .and_then(|state| state.label.clone()),
+        Some(crate::i18n::context_text(
+            &harness.ctx,
+            "view-switch-to-live"
+        ))
     );
     assert_eq!(cell_value(&harness, "A2"), "**語**");
     assert_eq!(cell_value(&harness, "B2"), "=1+2");

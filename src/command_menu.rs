@@ -113,6 +113,7 @@ fn key_for_character(character: char) -> Option<egui::Key> {
         'R' => Some(egui::Key::R),
         '-' => Some(egui::Key::Minus),
         '0' => Some(egui::Key::Num0),
+        '/' => Some(egui::Key::Slash),
         _ => None,
     }
 }

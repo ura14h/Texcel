@@ -131,7 +131,7 @@ Each window holds one document. New Document and Open… open a new window. If t
 - **Live Editing** (default) shows formula results and renders Markdown formatting such as bold, italic, and links.
 - **Source Editing** shows the Markdown source of every cell, including formulas and marks such as `**`.
 
-Switch with the button to the right of the formula bar, the View menu, or Ctrl+/ (Cmd+/ on macOS). Switching does not change the document.
+Switch with the button to the right of the formula bar, **Switch to Source Editing** in the View menu (**Switch to Live Editing** while in Source Editing), or Ctrl+/ (Cmd+/ on macOS). Switching does not change the document.
 
 ## 5. Basic operations
 

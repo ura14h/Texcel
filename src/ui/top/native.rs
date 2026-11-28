@@ -89,7 +89,7 @@ impl TexcelApp {
                     crate::native_menu::ItemState {
                         enabled: self.menu_item_enabled(id, state, navigation_blocked),
                         checked,
-                        label: None,
+                        label: self.menu_item_label(id),
                     },
                 )
             })
@@ -143,7 +143,7 @@ impl TexcelApp {
             "edit.search" => !blocked && !state.document_edit_locked && state.has_table,
             "edit.replace" => !blocked && !state.document_edit_locked && state.has_table,
             "data.replace_results" => !blocked && state.has_table && !state.document_edit_locked,
-            "view.live" | "view.source" | "view.wrap_on" | "view.wrap_off" => {
+            "view.toggle_mode" | "view.wrap_on" | "view.wrap_off" => {
                 state.has_table && !blocked && !state.document_edit_locked
             }
             "view.zoom_in" => !blocked && self.sheet_zoom.0 < MAX_SHEET_ZOOM,
@@ -237,17 +237,25 @@ impl TexcelApp {
         }
     }
 
+    /// Returns the label of a menu item whose text follows the app state: the live/source
+    /// item names the mode that choosing it (or Cmd+/) switches to.
+    pub(super) fn menu_item_label(&self, id: &str) -> Option<String> {
+        (id == "view.toggle_mode").then(|| {
+            let key = match self
+                .workspace
+                .active_document()
+                .map(|document| document.display_mode)
+            {
+                Some(crate::document::DocumentDisplayMode::Source) => "view-switch-to-live",
+                _ => "view-switch-to-source",
+            };
+            text(self.language, key)
+        })
+    }
+
     // Returns the checked state for native menu items that show one.
     pub(super) fn menu_item_checked(&self, id: &str, state: &TopActionState) -> Option<bool> {
         match id {
-            "view.live" | "view.source" => {
-                let mode = state.table_display_mode?;
-                Some(if id == "view.live" {
-                    mode == crate::document::DocumentDisplayMode::Live
-                } else {
-                    mode == crate::document::DocumentDisplayMode::Source
-                })
-            }
             "view.wrap_on" => Some(state.table_wrap_mode == Some(WrapMode::On)),
             "view.wrap_off" => Some(state.table_wrap_mode == Some(WrapMode::Off)),
             _ => None,

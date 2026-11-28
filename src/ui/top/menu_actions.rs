@@ -55,11 +55,19 @@ impl TexcelApp {
                 state.structure_action = Some(StructureAction::DuplicateTable)
             }
             "edit.table_delete" => state.structure_action = Some(StructureAction::DeleteTable),
-            "view.live" => {
-                state.table_display_mode = Some(crate::document::DocumentDisplayMode::Live)
-            }
-            "view.source" => {
-                state.table_display_mode = Some(crate::document::DocumentDisplayMode::Source)
+            "view.toggle_mode" => {
+                state.table_display_mode = Some(
+                    match self
+                        .workspace
+                        .active_document()
+                        .map(|document| document.display_mode)
+                    {
+                        Some(crate::document::DocumentDisplayMode::Source) => {
+                            crate::document::DocumentDisplayMode::Live
+                        }
+                        _ => crate::document::DocumentDisplayMode::Source,
+                    },
+                )
             }
             "view.zoom_in" => state.zoom_action = Some(step_sheet_zoom(self.sheet_zoom.0, true)),
             "view.zoom_out" => state.zoom_action = Some(step_sheet_zoom(self.sheet_zoom.0, false)),

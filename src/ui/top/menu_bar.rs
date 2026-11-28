@@ -191,7 +191,9 @@ impl TexcelApp {
     ) {
         let enabled = self.menu_item_enabled(action.id, state, blocked);
         let checked = self.menu_item_checked(action.id, state).unwrap_or(false);
-        let label = crate::i18n::context_text(ui.ctx(), action.label);
+        let label = self
+            .menu_item_label(action.id)
+            .unwrap_or_else(|| crate::i18n::context_text(ui.ctx(), action.label));
         let clicked = match action.check {
             MenuCheck::Radio => {
                 let label = if checked {

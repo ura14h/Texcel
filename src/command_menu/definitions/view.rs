@@ -3,8 +3,13 @@ use MenuCheck::Radio;
 use MenuEntry::{Action as A, Separator as Sep, Submenu as S};
 use MenuShortcut::{Command as Cmd, None as NoKey};
 
-const VIEW_LIVE: MenuAction = action("view.live", "view-live", NoKey, Radio);
-const VIEW_SOURCE: MenuAction = action("view.source", "view-source", NoKey, Radio);
+/// One item that names the mode Cmd+/ switches to; its label follows the current mode.
+const VIEW_TOGGLE_MODE: MenuAction = action(
+    "view.toggle_mode",
+    "view-switch-to-source",
+    Cmd('/'),
+    MenuCheck::None,
+);
 const VIEW_ZOOM_IN: MenuAction = action(
     "view.zoom_in",
     "view-zoom-in",
@@ -68,8 +73,7 @@ const FREEZE: MenuSubmenu = submenu(
 );
 
 pub(super) const VIEW: &[MenuEntry] = &[
-    A(&VIEW_LIVE),
-    A(&VIEW_SOURCE),
+    A(&VIEW_TOGGLE_MODE),
     Sep,
     S(&ZOOM),
     S(&WRAP),

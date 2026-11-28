@@ -185,6 +185,7 @@ fn accelerator(shortcut: MenuShortcut) -> Option<Accelerator> {
         MenuShortcut::Command('M') => (Code::KeyM, false),
         MenuShortcut::Command('-') => (Code::Minus, false),
         MenuShortcut::Command('0') => (Code::Digit0, false),
+        MenuShortcut::Command('/') => (Code::Slash, false),
         MenuShortcut::CommandShift('S') => (Code::KeyS, true),
         MenuShortcut::CommandShift('Z') => (Code::KeyZ, true),
         MenuShortcut::CommandShift('D') => (Code::KeyD, true),
