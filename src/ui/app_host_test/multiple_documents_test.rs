@@ -455,8 +455,8 @@ fn readme_then_cp932_opens_the_csv_in_a_window_of_its_own() {
             (
                 host.child_viewports()
                     .into_iter()
-                    .find(|(id, _, _)| *id == csv_id)
-                    .map(|(_, viewport, _)| viewport),
+                    .find(|child| child.document_id == csv_id)
+                    .map(|child| child.viewport),
                 host.app.workspace.documents.contains_key(&readme_id),
             )
         });
@@ -502,4 +502,47 @@ fn root_takes_over_another_document_when_its_own_closes() {
             "one other document keeps its window"
         );
     });
+}
+
+#[test]
+/// Opens a second document in a window the size of the first, one step down and to the right.
+fn second_window_follows_the_first_one_step_down_and_right() {
+    let directory = crate::ui::tests::TestDirectory::new();
+    let samples = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples");
+    let settings_path = directory.0.join("settings.json");
+    let mut harness = Harness::builder()
+        .with_size([1000.0, 700.0])
+        .allow_missing_glyphs()
+        .build_eframe(move |creation| {
+            creation.egui_ctx.set_embed_viewports(false);
+            let app = TexcelApp::new_with_settings_path(creation, Some(settings_path));
+            TexcelAppHost::new(app, creation.egui_ctx.viewport_id())
+        });
+    harness.step();
+    let first = fs::canonicalize(samples.join("tables.md")).expect("the sample exists");
+    let second = fs::canonicalize(samples.join("README.md")).expect("the sample exists");
+    open_in_host(&mut harness, &first);
+    // The first window sits at (200, 150) with a 900x640 content area and has focus.
+    let root_outer = egui::Rect::from_min_size(egui::pos2(200.0, 150.0), egui::vec2(900.0, 668.0));
+    let root_inner = egui::Rect::from_min_size(egui::pos2(200.0, 178.0), egui::vec2(900.0, 640.0));
+    {
+        let info = harness
+            .input_mut()
+            .viewports
+            .entry(egui::ViewportId::ROOT)
+            .or_default();
+        info.outer_rect = Some(root_outer);
+        info.inner_rect = Some(root_inner);
+        info.focused = Some(true);
+        info.monitor_size = Some(egui::vec2(1920.0, 1080.0));
+    }
+    harness.step();
+    let second_id = open_in_host(&mut harness, &second);
+    let placement = with_host(harness.state().id, |host| {
+        let viewport = host.document_viewports[&second_id];
+        host.placements.get(&viewport).copied()
+    })
+    .expect("the second window has a place");
+    assert_eq!(placement.position, root_outer.min + Vec2::splat(24.0));
+    assert_eq!(placement.size, root_inner.size());
 }

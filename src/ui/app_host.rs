@@ -5,6 +5,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 #[path = "app_host/file_results.rs"]
 mod file_results;
+#[path = "app_host/placement.rs"]
+mod placement;
 #[path = "app_host/root_window.rs"]
 mod root_window;
 
@@ -29,6 +31,11 @@ struct HostRuntime {
     root_document: Option<DocumentId>,
     document_viewports: BTreeMap<DocumentId, egui::ViewportId>,
     retired_viewports: BTreeSet<egui::ViewportId>,
+    /// Where each child window first appears.
+    placements: BTreeMap<egui::ViewportId, placement::WindowPlacement>,
+    last_focused_viewport: Option<egui::ViewportId>,
+    /// The window placed last, which the next new window follows until focus moves.
+    last_placement: Option<placement::WindowPlacement>,
 }
 
 impl TexcelAppHost {
@@ -52,6 +59,9 @@ impl TexcelAppHost {
                     root_document,
                     document_viewports,
                     retired_viewports: BTreeSet::new(),
+                    placements: BTreeMap::new(),
+                    last_focused_viewport: None,
+                    last_placement: None,
                 },
             );
         });
@@ -174,6 +184,8 @@ impl eframe::App for TexcelAppHost {
                 app.draw_contents(root);
             });
             host.settle_root_window(&ctx);
+            host.note_focused_window(&ctx, host.root_viewport);
+            host.place_new_windows(&ctx);
             host.deliver_pending_document_focus(&ctx);
             if host.app.app_exit_ready {
                 host.request_close_all_windows(&ctx);
@@ -294,13 +306,16 @@ impl HostRuntime {
         }
     }
 
-    /// Collects child window identifiers and titles after root state is current.
-    fn child_viewports(&self) -> Vec<(DocumentId, egui::ViewportId, String)> {
+    /// Collects child window identifiers, titles, and first places after root state is current.
+    fn child_viewports(&self) -> Vec<ChildWindow> {
         self.document_viewports
             .iter()
             .filter(|(_, viewport)| **viewport != self.root_viewport)
-            .map(|(document_id, viewport)| {
-                (*document_id, *viewport, self.window_title(*document_id))
+            .map(|(document_id, viewport)| ChildWindow {
+                document_id: *document_id,
+                viewport: *viewport,
+                title: self.window_title(*document_id),
+                placement: self.placements.get(viewport).copied(),
             })
             .collect()
     }
@@ -319,19 +334,37 @@ impl HostRuntime {
     }
 }
 
+/// One child window to register this frame.
+struct ChildWindow {
+    document_id: DocumentId,
+    viewport: egui::ViewportId,
+    title: String,
+    placement: Option<placement::WindowPlacement>,
+}
+
 /// Registers child windows after releasing the host registry borrow.
 fn draw_child_viewports(
     host_id: u64,
     ctx: &egui::Context,
-    children: Vec<(DocumentId, egui::ViewportId, String)>,
+    children: Vec<ChildWindow>,
     retired: BTreeSet<egui::ViewportId>,
 ) {
-    for (document_id, viewport, title) in children {
-        let builder = egui::ViewportBuilder::default()
+    for ChildWindow {
+        document_id,
+        viewport,
+        title,
+        placement,
+    } in children
+    {
+        // The place only applies when the window is created; later moves are the user's.
+        let mut builder = egui::ViewportBuilder::default()
             .with_title(title)
-            .with_inner_size([1120.0, 760.0])
+            .with_inner_size(placement.map_or(placement::DEFAULT_WINDOW_SIZE, |place| place.size))
             .with_min_inner_size([760.0, 500.0])
             .with_drag_and_drop(true);
+        if let Some(place) = placement {
+            builder = builder.with_position(place.position);
+        }
         ctx.show_viewport_deferred(viewport, builder, move |ui, _class| {
             draw_document_viewport(host_id, viewport, document_id, ui);
         });
@@ -393,6 +426,7 @@ fn draw_document_viewport(
                 app.draw_contents(ui);
             });
         host.settle_root_window(&ctx);
+        host.note_focused_window(&ctx, viewport);
         host.deliver_pending_document_focus(&ctx);
         if host.app.app_exit_ready {
             host.request_close_all_windows(&ctx);
