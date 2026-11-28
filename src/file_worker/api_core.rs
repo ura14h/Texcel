@@ -15,19 +15,30 @@ impl FileWorker {
     fn new_inner(with_load_progress: bool) -> Self {
         let (sender, receiver) = mpsc::sync_channel(JOB_QUEUE_CAPACITY);
         let (result_sender, results) = mpsc::sync_channel(RESULT_QUEUE_CAPACITY);
+        let waker = WorkerWaker::default();
         let (progress_sender, load_progress) = if with_load_progress {
             let (sender, receiver) = mpsc::sync_channel(1);
-            (Some(sender), Some(receiver))
+            (
+                Some(ProgressQueue::new(sender, waker.clone())),
+                Some(receiver),
+            )
         } else {
             (None, None)
         };
+        let worker_waker = waker.clone();
         let cancellation = Arc::new(Mutex::new(HashMap::new()));
         let shutdown = Arc::new(AtomicBool::new(false));
         let worker_shutdown = Arc::clone(&shutdown);
         let thread = thread::Builder::new()
             .name("texcel-file-worker".to_owned())
             .spawn(move || {
-                worker_loop(receiver, result_sender, progress_sender, worker_shutdown);
+                worker_loop(
+                    receiver,
+                    result_sender,
+                    progress_sender,
+                    worker_shutdown,
+                    worker_waker,
+                );
             })
             .ok();
         let stopped = thread.is_none();
@@ -39,7 +50,13 @@ impl FileWorker {
             shutdown,
             stopped: AtomicBool::new(stopped),
             thread,
+            waker,
         }
+    }
+
+    /// Sets how the worker wakes the UI after handing over a result or a load preview.
+    pub fn set_waker(&self, wake: impl Fn() + Send + Sync + 'static) {
+        let _ = self.waker.0.set(Box::new(wake));
     }
 
     // Cancels a running or queued job. A save is not canceled after its final replacement.

@@ -50,11 +50,12 @@ fn preview_chunks_keep_row_boundaries_and_large_cells() {
         revision: 0,
         job_id: 7,
     };
+    let queue = ProgressQueue::new(sender.clone(), WorkerWaker::default());
     let mut progress = LoadProgressSender::new(
         token,
         FileOperation::LoadCsv,
         Path::new("input.csv"),
-        Some(&sender),
+        Some(&queue),
         &cancelled,
         &shutdown,
     );
@@ -124,7 +125,7 @@ fn progress_retry_stops_after_cancellation() {
             kind: LoadProgressKind::Stage(LoadStage::ReadingSource),
         })
         .expect("the test fills the progress queue");
-    let worker_sender = sender.clone();
+    let worker_sender = ProgressQueue::new(sender.clone(), WorkerWaker::default());
     let worker_cancelled = Arc::clone(&cancelled);
     let worker_shutdown = Arc::clone(&shutdown);
     let worker = thread::spawn(move || {

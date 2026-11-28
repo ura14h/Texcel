@@ -286,6 +286,12 @@ impl TexcelApp {
                 .active_document()
                 .map(|document| (document.id, document.revision));
         }
+        // File results and load previews are taken in the root window's pass, so the worker
+        // wakes the root whichever window started the job.
+        let wake_context = creation.egui_ctx.clone();
+        app.file_worker.set_waker(move || {
+            wake_context.request_repaint_of(egui::ViewportId::ROOT);
+        });
         app
     }
 

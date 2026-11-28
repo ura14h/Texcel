@@ -799,3 +799,29 @@ fn cancellation_after_final_identity_check_stops_before_publish() {
     );
     assert_eq!(fs::read(&path).expect("source remains"), b"old");
 }
+
+#[test]
+// Wakes the UI when a result is ready, so the window that takes results draws even when the
+// job was started from another window.
+fn worker_wakes_the_ui_when_a_result_is_ready() {
+    let directory = std::env::temp_dir().join(format!("texcel-worker-wake-{}", std::process::id()));
+    fs::create_dir_all(&directory).expect("create the test directory");
+    let path = directory.join("wake.md");
+    fs::write(&path, "| A |\n| --- |\n| 1 |\n").expect("write the input");
+    let worker = FileWorker::new();
+    let (woken, wakes) = std::sync::mpsc::channel();
+    worker.set_waker(move || {
+        let _ = woken.send(());
+    });
+    let token = JobToken {
+        document_id: 1,
+        revision: 0,
+        job_id: 1,
+    };
+    worker.load_markdown(token, path).expect("enqueue the load");
+    wakes
+        .recv_timeout(std::time::Duration::from_secs(3))
+        .expect("the worker wakes the UI");
+    assert_eq!(wait_for_result(&worker).token, token);
+    let _ = fs::remove_dir_all(&directory);
+}

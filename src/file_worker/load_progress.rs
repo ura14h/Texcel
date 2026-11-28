@@ -64,12 +64,32 @@ struct PendingChunk {
     column_count: usize,
 }
 
+/// The preview channel to the UI; each accepted preview wakes the UI to take it.
+pub(crate) struct ProgressQueue {
+    sender: SyncSender<LoadProgress>,
+    waker: WorkerWaker,
+}
+
+impl ProgressQueue {
+    /// Wraps the bounded preview channel with the worker's wake function.
+    pub(crate) fn new(sender: SyncSender<LoadProgress>, waker: WorkerWaker) -> Self {
+        Self { sender, waker }
+    }
+
+    /// Hands one preview to the UI and wakes it when the channel accepted it.
+    fn try_send(&self, message: LoadProgress) -> Result<(), TrySendError<LoadProgress>> {
+        self.sender.try_send(message)?;
+        self.waker.wake();
+        Ok(())
+    }
+}
+
 /// Collects complete rows until one preview chunk should be sent.
 pub(super) struct LoadProgressSender<'a> {
     token: JobToken,
     operation: FileOperation,
     path: &'a Path,
-    sender: Option<&'a SyncSender<LoadProgress>>,
+    sender: Option<&'a ProgressQueue>,
     cancelled: &'a AtomicBool,
     shutdown: &'a AtomicBool,
     pending: Option<PendingChunk>,
@@ -81,7 +101,7 @@ impl<'a> LoadProgressSender<'a> {
         token: JobToken,
         operation: FileOperation,
         path: &'a Path,
-        sender: Option<&'a SyncSender<LoadProgress>>,
+        sender: Option<&'a ProgressQueue>,
         cancelled: &'a AtomicBool,
         shutdown: &'a AtomicBool,
     ) -> Self {

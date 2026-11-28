@@ -335,6 +335,21 @@ pub enum SubmitError {
     Stopped,
 }
 
+/// Wakes the UI from the worker thread after a result or a load preview is handed over.
+/// The UI takes them only in the root window's pass, so a load started from another window
+/// would otherwise wait until something else redrew the root.
+#[derive(Clone, Default)]
+pub(crate) struct WorkerWaker(Arc<std::sync::OnceLock<Box<dyn Fn() + Send + Sync>>>);
+
+impl WorkerWaker {
+    /// Calls the UI's wake function once it is set.
+    pub(crate) fn wake(&self) {
+        if let Some(wake) = self.0.get() {
+            wake();
+        }
+    }
+}
+
 // A bounded file worker that runs only loading and saving jobs one at a time.
 pub struct FileWorker {
     sender: SyncSender<WorkerMessage>,
@@ -344,6 +359,7 @@ pub struct FileWorker {
     shutdown: Arc<AtomicBool>,
     stopped: AtomicBool,
     thread: Option<JoinHandle<()>>,
+    waker: WorkerWaker,
 }
 
 mod api_core;
@@ -384,6 +400,7 @@ mod load_progress_tests;
 #[path = "file_worker_test.rs"]
 mod tests;
 
+pub(crate) use self::load_progress::ProgressQueue;
 pub use self::load_progress::{
     LoadPreviewCell, LoadPreviewChunk, LoadPreviewRow, LoadProgress, LoadProgressKind, LoadStage,
 };

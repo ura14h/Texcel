@@ -5,8 +5,9 @@ use super::*;
 pub(super) fn worker_loop(
     receiver: Receiver<WorkerMessage>,
     results: SyncSender<FileResult>,
-    progress: Option<SyncSender<LoadProgress>>,
+    progress: Option<ProgressQueue>,
     shutdown: Arc<AtomicBool>,
+    waker: WorkerWaker,
 ) {
     while !shutdown.load(Ordering::Acquire) {
         let Ok(message) = receiver.recv() else {
@@ -191,5 +192,6 @@ pub(super) fn worker_loop(
         if results.send(result).is_err() {
             break;
         }
+        waker.wake();
     }
 }

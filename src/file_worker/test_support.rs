@@ -12,5 +12,6 @@ pub(crate) fn stopped_worker() -> FileWorker {
         shutdown: Arc::new(AtomicBool::new(true)),
         stopped: AtomicBool::new(true),
         thread: None,
+        waker: WorkerWaker::default(),
     }
 }

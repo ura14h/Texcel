@@ -16,7 +16,7 @@ pub(super) fn run_import_workbook(
     format: WorkbookFormat,
     language: crate::i18n::Language,
     cancelled: Arc<AtomicBool>,
-    progress_queue: Option<&SyncSender<LoadProgress>>,
+    progress_queue: Option<&ProgressQueue>,
     shutdown: &AtomicBool,
 ) -> FileResult {
     let path = super::canonical_load_path(path);
