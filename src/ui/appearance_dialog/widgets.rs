@@ -134,8 +134,8 @@ pub(super) fn theme_selector(ui: &mut egui::Ui, theme: &mut ThemeChoice, languag
         });
 }
 
-/// Keeps each font sample on its own bounded row and reveals longer samples on demand.
-pub(super) fn font_preview(ui: &mut egui::Ui, details_open: &mut bool, language: Language) {
+/// Keeps each font sample on its own bounded row.
+pub(super) fn font_preview(ui: &mut egui::Ui, language: Language) {
     egui::Frame::new()
         .fill(ui.visuals().faint_bg_color)
         .inner_margin(egui::Margin::symmetric(8, 4))
@@ -184,52 +184,6 @@ pub(super) fn font_preview(ui: &mut egui::Ui, details_open: &mut bool, language:
                 }
             });
         });
-
-    // Opens the full mixed-language sample only when the user asks for detail.
-    if ui
-        .add(egui::Button::selectable(
-            *details_open,
-            text(language, "settings-preview-details"),
-        ))
-        .clicked()
-    {
-        *details_open = !*details_open;
-        ui.ctx().request_repaint();
-    }
-    if *details_open {
-        let sample = "ABC xyz 012 日本語 あいう 漢字 ()[] +-=";
-        let examples = [
-            (
-                text(language, "settings-preview-regular"),
-                grid_font_family(false),
-            ),
-            (
-                text(language, "settings-preview-bold"),
-                grid_font_family(true),
-            ),
-            (
-                text(language, "settings-preview-mono"),
-                grid_mono_font_family(false),
-            ),
-            (
-                text(language, "settings-preview-mono-bold"),
-                grid_mono_font_family(true),
-            ),
-        ];
-        for (label, family) in examples {
-            ui.horizontal_top(|ui| {
-                ui.allocate_ui_with_layout(
-                    egui::vec2(116.0, 0.0),
-                    egui::Layout::top_down(egui::Align::Min),
-                    |ui| {
-                        ui.add(egui::Label::new(label).wrap());
-                    },
-                );
-                let text = egui::RichText::new(sample).font(FontId::new(visual::BODY_SIZE, family));
-                ui.add(egui::Label::new(text).wrap());
-            });
-        }
-    }
 }
 
 /// Keeps menu controls within the same short width as their setting rows.

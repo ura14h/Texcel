@@ -137,7 +137,6 @@ pub struct TexcelApp {
     /// Whether this window shows the Markdown minimap instead of the table list.
     minimap_open: bool,
     minimap_cache: Option<minimap::MinimapCache>,
-    font_preview_details_open: bool,
     settings_worker: Option<SettingsWorker>,
     settings_file: SettingsFile,
     settings_loaded: bool,

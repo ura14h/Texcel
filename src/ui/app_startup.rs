@@ -99,7 +99,6 @@ impl TexcelApp {
             help_blocks: None,
             minimap_open: false,
             minimap_cache: None,
-            font_preview_details_open: false,
             settings_worker,
             settings_file: SettingsFile::default(),
             settings_loaded: false,

@@ -35,7 +35,6 @@ settings-preview-regular = 標準
 settings-preview-bold = 太字
 settings-preview-mono = 等幅
 settings-preview-mono-bold = 等幅太字
-settings-preview-details = 詳しい見本
 settings-table-wrap-on = 折り返す
 settings-table-wrap-off = 折り返さない
 action-cancel = キャンセル

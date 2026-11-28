@@ -59,9 +59,7 @@ fn render_main_and_settings_matrix() {
     let render_directory = render_directory();
     fs::create_dir_all(&render_directory).expect("create raster output directory");
     render_main_screen(&render_directory);
-    render_settings(&render_directory, false);
-    render_settings(&render_directory, true);
-    render_expanded_settings_bottom(&render_directory);
+    render_settings(&render_directory);
     render_narrow_settings(&render_directory);
     render_narrow_settings_bottom(&render_directory);
 }
@@ -707,8 +705,8 @@ fn select_markdown_sample(harness: &mut Harness<'_, TexcelApp>, path: &std::path
     );
 }
 
-/// Captures Settings with the optional detailed font sample closed or expanded.
-fn render_settings(directory: &std::path::Path, details_open: bool) {
+/// Captures Settings in each language and theme.
+fn render_settings(directory: &std::path::Path) {
     let settings_directory = TestDirectory::new();
     let settings_path = settings_directory.0.join("settings.json");
     let mut harness = Harness::builder()
@@ -717,19 +715,13 @@ fn render_settings(directory: &std::path::Path, details_open: bool) {
             TexcelApp::new_with_settings_path(creation, Some(settings_path))
         });
     harness.state_mut().settings_window_open = true;
-    harness.state_mut().font_preview_details_open = details_open;
     harness.step();
     harness.step();
     render_locales_and_themes(
         &mut harness,
         |language, theme| {
             format!(
-                "settings-{}-{}-{}.png",
-                if details_open {
-                    "font-details"
-                } else {
-                    "appearance"
-                },
+                "settings-appearance-{}-{}.png",
                 language_name(language),
                 theme_name(theme),
             )
@@ -762,31 +754,6 @@ fn render_narrow_settings(directory: &std::path::Path) {
     );
 }
 
-/// Confirms the expanded font sample can reach its fixed footer after scrolling.
-fn render_expanded_settings_bottom(directory: &std::path::Path) {
-    let settings_directory = TestDirectory::new();
-    let settings_path = settings_directory.0.join("settings.json");
-    let mut harness = Harness::builder()
-        .with_size(RENDER_SIZE)
-        .build_eframe(move |creation| {
-            TexcelApp::new_with_settings_path(creation, Some(settings_path))
-        });
-    set_language_and_theme(
-        &mut harness,
-        crate::i18n::Language::Japanese,
-        ThemeChoice::Light,
-    );
-    harness.state_mut().settings_window_open = true;
-    harness.state_mut().font_preview_details_open = true;
-    harness.step();
-    harness.step();
-    scroll_settings_to_bottom(&mut harness, Pos2::new(560.0, 400.0));
-    save_render(
-        &mut harness,
-        directory.join("settings-font-details-bottom-ja-light.png"),
-    );
-}
-
 /// Confirms the Close footer stays reachable in a narrow Japanese Settings window.
 fn render_narrow_settings_bottom(directory: &std::path::Path) {
     let settings_directory = TestDirectory::new();
@@ -802,7 +769,6 @@ fn render_narrow_settings_bottom(directory: &std::path::Path) {
         ThemeChoice::Light,
     );
     harness.state_mut().settings_window_open = true;
-    harness.state_mut().font_preview_details_open = true;
     harness.step();
     harness.step();
     scroll_settings_to_bottom(&mut harness, Pos2::new(230.0, 170.0));

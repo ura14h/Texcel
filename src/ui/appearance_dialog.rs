@@ -62,7 +62,6 @@ impl TexcelApp {
                                 selected: &mut self.language_choice,
                             },
                             &mut self.font_preset,
-                            &mut self.font_preview_details_open,
                             &mut self.theme,
                             DisplayControls {
                                 ui_font_points: &mut next_font_size,

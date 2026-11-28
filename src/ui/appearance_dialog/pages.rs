@@ -65,7 +65,6 @@ pub(super) fn draw_appearance_page(
     ui: &mut egui::Ui,
     language_controls: LanguageControls<'_>,
     font_preset: &mut FontPreset,
-    font_preview_details_open: &mut bool,
     theme: &mut ThemeChoice,
     display: DisplayControls<'_>,
 ) {
@@ -133,7 +132,7 @@ pub(super) fn draw_appearance_page(
                     });
                 ui_font_points_selector(ui, ui_font_points, size_width, language);
             });
-            font_preview(ui, font_preview_details_open, language);
+            font_preview(ui, language);
         });
     });
 

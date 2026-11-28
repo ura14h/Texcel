@@ -35,7 +35,6 @@ settings-preview-regular = Regular
 settings-preview-bold = Bold
 settings-preview-mono = Monospace
 settings-preview-mono-bold = Monospace Bold
-settings-preview-details = Detailed Sample
 settings-table-wrap-on = Wrap
 settings-table-wrap-off = Do Not Wrap
 action-cancel = Cancel
