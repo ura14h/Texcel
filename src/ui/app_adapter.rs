@@ -37,8 +37,12 @@ impl TexcelApp {
             .map(|file| file.path().to_path_buf())
             .collect::<Vec<_>>();
         self.queue_open_paths(dropped_paths);
+        // egui's memory may still answer for another window here; focus is read from the
+        // record of this window's last pass until its own pass starts.
+        self.raw_input_viewport = Some(raw.viewport_id);
         self.stage_ordered_edit_input(ctx, raw);
         self.prepare_ime_input(ctx, raw);
+        self.raw_input_viewport = None;
     }
     /// Runs the shared screen path for one viewport's local window state.
     pub(super) fn draw_contents(&mut self, root: &mut egui::Ui) {

@@ -37,6 +37,7 @@ impl TexcelApp {
             options.zoom_with_keyboard = false;
         });
         creation.egui_ctx.set_theme(egui::ThemePreference::System);
+        ime::pass_focus::track_pass_focus(&creation.egui_ctx);
         let language = crate::i18n::resolve_language(LanguageChoice::System);
         let installed_font_preset = resolved_font_preset(FontPreset::Auto, language);
         install_texcel_grid_fonts(&creation.egui_ctx, installed_font_preset);
@@ -77,6 +78,7 @@ impl TexcelApp {
             ime_escape_cancelled_this_frame: false,
             modal_ime_composition: None,
             late_ime_editor: None,
+            raw_input_viewport: None,
             startup_placeholder: None,
             formula_references: FormulaReferenceState::default(),
             pending_edit_input: None,

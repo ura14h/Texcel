@@ -1,5 +1,6 @@
 mod events;
 mod input;
+pub(super) mod pass_focus;
 mod sync;
 
 /// Separates owned IME text from ordinary navigation for one frame.

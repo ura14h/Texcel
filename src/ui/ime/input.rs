@@ -11,7 +11,7 @@ impl TexcelApp {
         if has_preedit
             && self.grid_focused
             && !self.edit.is_editing()
-            && !ctx.text_edit_focused()
+            && !self.text_edit_has_focus(ctx)
             && !self.modal_input_blocked()
         {
             self.begin_selected_edit();
@@ -28,7 +28,7 @@ impl TexcelApp {
                 // forget the marked text that macOS still holds, so Enter could not commit it.
                 // The draw code sees the focus already in place and does not request it again.
                 let editor = editor_id(document_id, self.edit.session_id);
-                ctx.memory_mut(|memory| memory.request_focus(editor));
+                self.focus_editor_before_pass(ctx, editor);
             }
         }
     }
@@ -129,7 +129,7 @@ impl TexcelApp {
                 .flatten();
             self.cancel_ime_composition_with_terminal(ctx, !terminal_seen);
             if let Some(editor_id) = escape_focus {
-                ctx.memory_mut(|memory| memory.request_focus(editor_id));
+                self.focus_editor_before_pass(ctx, editor_id);
                 self.request_editor_focus = true;
             }
             self.ime_escape_cancelled_this_frame |= escape_cancels;
@@ -157,9 +157,9 @@ impl TexcelApp {
     /// Keeps Enter and Escape with a focused modal field during its preedit.
     #[allow(deprecated)]
     fn prepare_modal_ime_keys(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
-        let focused_text = ctx
-            .text_edit_focused()
-            .then(|| ctx.memory(|memory| memory.focused()))
+        let focused_text = self
+            .text_edit_has_focus(ctx)
+            .then(|| self.focused_widget(ctx))
             .flatten();
         let shared_owner = self
             .current_ime_editor(ctx)

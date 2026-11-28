@@ -142,8 +142,36 @@ impl TexcelApp {
         ctx: &egui::Context,
     ) -> Option<(DocumentId, TableId, u64, Id)> {
         let owner = self.ime_editor_identity()?;
-        (ctx.text_edit_focused() && ctx.memory(|memory| memory.focused()) == Some(owner.3))
+        (self.text_edit_has_focus(ctx) && self.focused_widget(ctx) == Some(owner.3))
             .then_some(owner)
+    }
+
+    /// Returns the focused widget of the window being handled: before its pass starts, the
+    /// focus it had at the end of its last pass; during the pass, egui's own answer.
+    pub(in crate::ui) fn focused_widget(&self, ctx: &egui::Context) -> Option<Id> {
+        match self.raw_input_viewport {
+            Some(viewport) => super::pass_focus::focus_before_pass(ctx, viewport),
+            None => ctx.memory(|memory| memory.focused()),
+        }
+    }
+
+    /// Tells whether the focused widget of the window being handled is a text field.
+    pub(in crate::ui) fn text_edit_has_focus(&self, ctx: &egui::Context) -> bool {
+        self.focused_widget(ctx)
+            .is_some_and(|id| egui::text_edit::TextEditState::load(ctx, id).is_some())
+    }
+
+    /// Moves keyboard focus to a widget of the window being handled. Before its pass starts,
+    /// egui's memory may belong to another window, so the move waits for the draw instead.
+    pub(in crate::ui) fn focus_editor_before_pass(&mut self, ctx: &egui::Context, id: Id) {
+        let another_window = self
+            .raw_input_viewport
+            .is_some_and(|viewport| super::pass_focus::memory_is_for_another_window(ctx, viewport));
+        if another_window {
+            self.request_editor_focus = true;
+        } else {
+            ctx.memory_mut(|memory| memory.request_focus(id));
+        }
     }
 
     /// Finds an editor that will receive an IME preedit after the current draw.

@@ -110,6 +110,8 @@ pub struct TexcelApp {
     ime_escape_cancelled_this_frame: bool,
     modal_ime_composition: Option<Id>,
     late_ime_editor: Option<Id>,
+    /// The window whose raw input is being prepared, before egui starts its pass.
+    raw_input_viewport: Option<egui::ViewportId>,
     startup_placeholder: Option<(DocumentId, u64)>,
     formula_references: FormulaReferenceState,
     pending_edit_input: Option<ordered_edit_input::PendingEditInput>,

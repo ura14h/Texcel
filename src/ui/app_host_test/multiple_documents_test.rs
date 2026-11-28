@@ -311,3 +311,45 @@ fn csv_encoding_prompt_allows_editing_and_saving_in_another_window() {
             .any(|pending| pending.prompt.is_some())
     }));
 }
+
+#[test]
+/// Keeps a child window's IME preedit when the empty root window draws between its frames.
+/// The root keeps drawing after its own document closed, and raw input prepared right after
+/// that read the root's focus, so the child's preedit was cancelled and redrawn each time.
+fn root_pass_between_child_frames_keeps_the_preedit() {
+    let directory = crate::ui::tests::TestDirectory::new();
+    let (mut harness, paths) = host_with_three_documents(&directory.0);
+    let child = host_document_ids(&harness, &paths)[1];
+    assert_eq!(
+        with_host(harness.state().id, |host| host.root_document),
+        None,
+        "every document has its own window and the root has none"
+    );
+    click_host_cell(&mut harness, child);
+    let mut preedit = String::new();
+    for _ in 0..3 {
+        preedit.push('あ');
+        let shows_preedit = |output: &egui::FullOutput| {
+            output.shapes.iter().any(|clipped| {
+                matches!(&clipped.shape, egui::epaint::Shape::Text(text)
+                    if text.galley.job.text.contains(&preedit))
+            })
+        };
+        let output = host_window_frame(
+            &mut harness,
+            child,
+            [egui::Event::Ime(egui::ImeEvent::Preedit {
+                text: preedit.clone(),
+                active_range_chars: None,
+            })],
+        );
+        assert!(shows_preedit(&output));
+        // The root window draws, then the child draws again without new input.
+        harness.step();
+        let output = host_window_frame(&mut harness, child, []);
+        assert!(
+            shows_preedit(&output),
+            "the preedit {preedit:?} stays after the root drew"
+        );
+    }
+}
