@@ -50,7 +50,6 @@ pub(crate) struct RecoverySnapshot {
     pub saved_revision: u64,
     pub generation: u64,
     pub structure_revision: u64,
-    pub saved_structure_revision: u64,
     pub base: RecoveryBase,
     pub cells: Vec<(u64, CellAddress, Option<Cell>)>,
     pub tables: Vec<RecoveryTableInfo>,
@@ -89,7 +88,6 @@ pub(crate) struct RecoveryRecord {
     #[serde(default)]
     pub generation: u64,
     pub structure_revision: u64,
-    pub saved_structure_revision: u64,
     #[serde(default)]
     pub text_overlay_revision: u64,
     #[serde(default)]

@@ -112,22 +112,6 @@ impl TexcelApp {
         let token = self.next_job_token(document_id, revision);
         let submitted_path = path.clone();
         let recovery_generation = self.recovery_generation_for_save(document_id);
-        let (save_preferences, save_structure_revision) = self
-            .workspace
-            .documents
-            .get(&document_id)
-            .map(|document| {
-                (
-                    snapshot_table_preferences(document),
-                    document.structure_revision,
-                )
-            })
-            .unwrap_or_default();
-        let save_coordinate_preference_generation = self
-            .coordinate_preference_generations
-            .get(&document_id)
-            .copied()
-            .unwrap_or_default();
         let submitted = match source {
             SourceDocument::Csv(source) => {
                 let table_id = table_ids.first().copied();
@@ -225,15 +209,6 @@ impl TexcelApp {
                 }
                 self.pending_save_recovery_generations
                     .insert(document_id, (token, recovery_generation));
-                self.pending_save_preferences.insert(
-                    document_id,
-                    (
-                        token,
-                        save_preferences,
-                        save_structure_revision,
-                        save_coordinate_preference_generation,
-                    ),
-                );
             }
             Err(error) => self.status = Some(submit_error_message(error)),
         }

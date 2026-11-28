@@ -122,14 +122,8 @@ fn symlink_open_path_reuses_the_existing_document() {
     fs::write(&path, b"| value |\n| --- |\n| one |\n").expect("Markdown input is written");
     symlink(&path, &alias).expect("a symlink alias is created");
     symlink(&path, &second_alias).expect("a second symlink alias is created");
-    let identity = FileIdentity::read(&path).expect("the target identity is readable");
     let mut app = new_open_test_app();
     app.settings_loaded = true;
-    app.settings_file.upsert_document(DocumentPreferences {
-        key: document_key(&alias, &identity),
-        display_mode: crate::document::DocumentDisplayMode::Source,
-        tables: Vec::new(),
-    });
     app.queue_open_paths([alias.clone(), second_alias]);
     assert_eq!(app.queued_open_paths.len(), 2);
 
@@ -159,10 +153,6 @@ fn symlink_open_path_reuses_the_existing_document() {
     assert_eq!(app.user_file_paths[&first_id], alias);
     assert_eq!(app.recent_files.front(), app.user_file_paths.get(&first_id));
     assert_eq!(app.workspace.documents[&first_id].name, "alias.md");
-    assert_eq!(
-        app.workspace.documents[&first_id].display_mode,
-        crate::document::DocumentDisplayMode::Source
-    );
     assert_eq!(app.workspace.active_document, Some(first_id));
     assert!(
         fs::symlink_metadata(&alias)

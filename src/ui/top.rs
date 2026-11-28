@@ -7,7 +7,7 @@ pub(super) struct TopActionState {
     source_draft_active: bool,
     can_markdown_modifiers: bool,
     has_source: bool,
-    display_state: Option<(DocumentId, u64, crate::document::DocumentDisplayMode)>,
+    display_state: Option<(DocumentId, crate::document::DocumentDisplayMode)>,
     table_display_mode: Option<crate::document::DocumentDisplayMode>,
     wrap_state: Option<(DocumentId, u64, WrapMode)>,
     table_wrap_mode: Option<WrapMode>,
@@ -40,7 +40,6 @@ pub(super) struct TopActionState {
     zoom_action: Option<f32>,
     minimize_window: bool,
     toggle_window_zoom: bool,
-    local_preference_changes: Vec<(DocumentId, u64, TablePreferenceField)>,
     open_search_dialog: bool,
     open_replace_dialog: bool,
     open_data_edit_dialog: Option<DataEditKind>,
@@ -73,10 +72,9 @@ impl TopActionState {
             || self.minimize_window
             || self.toggle_window_zoom
             || self.focus_document.is_some()
-            || self.display_state.is_some_and(|(_, _, current)| {
+            || self.display_state.is_some_and(|(_, current)| {
                 self.table_display_mode.is_some_and(|next| next != current)
             })
-            || !self.local_preference_changes.is_empty()
     }
 }
 
@@ -159,10 +157,11 @@ impl TexcelApp {
             .active_document()
             .is_some_and(|document| document.source.is_some());
         let display_state = self.workspace.active_document().and_then(|document| {
-            let table = document.active_table()?;
-            Some((document.id, table.id, document.display_mode))
+            document
+                .active_table()
+                .map(|_| (document.id, document.display_mode))
         });
-        let table_display_mode = display_state.map(|state| state.2);
+        let table_display_mode = display_state.map(|state| state.1);
         let wrap_state = self.workspace.active_document().and_then(|document| {
             let table = document.active_table()?;
             let view = document.view(table.id)?;

@@ -61,26 +61,6 @@ impl StoredPath {
     }
 }
 
-/// Encodes a single document-key path without losing non-UTF8 OS units.
-pub(super) mod settings_path_serde {
-    use super::{Path, PathBuf, StoredPath, decode_tagged_path};
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
-    /// Stores one document path as text or its native path units.
-    pub fn serialize<S: Serializer>(path: &Path, serializer: S) -> Result<S::Ok, S::Error> {
-        StoredPath::from_path(path).serialize(serializer)
-    }
-
-    /// Restores one document path when this system can read its saved form.
-    pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<PathBuf, D::Error> {
-        match StoredPath::deserialize(deserializer)? {
-            StoredPath::Text(text) => Ok(PathBuf::from(text)),
-            StoredPath::Tagged(tagged) => decode_tagged_path(tagged)
-                .ok_or_else(|| serde::de::Error::custom("path OS encoding is unsupported")),
-        }
-    }
-}
-
 /// Keeps existing string-array settings readable while encoding non-UTF8 paths safely.
 pub(super) mod recent_paths_serde {
     use super::{PathBuf, StoredPath};

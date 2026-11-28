@@ -32,7 +32,6 @@ pub struct Document {
     pub revision: u64,
     pub saved_revision: u64,
     pub(crate) structure_revision: u64,
-    pub(crate) saved_structure_revision: u64,
     /// Monotone calculation-input version. It advances only when calculation inputs change,
     /// so formatting-only edits keep the current results valid.
     pub calculation_revision: u64,

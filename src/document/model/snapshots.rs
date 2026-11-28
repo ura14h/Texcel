@@ -8,7 +8,6 @@ pub(crate) struct RecoveryRevisions {
     pub(crate) revision: u64,
     pub(crate) saved_revision: u64,
     pub(crate) structure_revision: u64,
-    pub(crate) saved_structure_revision: u64,
 }
 
 impl Document {
@@ -33,7 +32,6 @@ impl Document {
         self.revision = revisions.revision;
         self.saved_revision = revisions.saved_revision;
         self.structure_revision = revisions.structure_revision;
-        self.saved_structure_revision = revisions.saved_structure_revision;
         self.record_recovered_history_state();
         Ok(())
     }
@@ -177,37 +175,20 @@ impl Document {
             self.saved_history_state_id = self.history_state_id();
         }
         if self.revision == revision {
-            self.saved_structure_revision = self.structure_revision;
             self.clear_changed_cells();
         }
     }
 
-    /// Records the structure version represented by a specific save request.
+    /// Records the saved version and the undo state that a specific save request wrote.
     pub(crate) fn mark_saved_at_state(&mut self, revision: u64, state_id: u64) {
         self.saved_revision = revision;
         self.saved_history_state_id = state_id;
         if self.revision == revision {
-            self.saved_structure_revision = self.structure_revision;
             self.clear_changed_cells();
         }
     }
 
-    /// Records the saved undo state together with the structure version in the file.
-    pub(crate) fn mark_saved_at_structure(
-        &mut self,
-        revision: u64,
-        structure_revision: u64,
-        state_id: u64,
-    ) {
-        self.saved_revision = revision;
-        self.saved_structure_revision = structure_revision;
-        self.saved_history_state_id = state_id;
-        if self.revision == revision {
-            self.clear_changed_cells();
-        }
-    }
-
-    /// Advances the version used to guard coordinate-based preferences.
+    /// Counts a change to the table structure; recovery writes a new base snapshot after one.
     pub(super) fn note_structure_change(&mut self) {
         self.structure_revision = self.structure_revision.saturating_add(1);
     }

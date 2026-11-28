@@ -42,12 +42,11 @@ impl TexcelApp {
     /// Draws the one button right of the formula bar that names the current mode and
     /// switches to the other one.
     pub(super) fn draw_display_mode_bar(&mut self, ui: &mut egui::Ui, navigation_blocked: bool) {
-        let Some((document_id, table_id, current)) =
-            self.workspace.active_document().and_then(|document| {
-                let table = document.active_table()?;
-                Some((document.id, table.id, document.display_mode))
-            })
-        else {
+        let Some((document_id, current)) = self.workspace.active_document().and_then(|document| {
+            document
+                .active_table()
+                .map(|_| (document.id, document.display_mode))
+        }) else {
             return;
         };
         let shortcut = ui.ctx().format_shortcut(&egui::KeyboardShortcut::new(
@@ -81,7 +80,7 @@ impl TexcelApp {
                 DocumentDisplayMode::Live => DocumentDisplayMode::Source,
                 DocumentDisplayMode::Source => DocumentDisplayMode::Live,
             };
-            self.set_display_mode(document_id, table_id, next, ui.ctx());
+            self.set_display_mode(document_id, next, ui.ctx());
         }
     }
 
@@ -89,17 +88,11 @@ impl TexcelApp {
     pub(super) fn set_display_mode(
         &mut self,
         document_id: DocumentId,
-        table_id: TableId,
         mode: DocumentDisplayMode,
         ctx: &egui::Context,
     ) {
         if let Some(document) = self.workspace.documents.get_mut(&document_id) {
             document.display_mode = mode;
-            self.mark_document_preference_change(
-                document_id,
-                table_id,
-                TablePreferenceField::DisplayMode,
-            );
             ctx.request_repaint();
         }
     }

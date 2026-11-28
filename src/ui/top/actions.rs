@@ -33,17 +33,12 @@ impl TexcelApp {
                 let maximized = ctx.input(|input| input.viewport().maximized.unwrap_or(false));
                 ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(!maximized));
             }
-            if let Some((document_id, table_id, previous_mode)) = state.display_state
+            if let Some((document_id, previous_mode)) = state.display_state
                 && let Some(document) = self.workspace.documents.get_mut(&document_id)
                 && let Some(mode) = state.table_display_mode
                 && mode != previous_mode
             {
                 document.display_mode = mode;
-                state.local_preference_changes.push((
-                    document_id,
-                    table_id,
-                    TablePreferenceField::DisplayMode,
-                ));
                 ctx.request_repaint();
             }
             if let Some((document_id, table_id, previous_mode)) = state.wrap_state
@@ -56,11 +51,6 @@ impl TexcelApp {
                     .and_then(|document| document.view_mut(table_id))
             {
                 view.wrap_text = mode == WrapMode::On;
-                state.local_preference_changes.push((
-                    document_id,
-                    table_id,
-                    TablePreferenceField::WrapMode,
-                ));
                 self.font_layout_generation = self.font_layout_generation.saturating_add(1);
                 ctx.request_repaint();
             }
@@ -188,9 +178,6 @@ impl TexcelApp {
             if let Err(message) = self.create_new_document(name) {
                 self.status = Some(message);
             }
-        }
-        for (document_id, table_id, field) in state.local_preference_changes {
-            self.mark_document_preference_change(document_id, table_id, field);
         }
         self.apply_appearance(ctx);
     }

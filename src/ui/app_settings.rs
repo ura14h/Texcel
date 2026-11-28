@@ -11,40 +11,6 @@ impl TexcelApp {
         self.settings_exit_authorized_generation = None;
     }
 
-    /// Marks one table preference as changed and schedules persistence.
-    pub(super) fn mark_document_preference_change(
-        &mut self,
-        document_id: DocumentId,
-        table_id: u64,
-        field: TablePreferenceField,
-    ) {
-        if field.is_coordinate_based() {
-            let generation = {
-                let generation = self
-                    .coordinate_preference_generations
-                    .entry(document_id)
-                    .or_default();
-                *generation = generation.saturating_add(1);
-                *generation
-            };
-            if self
-                .frozen_coordinate_preference_generations
-                .get(&document_id)
-                .is_some_and(|frozen| generation > *frozen)
-            {
-                self.frozen_coordinate_preference_generations
-                    .remove(&document_id);
-            }
-        }
-        self.document_preference_changes
-            .entry(document_id)
-            .or_default()
-            .entry(table_id)
-            .or_default()
-            .insert(field);
-        self.mark_settings_write();
-    }
-
     /// Marks an application preference as changed.
     pub(super) fn mark_app_preference_change(&mut self, field: AppPreferenceField) {
         match field {
@@ -175,17 +141,6 @@ impl TexcelApp {
                                             self.settings_failed_generation = None;
                                             self.settings_close_attempt_generation = None;
                                             self.settings_exit_authorized_generation = None;
-                                            if outcome.dropped_documents > 0 {
-                                                self.status = Some(
-                                                    Message::new(
-                                                        "status-settings-dropped-documents",
-                                                    )
-                                                    .with_number(
-                                                        "count",
-                                                        outcome.dropped_documents as i64,
-                                                    ),
-                                                );
-                                            }
                                         }
                                     }
                                     Err(error) => {
@@ -218,18 +173,9 @@ impl TexcelApp {
         if let Some(recent_files) = loaded_recent_files {
             self.restore_recent_files(recent_files);
         }
-        if self.settings_loaded && !self.pending_saved_document_preferences.is_empty() {
-            for preferences in std::mem::take(&mut self.pending_saved_document_preferences) {
-                self.settings_file.upsert_document(preferences);
-            }
-        }
         if loaded_preferences == Some(true) {
             let preferences = self.settings_file.app.clone();
             self.apply_app_preferences_merged(ctx, &preferences);
-            let document_ids = self.file_backings.keys().copied().collect::<Vec<_>>();
-            for document_id in document_ids {
-                self.restore_document_preferences(document_id);
-            }
         }
         if self.settings_loaded && self.recent_files_changed_before_load {
             self.recent_files_changed_before_load = false;

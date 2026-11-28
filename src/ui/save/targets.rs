@@ -272,14 +272,7 @@ impl TexcelApp {
         }
         let revision = document.revision;
         let history_state_id = document.history_state_id();
-        let structure_revision = document.structure_revision;
-        let preferences = snapshot_table_preferences(document);
         let recovery_generation = self.recovery_generation_for_save(document_id);
-        let coordinate_generation = self
-            .coordinate_preference_generations
-            .get(&document_id)
-            .copied()
-            .unwrap_or_default();
         let token = self.next_job_token(document_id, revision);
         match self.file_worker.save_converted_csv(
             token,
@@ -301,15 +294,6 @@ impl TexcelApp {
                 }
                 self.pending_save_recovery_generations
                     .insert(document_id, (token, recovery_generation));
-                self.pending_save_preferences.insert(
-                    document_id,
-                    (
-                        token,
-                        preferences,
-                        structure_revision,
-                        coordinate_generation,
-                    ),
-                );
                 self.bind_save_intent_to_worker(document_id);
             }
             Err(error) => {

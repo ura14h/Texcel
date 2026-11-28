@@ -73,7 +73,6 @@ impl TexcelApp {
                         document.revision,
                         document.saved_revision,
                         document.structure_revision,
-                        document.saved_structure_revision,
                     ),
                 )
             })
@@ -120,7 +119,6 @@ impl TexcelApp {
                 document.revision,
                 document.saved_revision,
                 document.structure_revision,
-                document.saved_structure_revision,
             );
             if state.document_versions.get(document_id) != Some(&version)
                 || state.drafts.contains_key(document_id)

@@ -74,9 +74,9 @@ impl TexcelApp {
             AppShortcut::Replace => state.open_replace_dialog = true,
             AppShortcut::ToggleDisplayMode => {
                 if let Some(document) = self.workspace.active_document()
-                    && let Some(table) = document.active_table()
+                    && document.active_table().is_some()
                 {
-                    state.display_state = Some((document.id, table.id, document.display_mode));
+                    state.display_state = Some((document.id, document.display_mode));
                     state.table_display_mode = Some(match document.display_mode {
                         crate::document::DocumentDisplayMode::Live => {
                             crate::document::DocumentDisplayMode::Source

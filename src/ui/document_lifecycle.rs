@@ -151,25 +151,6 @@ impl TexcelApp {
             self.status = Some(Message::new("status-finish-pending-input-before-close"));
             return;
         }
-        let saved_preferences = self
-            .workspace
-            .documents
-            .get(&document_id)
-            .filter(|_| !self.document_requires_save(document_id))
-            .and_then(|_| {
-                let backing = self.file_backings.get(&document_id)?;
-                let key = document_key(
-                    user_file_path(self, document_id, backing),
-                    &backing.identity,
-                );
-                let snapshot = self.snapshot_settings();
-                snapshot
-                    .document_shared(&key)
-                    .map(|preferences| preferences.as_ref().clone())
-            });
-        if let Some(preferences) = saved_preferences {
-            self.preserve_saved_document_preferences(preferences);
-        }
         if self.workspace.remove_document(document_id).is_none() {
             return;
         }
@@ -186,24 +167,9 @@ impl TexcelApp {
         {
             self.startup_placeholder = None;
         }
-        let user_path = self.user_file_paths.remove(&document_id);
-        let closed_path = self
-            .file_backings
-            .remove(&document_id)
-            .map(|backing| normalize_recent_path(user_path.as_deref().unwrap_or(&backing.path)));
+        self.user_file_paths.remove(&document_id);
+        self.file_backings.remove(&document_id);
         self.import_origins.remove(&document_id);
-        if let Some(path) = closed_path
-            && !self.file_backings.iter().any(|(other_id, backing)| {
-                normalize_recent_path(user_file_path(self, *other_id, backing)) == path
-            })
-        {
-            self.preferred_settings_identity_by_path.remove(&path);
-        }
-        self.coordinate_preference_generations.remove(&document_id);
-        self.frozen_coordinate_preference_generations
-            .remove(&document_id);
-        self.document_preference_changes.remove(&document_id);
-        self.settings_applied_documents.remove(&document_id);
         self.minimap_caches.remove(&document_id);
         self.forget_accesskit_document(document_id);
         if self

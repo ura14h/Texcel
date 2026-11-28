@@ -384,10 +384,7 @@ fn update_header_resize(
             document_id,
             table_id,
             LayoutTarget::Column(column),
-            LayoutValue::Column(Some(ColumnLayout {
-                width: Some(width),
-                fitted_on_opening: false,
-            })),
+            LayoutValue::Column(Some(ColumnLayout { width: Some(width) })),
         ));
     }
     if matching_drag && response.drag_stopped_by(egui::PointerButton::Primary) {

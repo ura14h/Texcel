@@ -130,7 +130,6 @@ impl TexcelApp {
                 let layout = &document.view(dialog.table_id)?.layout;
                 let mut column = layout.column(dialog.address.column).unwrap_or_default();
                 column.width = Some(value);
-                column.fitted_on_opening = false;
                 Some((
                     LayoutTarget::Column(dialog.address.column),
                     LayoutValue::Column(Some(column)),
@@ -180,13 +179,6 @@ impl TexcelApp {
             }
             changed
         };
-        if changed {
-            self.mark_document_preference_change(
-                document_id,
-                table_id,
-                TablePreferenceField::ViewLayout,
-            );
-        }
         Ok(changed)
     }
 

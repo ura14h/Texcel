@@ -2,9 +2,10 @@
 //!
 //! Widths follow from the document's content, its formula results, and the display and font
 //! settings. An opening document is not shown yet, so only the opening steps themselves
-//! change those inputs: restoring the widths saved for the file, and the first calculation.
-//! The fit therefore runs once, after both, as one worker job over every table, and its
-//! result is applied only to the inputs it was measured from. Then the window appears.
+//! change those inputs: reading the app settings (which choose the fonts), and the first
+//! calculation. The fit therefore runs once, after both, as one worker job over every table,
+//! and its result is applied only to the inputs it was measured from. Then the window appears.
+//! Nothing about a file's view is saved, so every column is measured on every opening.
 
 use super::*;
 
@@ -14,7 +15,7 @@ const OPENING_FIT_ROWS: usize = 1_000;
 
 /// Where one opening document's fit stands.
 pub(super) enum OpeningFit {
-    /// Waiting until the saved widths are restored and the first calculation is done.
+    /// Waiting until the app settings are read and the first calculation is done.
     Waiting,
     /// Sent to the worker, measured from this document and calculation revision.
     Measuring {
@@ -89,16 +90,18 @@ impl TexcelApp {
         }
     }
 
-    /// Tells whether the inputs of a document's widths are final: the widths saved for the
-    /// file are restored and no calculation is running.
+    /// Tells whether the inputs of a document's widths are final: the app settings are read
+    /// (they choose the fonts measured with), and no calculation is running, so the formula
+    /// results the columns show are known.
     fn opening_fit_inputs_settled(&self, document_id: DocumentId) -> bool {
-        self.settings_applied_documents.contains(&document_id)
+        self.settings_loaded
             && !self.pending_calculations.contains_key(&document_id)
             && !self.pending_initial_calculations.contains_key(&document_id)
             && !self.calculation_retries.contains(&document_id)
     }
 
-    /// Lists every table with the used columns that have no saved width.
+    /// Lists every table with the used columns that have no width yet; a workbook brings the
+    /// widths of its own columns.
     fn opening_fit_targets(
         &self,
         document_id: DocumentId,
@@ -160,17 +163,14 @@ impl TexcelApp {
                 continue;
             };
             for (column, width) in columns {
-                let layout = ColumnLayout {
-                    width: Some(*width),
-                    fitted_on_opening: true,
-                };
+                let mut layout = view.layout.column(*column).unwrap_or_default();
+                layout.width = Some(*width);
                 view.set_layout_value(
                     LayoutTarget::Column(*column),
                     LayoutValue::Column(Some(layout)),
                 );
             }
         }
-        // The fitted widths are not the user's choice, so they do not change saved settings.
         self.opening_fits.remove(&document_id);
         true
     }
@@ -182,7 +182,7 @@ impl TexcelApp {
             || self.calculation_retries.contains(&document_id);
         match self.opening_fits.get(&document_id)? {
             OpeningFit::Waiting if calculating => Some(OpeningFitStep::Calculating),
-            // Waiting for the saved widths or a free worker comes right before measuring.
+            // Waiting for the app settings or a free worker comes right before measuring.
             OpeningFit::Waiting | OpeningFit::Measuring { .. } => Some(OpeningFitStep::Measuring),
         }
     }

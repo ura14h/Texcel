@@ -36,7 +36,6 @@ pub(crate) fn save_snapshot(
         saved_revision: snapshot.saved_revision,
         generation: snapshot.generation,
         structure_revision: snapshot.structure_revision,
-        saved_structure_revision: snapshot.saved_structure_revision,
         text_overlay_revision: snapshot.text_overlay_revision,
         text_overlay_cells: (*snapshot.text_overlay_cells).clone(),
         base_generation,
@@ -151,7 +150,6 @@ pub(crate) fn restore_item(
             revision: record.revision,
             saved_revision: record.saved_revision,
             structure_revision: record.structure_revision,
-            saved_structure_revision: record.saved_structure_revision,
         },
     )?;
     let import_report = None;

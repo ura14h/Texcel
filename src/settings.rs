@@ -1,29 +1,23 @@
-//!  App-local appearance and view preferences, stored independently from document edits.
+//!  App-wide preferences and recent files. Nothing about a single file's view is stored:
+//!  Markdown and CSV cannot carry view settings, so a file opens the same way every time.
 
-use std::collections::BTreeSet;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read, Write};
 use std::path::{Component, Path, PathBuf};
-use std::sync::Arc;
 use std::sync::mpsc::{self, Receiver, SyncSender, TryRecvError, TrySendError};
 use std::thread::{self, JoinHandle};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 
-#[path = "settings/document_preferences.rs"]
-mod document_preferences;
-pub use self::document_preferences::{DocumentKey, DocumentPreferences, TablePreferences};
-
 #[path = "settings/path_serde.rs"]
 mod path_serde;
 use self::path_serde::recent_paths_serde;
 
-/// Version 2 saves only column widths the user chose. Version 1 files also hold widths fitted
-/// on opening that cannot be told apart, so they are not read and the defaults start over.
+/// Version 2 keeps no per-file view settings: Markdown and CSV cannot carry them, so a file
+/// opens the same way every time. Version 1 files held them and are not read.
 const SETTINGS_VERSION: u32 = 2;
 const MAX_SETTINGS_BYTES: u64 = 16 * 1024 * 1024;
-const MAX_DOCUMENT_ENTRIES: usize = 128;
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -158,8 +152,6 @@ impl Default for AppPreferences {
 pub struct SettingsFile {
     pub schema_version: u32,
     pub app: AppPreferences,
-    #[serde(default)]
-    pub documents: Vec<Arc<DocumentPreferences>>,
     /// Paths opened or fully saved most recently, newest first.
     #[serde(default, with = "recent_paths_serde")]
     pub recent_files: Vec<PathBuf>,
@@ -171,27 +163,7 @@ impl Default for SettingsFile {
         Self {
             schema_version: SETTINGS_VERSION,
             app: AppPreferences::default(),
-            documents: Vec::new(),
             recent_files: Vec::new(),
-        }
-    }
-}
-
-impl SettingsFile {
-    /// Returns the shared preferences record for a document key.
-    pub fn document_shared(&self, key: &DocumentKey) -> Option<&Arc<DocumentPreferences>> {
-        self.documents.iter().find(|entry| &entry.key == key)
-    }
-
-    /// Adds or replaces preferences for one document.
-    pub fn upsert_document(&mut self, preferences: DocumentPreferences) {
-        // Retain one content version per path. A new saved identity replaces the old entry
-        // instead of growing an unbounded per-path history.
-        self.documents
-            .retain(|existing| existing.key.path != preferences.key.path);
-        self.documents.push(Arc::new(preferences));
-        if self.documents.len() > MAX_DOCUMENT_ENTRIES {
-            self.documents.remove(0);
         }
     }
 }
@@ -208,7 +180,6 @@ pub enum SettingsEvent {
 #[derive(Debug)]
 pub struct SettingsSaveOutcome {
     pub persisted: SettingsFile,
-    pub dropped_documents: usize,
 }
 
 #[derive(Debug)]
@@ -363,20 +334,6 @@ fn validate_settings(settings: &SettingsFile) -> Result<(), crate::i18n::Message
             "status-settings-ui-font-size-out-of-range",
         ));
     }
-    let mut keys = BTreeSet::new();
-    for document in &settings.documents {
-        if !keys.insert(&document.key) {
-            return Err(crate::i18n::Message::new(
-                "status-settings-document-duplicate",
-            ));
-        }
-        let mut table_indices = BTreeSet::new();
-        for table in &document.tables {
-            if !table_indices.insert(table.table_index) {
-                return Err(crate::i18n::Message::new("status-settings-table-duplicate"));
-            }
-        }
-    }
     Ok(())
 }
 
@@ -389,7 +346,9 @@ fn save_settings(
     let parent = path
         .parent()
         .ok_or_else(|| crate::i18n::Message::new("status-settings-directory-missing"))?;
-    let (persisted, dropped_documents, bytes) = bounded_settings_serialization(settings)?;
+    let bytes = serde_json::to_vec_pretty(&settings).map_err(|error| {
+        crate::i18n::Message::new("status-settings-save-failed").with_text("detail", error)
+    })?;
     if bytes.len() as u64 > MAX_SETTINGS_BYTES {
         return Err(crate::i18n::Message::new("status-settings-size-limit"));
     }
@@ -418,40 +377,8 @@ fn save_settings(
     }
     result?;
     Ok(SettingsSaveOutcome {
-        persisted,
-        dropped_documents,
+        persisted: settings,
     })
-}
-
-/// Serializes settings within the configured size limit.
-fn bounded_settings_serialization(
-    settings: SettingsFile,
-) -> Result<(SettingsFile, usize, Vec<u8>), crate::i18n::Message> {
-    let base = settings.clone();
-    let original_documents = settings.documents;
-    let mut low = 0;
-    let mut high = original_documents.len();
-    let mut fitting = None;
-    while low <= high {
-        let dropped = low + (high - low) / 2;
-        let candidate = SettingsFile {
-            documents: original_documents[dropped..].to_vec(),
-            ..base.clone()
-        };
-        let bytes = serde_json::to_vec_pretty(&candidate).map_err(|error| {
-            crate::i18n::Message::new("status-settings-save-failed").with_text("detail", error)
-        })?;
-        if bytes.len() as u64 <= MAX_SETTINGS_BYTES {
-            fitting = Some((candidate, dropped, bytes));
-            if dropped == 0 {
-                break;
-            }
-            high = dropped - 1;
-        } else {
-            low = dropped.saturating_add(1);
-        }
-    }
-    fitting.ok_or_else(|| crate::i18n::Message::new("status-settings-size-failure"))
 }
 
 // Keeps operating system save details under a translated main message.
@@ -464,17 +391,6 @@ fn settings_save_error(error: io::Error) -> crate::i18n::Message {
 fn settings_load_error(error: io::Error) -> crate::i18n::Message {
     crate::i18n::Message::new("status-settings-load-failed")
         .with_message("detail", crate::file_worker::file_error_message(error))
-}
-
-#[cfg(test)]
-impl SettingsFile {
-    /// Returns preferences stored for a document key.
-    pub fn document(&self, key: &DocumentKey) -> Option<&DocumentPreferences> {
-        self.documents
-            .iter()
-            .find(|entry| &entry.key == key)
-            .map(Arc::as_ref)
-    }
 }
 
 #[cfg(test)]

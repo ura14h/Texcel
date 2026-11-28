@@ -244,7 +244,6 @@ impl RecoverySnapshot {
             saved_revision: document.saved_revision,
             generation,
             structure_revision: document.structure_revision,
-            saved_structure_revision: document.saved_structure_revision,
             base,
             cells: document.changed_cell_snapshot(),
             tables,

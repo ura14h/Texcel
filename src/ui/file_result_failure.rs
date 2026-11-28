@@ -79,7 +79,6 @@ impl TexcelApp {
                             self.pending_save_history_states.remove(&document_id);
                         }
                         self.clear_recent_save_candidate(document_id, job_token);
-                        self.pending_save_preferences.remove(&document_id);
                         self.pending_save_recovery_generations.remove(&document_id);
                     }
                     FileOperation::SaveReport => {
@@ -206,7 +205,6 @@ impl TexcelApp {
                             self.pending_save_history_states.remove(&document_id);
                         }
                         self.clear_recent_save_candidate(document_id, job_token);
-                        self.pending_save_preferences.remove(&document_id);
                         self.pending_save_recovery_generations.remove(&document_id);
                         if self.close_after_save.remove(&document_id) {
                             self.pending_close_document = Some(document_id);

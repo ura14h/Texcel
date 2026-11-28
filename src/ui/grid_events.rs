@@ -107,23 +107,15 @@ impl TexcelApp {
                     .collect(),
                 other => vec![other],
             };
-            let applied = self
+            if let Some(view) = self
                 .workspace
                 .documents
                 .get_mut(&document_id)
                 .and_then(|document| document.view_mut(table_id))
-                .is_some_and(|view| {
-                    for target in targets {
-                        view.set_layout_value(target, value.clone());
-                    }
-                    true
-                });
-            if applied && outcome.resize_finished {
-                self.mark_document_preference_change(
-                    document_id,
-                    table_id,
-                    TablePreferenceField::ViewLayout,
-                );
+            {
+                for target in targets {
+                    view.set_layout_value(target, value.clone());
+                }
             }
         }
         if !navigation_blocked

@@ -8,7 +8,7 @@ pub(super) use search_data::*;
 pub(super) struct AppCloseDiscardState {
     pub(super) settings_generation: u64,
     pub(super) document_order: Vec<DocumentId>,
-    pub(super) document_versions: BTreeMap<DocumentId, (u64, u64, u64, u64)>,
+    pub(super) document_versions: BTreeMap<DocumentId, (u64, u64, u64)>,
     pub(super) drafts: BTreeMap<DocumentId, DiscardDraftState>,
     pub(super) recovered_edits: BTreeMap<DocumentId, crate::recovery::RecoveryCellEdit>,
     pub(super) recovered_needing_save: BTreeSet<DocumentId>,

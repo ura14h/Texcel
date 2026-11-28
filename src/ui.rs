@@ -41,9 +41,9 @@ use crate::file_worker::{
 use crate::i18n::{Language, Message, context_message, context_text, text};
 use crate::markdown_adapter::{MarkdownCellChange, MarkdownCellDisplay};
 use crate::settings::{
-    AppPreferences, DocumentKey, DocumentPreferences, FontPreset, LanguageChoice, SettingsEvent,
-    SettingsFile, SettingsSubmitError, SettingsWorker, TablePreferences, ThemeChoice, WrapMode,
-    app_settings_path, normalize_recent_path, normalize_settings_path,
+    AppPreferences, FontPreset, LanguageChoice, SettingsEvent, SettingsFile, SettingsSubmitError,
+    SettingsWorker, ThemeChoice, WrapMode, app_settings_path, normalize_recent_path,
+    normalize_settings_path,
 };
 use crate::source::SourceDocument;
 use crate::structure::{ClipboardPasteRequest, StructureRequest, StructureTableMeta};
@@ -158,14 +158,7 @@ pub struct TexcelApp {
     settings_close_attempt_generation: Option<u64>,
     settings_exit_authorized_generation: Option<u64>,
     close_after_settings_save: bool,
-    settings_applied_documents: BTreeSet<DocumentId>,
-    document_preference_changes:
-        BTreeMap<DocumentId, BTreeMap<u64, BTreeSet<TablePreferenceField>>>,
     app_preference_changes: AppPreferenceChanges,
-    pending_save_preferences: BTreeMap<DocumentId, (JobToken, Vec<TablePreferences>, u64, u64)>,
-    coordinate_preference_generations: BTreeMap<DocumentId, u64>,
-    frozen_coordinate_preference_generations: BTreeMap<DocumentId, u64>,
-    pending_saved_document_preferences: Vec<DocumentPreferences>,
     accesskit_table_tokens: BTreeMap<(DocumentId, u64), u32>,
     accesskit_tables_by_token: BTreeMap<u32, (DocumentId, u64)>,
     pending_accesskit_focus: Option<(DocumentId, u64, CellAddress)>,
@@ -244,7 +237,6 @@ pub struct TexcelApp {
     recovered_documents_needing_save: BTreeSet<DocumentId>,
     pending_file_load_paths: BTreeMap<DocumentId, PathBuf>,
     pending_document_focus: Option<DocumentId>,
-    preferred_settings_identity_by_path: BTreeMap<PathBuf, FileIdentity>,
     pending_csv_opens: BTreeMap<DocumentId, PendingCsvOpen>,
     pending_markdown_loads: BTreeMap<DocumentId, JobToken>,
     pending_html_loads: BTreeMap<DocumentId, JobToken>,

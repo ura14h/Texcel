@@ -599,65 +599,9 @@ fn zoom_shortcuts_change_the_sheet_zoom_and_leave_cell_edits_untouched() {
 }
 
 #[test]
-// Verify that document preferences are not reused for changed file contents.
-fn preferences_are_not_restored_when_file_content_identity_changes() {
-    let ctx = egui::Context::default();
-    let mut app = new_app(&ctx);
-    let document = app
-        .workspace
-        .active_document_mut()
-        .expect("demo document exists");
-    let document_id = document.id;
-    let table_id = document.active_table().expect("demo table exists").id;
-    let table_name = document.active_table().unwrap().name.clone();
-    let address = CellAddress { row: 1, column: 2 };
-    let path = std::env::temp_dir().join("texcel-settings-identity.csv");
-    let identity = FileIdentity {
-        size: 3,
-        modified_unix_nanos: None,
-        sha256: [1; 32],
-    };
-    let mut app_preferences = SettingsFile::default();
-    app_preferences.upsert_document(DocumentPreferences {
-        key: DocumentKey {
-            path: normalize_settings_path(&path),
-            size: 3,
-            sha256: [2; 32],
-        },
-        display_mode: crate::document::DocumentDisplayMode::Source,
-        tables: vec![TablePreferences {
-            table_index: 0,
-            table_name,
-            wrap_mode: WrapMode::On,
-            view_layout: Arc::new(TableLayout::default()),
-        }],
-    });
-    app.settings_file = app_preferences;
-    app.settings_loaded = true;
-    app.file_backings.insert(
-        document_id,
-        FileBacking {
-            path,
-            identity,
-            source: None,
-            overwrite_confirmed: false,
-        },
-    );
-
-    app.restore_document_preferences(document_id);
-    let document = &app.workspace.documents[&document_id];
-    assert!(!document.tables[0].is_string_cell(address));
-    let view = document.view(table_id).unwrap();
-    assert_eq!(
-        document.display_mode,
-        crate::document::DocumentDisplayMode::Live
-    );
-    assert!(!view.wrap_text);
-}
-
-#[test]
-// Verify that save-and-close preserves current CSV view and calculation preferences.
-fn save_and_close_preserves_csv_view_and_calculation_settings_for_reopen() {
+// A file reopens with the default view whatever view it was closed with: Markdown and CSV
+// cannot carry view settings, so nothing about a single file is kept between openings.
+fn reopening_a_file_starts_from_the_default_view() {
     let directory = TestDirectory::new();
     let path = directory.0.join("save-close.csv");
     let ctx = egui::Context::default();
@@ -674,10 +618,7 @@ fn save_and_close_preserves_csv_view_and_calculation_settings_for_reopen() {
         let mut view_layout = TableLayout::default();
         view_layout.apply_value(
             LayoutTarget::Column(0),
-            LayoutValue::Column(Some(ColumnLayout {
-                width: Some(31.0),
-                ..Default::default()
-            })),
+            LayoutValue::Column(Some(ColumnLayout { width: Some(31.0) })),
         );
         view.layout = Arc::new(view_layout);
         document
@@ -696,30 +637,25 @@ fn save_and_close_preserves_csv_view_and_calculation_settings_for_reopen() {
             && !app.pending_saves.contains_key(&document_id)
     });
 
-    let saved_identity = FileIdentity::read(&path).expect("saved CSV identity exists");
-    let saved_key = document_key(&path, &saved_identity);
-    let saved_table = &app
-        .settings_file
-        .document(&saved_key)
-        .expect("save-and-close captured view preferences")
-        .tables[0];
-    assert_eq!(
-        app.settings_file.document(&saved_key).unwrap().display_mode,
-        crate::document::DocumentDisplayMode::Source
+    let settings = serde_json::to_string(&app.snapshot_settings()).expect("settings encode");
+    assert!(
+        !settings.contains("view_layout") && !settings.contains("display_mode"),
+        "no per-file view settings are saved: {settings}"
     );
-    assert_eq!(saved_table.wrap_mode, WrapMode::On);
-    assert_eq!(saved_table.view_layout.column(0).unwrap().width, Some(31.0));
 
     app.open_path(path.clone());
     let reopened_id = confirm_pending_csv_settings_with_test_defaults(&mut app);
     let reopened = &app.workspace.documents[&reopened_id];
-    let view = reopened.view(table_id).expect("CSV view was restored");
+    let view = reopened.view(table_id).expect("the CSV table has a view");
     assert_eq!(
         reopened.display_mode,
-        crate::document::DocumentDisplayMode::Source
+        crate::document::DocumentDisplayMode::Live
     );
-    assert!(view.wrap_text);
-    assert_eq!(view.layout.column(0).unwrap().width, Some(31.0));
+    assert!(!view.wrap_text);
+    assert_ne!(
+        view.layout.column(0).and_then(|column| column.width),
+        Some(31.0)
+    );
     assert!(!reopened.is_dirty());
 }
 
@@ -3515,10 +3451,7 @@ fn csv_layout_actions_change_only_the_view_state() {
         table_id,
         vec![(
             LayoutTarget::Column(3),
-            LayoutValue::Column(Some(ColumnLayout {
-                width: Some(12.0),
-                ..Default::default()
-            })),
+            LayoutValue::Column(Some(ColumnLayout { width: Some(12.0) })),
         )],
     )
     .expect("text formats can change local display geometry");

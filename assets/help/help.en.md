@@ -86,7 +86,7 @@ Ctrl+Z undoes and Ctrl+Shift+Z redoes (Ctrl+Y also redoes on Windows). Each docu
 ## View
 
 - Ctrl++ and Ctrl+− change the sheet zoom; Ctrl+0 returns to 100%.
-- The View menu turns text wrapping on or off, freezes panes, and fits column widths.
+- The View menu turns text wrapping on or off, freezes panes, and fits column widths. These, column widths, and the choice of Live or Source Editing are gone when the document closes; each opening starts with the default view.
 - Settings… changes the language, theme, font, interface text size, and invisible marks.
 
 ## Search and data tools

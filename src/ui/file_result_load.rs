@@ -30,8 +30,6 @@ impl TexcelApp {
                     self.workspace.insert_loaded_document(document);
                     self.queue_opening_fit(document_id);
                     self.remember_recent_file(user_path.clone());
-                    self.preferred_settings_identity_by_path
-                        .insert(normalize_recent_path(&user_path), identity.clone());
                     self.user_file_paths.insert(document_id, user_path.clone());
                     self.file_backings.insert(
                         document_id,
@@ -42,7 +40,6 @@ impl TexcelApp {
                             overwrite_confirmed: false,
                         },
                     );
-                    self.restore_document_preferences(document_id);
                     self.grid_focused = false;
                     self.request_editor_focus = false;
                     self.request_grid_focus = true;
@@ -68,8 +65,6 @@ impl TexcelApp {
                 self.queue_opening_fit(document_id);
                 self.import_origins.insert(document_id, path.clone());
                 self.remember_recent_file(user_path.clone());
-                self.preferred_settings_identity_by_path
-                    .insert(normalize_recent_path(&user_path), identity.clone());
                 self.user_file_paths.insert(document_id, user_path.clone());
                 self.file_backings.insert(
                     document_id,
@@ -80,7 +75,6 @@ impl TexcelApp {
                         overwrite_confirmed: false,
                     },
                 );
-                self.restore_document_preferences(document_id);
                 if let Some(document) = self.workspace.documents.get_mut(&document_id) {
                     for view in document.views.values_mut() {
                         view.header_row = Some(0);
@@ -117,8 +111,6 @@ impl TexcelApp {
                 self.workspace.insert_loaded_document(document);
                 self.queue_opening_fit(document_id);
                 self.remember_recent_file(user_path.clone());
-                self.preferred_settings_identity_by_path
-                    .insert(normalize_recent_path(&user_path), identity.clone());
                 self.user_file_paths.insert(document_id, user_path.clone());
                 self.file_backings.insert(
                     document_id,
@@ -129,7 +121,6 @@ impl TexcelApp {
                         overwrite_confirmed: false,
                     },
                 );
-                self.restore_document_preferences(document_id);
                 if let Some(document) = self.workspace.documents.get_mut(&document_id) {
                     for view in document.views.values_mut() {
                         view.header_row = Some(0);

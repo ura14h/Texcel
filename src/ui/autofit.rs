@@ -343,20 +343,12 @@ impl TexcelApp {
             return;
         };
         for (column, width) in widths {
-            // The user asked for this fit, so it is their width and is saved.
-            let layout = ColumnLayout {
-                width: Some(width),
-                fitted_on_opening: false,
-            };
+            let mut layout = view.layout.column(column).unwrap_or_default();
+            layout.width = Some(width);
             view.set_layout_value(
                 LayoutTarget::Column(column),
                 LayoutValue::Column(Some(layout)),
             );
         }
-        self.mark_document_preference_change(
-            document_id,
-            pending.table_id,
-            TablePreferenceField::ViewLayout,
-        );
     }
 }

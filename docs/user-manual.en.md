@@ -27,7 +27,7 @@ Texcel works only with files on your computer. It needs no account and no networ
 
 ## 3. Package contents and starting Texcel
 
-The macOS and Windows versions come as `Texcel-mac-<version>.zip` and `Texcel-windows-<version>.zip`. Each zip holds the app, a `licenses` folder, and this manual in English and Japanese. The `licenses` folder has the license texts of Texcel and of the libraries and fonts it includes.
+The macOS and Windows versions come as `Texcel-mac-<version>.zip` and `Texcel-windows-<version>.zip`. Each zip holds the app, a `licenses` folder, this manual in English and Japanese, and a script that resets the settings (section 16). The `licenses` folder has the license texts of Texcel and of the libraries and fonts it includes.
 
 ### 3.1 macOS
 
@@ -37,6 +37,7 @@ Double-click `Texcel-mac-<version>.zip` to extract it. It contains:
 Texcel-mac-<version>/
 ├── Texcel.app
 ├── licenses/
+├── reset-settings.command
 ├── user-manual.en.md
 └── user-manual.ja.md
 ```
@@ -58,6 +59,7 @@ Right-click `Texcel-windows-<version>.zip` and choose Extract All. It contains:
 Texcel-windows-<version>\
 ├── Texcel.exe
 ├── licenses\
+├── reset-settings.cmd
 ├── user-manual.en.md
 └── user-manual.ja.md
 ```
@@ -77,6 +79,7 @@ Package contents (freedesktop layout):
 linux/
 └── usr/
     ├── bin/texcel
+    ├── bin/texcel-reset-settings
     └── share/
         ├── applications/net.homeunix.hio.app.Texcel.desktop
         ├── icons/hicolor/256x256/apps/texcel.png
@@ -182,7 +185,7 @@ Table > Fill lets you choose filling by copying or with a series explicitly. Ctr
 ### 5.5 Rows, columns, and tables
 
 - Insert rows and columns from the Insert menu. Delete, duplicate, and move them from Table > Rows and Table > Columns. The same commands are on the right-click menus of cells, row numbers, and column letters. Inserting adds rows above the selected rows and columns to the left of the selected columns.
-- Drag the border between column letters to change a column's width, or double-click it to fit the content. With several whole columns selected, dragging the border of one of them gives all of them that width, and double-clicking fits all of them. Column widths are a view setting and are not saved in the file.
+- Drag the border between column letters to change a column's width, or double-click it to fit the content. With several whole columns selected, dragging the border of one of them gives all of them that width, and double-clicking fits all of them. Column widths are a view setting: they are not saved in the file and are gone when the document closes. Each opening starts with widths fitted to the content.
 - Add, duplicate, and delete tables from the Table menu or from a table tab's right-click menu. A CSV document holds only one table.
 
 ### 5.6 Markdown formatting
@@ -261,13 +264,13 @@ Notes:
 
 ## 9. View settings
 
-The View menu has these commands. None of them change the file.
+The View menu has these commands. None of them change the file. Text wrapping, frozen panes, column widths, and the choice of Live or Source Editing last only while the document is open and are gone when it closes. Markdown and CSV cannot store them, so Texcel does not record them outside the file either.
 
 - Zoom: Ctrl/Cmd++ and Ctrl/Cmd+− change the sheet zoom in steps of 10%, and Ctrl/Cmd+0 returns to 100%. Click the percentage at the lower right of the window to choose 200%, 100%, 75%, 50%, 25%, or a custom zoom from 10% to 400%. Each window has its own sheet zoom; menus, the formula bar, and dialogs keep their size.
 - Text Wrapping: wrap long content or not.
 - Freeze Panes: keep the rows and columns through the selected cell, the rows through the selected row, or the columns through the selected column in view while scrolling.
 - Column Width…: set a column's width in half-width characters (up to two decimal places). A width of 10 holds ten monospace half-width characters.
-- AutoFit Column Widths: fit every column of the table to its contents. When you open a file, the columns of every table are fitted before the window appears (widths you set earlier are kept). If opening takes a while, an **Opening Files** window shows how far it has got.
+- AutoFit Column Widths: fit every column of the table to its contents. When you open a file, the columns of every table are fitted before the window appears. If opening takes a while, an **Opening Files** window shows how far it has got.
 
 ## 10. Search and data tools
 
@@ -352,13 +355,13 @@ On macOS, use Cmd instead of Ctrl, except where Control is written.
 | Windows | `%APPDATA%\Texcel\` |
 | Linux | `$XDG_CONFIG_HOME/Texcel/` (`~/.config/Texcel/` if unset) |
 
-`settings.json` holds the settings. The `recovery` folder holds work saved in case Texcel stops unexpectedly.
+`settings.json` holds the settings. The `recovery` folder holds work saved in case Texcel stops unexpectedly. The settings record only app-wide choices, such as the language, theme, display font, and text size, and the recently used files. Nothing about how a single file is shown, such as its column widths, is recorded.
 
 ## 15. Uninstalling
 
 - macOS: move `Texcel.app` to the Trash.
 - Windows: delete the extracted folder.
-- Linux: delete the copied `bin/texcel`, `share/applications/net.homeunix.hio.app.Texcel.desktop`, `share/icons/hicolor/256x256/apps/texcel.png`, and `share/doc/texcel`.
+- Linux: delete the copied `bin/texcel`, `bin/texcel-reset-settings`, `share/applications/net.homeunix.hio.app.Texcel.desktop`, `share/icons/hicolor/256x256/apps/texcel.png`, and `share/doc/texcel`.
 
 To remove the settings too, delete the folder listed in section 14.
 
@@ -373,3 +376,12 @@ To remove the settings too, delete the folder listed in section 14.
 | CSV text looks garbled | Close the document, open the file again, and choose the encoding in the preview |
 | Numbers are not added up | They are text that Texcel does not treat as numbers, such as values with leading zeros. Convert them with `=VALUE()` |
 | You are not sure how to do something | Open Help > Texcel Help… |
+| The settings seem wrong, or you want the defaults back | Quit Texcel and run the script that resets the settings (below) |
+
+### Resetting the settings
+
+Quit Texcel, then run the script below. It asks whether to delete the settings file (`settings.json` in section 14) and deletes it when you answer `y`. Texcel starts with its default settings the next time. Work kept in the `recovery` folder is not deleted. If Texcel is running, the script stops without deleting anything.
+
+- macOS: double-click `reset-settings.command` from the zip. It runs in Terminal.
+- Windows: double-click `reset-settings.cmd` from the zip.
+- Linux: run `texcel-reset-settings` in a terminal.

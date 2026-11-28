@@ -202,7 +202,9 @@ impl TexcelApp {
         path_matches_source(&backing.path, source)
     }
 
-    /// Treats converted sources as needing a matching saved destination.
+    /// Tells whether the document still needs saving: it was edited, or its source has no
+    /// matching saved file (an import, say). Tests state their expectations with it.
+    #[cfg(test)]
     pub(in crate::ui) fn document_requires_save(&self, document_id: DocumentId) -> bool {
         self.workspace
             .documents

@@ -29,7 +29,6 @@ fn cancelled_save_keeps_edit_undo_and_pending_close() {
     app.request_cancel_save(document_id);
 
     assert_eq!(app.pending_saves.get(&document_id), Some(&token));
-    assert_eq!(app.pending_save_preferences[&document_id].0, token);
     assert_eq!(app.cancelling_saves.get(&document_id), Some(&token));
     assert!(app.close_after_save.contains(&document_id));
     app.deferred_file_results

@@ -27,7 +27,6 @@ impl Document {
             revision: 0,
             saved_revision: 0,
             structure_revision: 0,
-            saved_structure_revision: 0,
             calculation_revision: 0,
             calculation_results: None,
             source: None,
