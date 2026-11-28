@@ -837,7 +837,7 @@ fn bom_sample_edits_and_reopens_all_three_tables() {
             .iter()
             .map(|table| table.name.as_str())
             .collect::<Vec<_>>(),
-        ["表1", "追加注文", "表3"]
+        ["表1", "追加注文 (1)", "追加注文 (2)"]
     );
     assert_eq!(
         document.tables[0]
@@ -912,8 +912,8 @@ fn bom_sample_edits_and_reopens_all_three_tables() {
     let reopened_doc = &reopened.state().workspace.documents[&reopened_id];
     assert_eq!(reopened_doc.tables.len(), 3);
     assert_eq!(reopened_doc.tables[0].name, "表1");
-    assert_eq!(reopened_doc.tables[1].name, "追加注文");
-    assert_eq!(reopened_doc.tables[2].name, "表3");
+    assert_eq!(reopened_doc.tables[1].name, "追加注文 (1)");
+    assert_eq!(reopened_doc.tables[2].name, "追加注文 (2)");
     assert_eq!(
         reopened_doc.tables[0]
             .cell(CellAddress { row: 1, column: 1 })

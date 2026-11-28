@@ -170,7 +170,6 @@ impl MarkdownDocument {
         }
 
         let mut tables = Vec::with_capacity(raw_tables.len());
-        let mut heading = String::new();
         let mut heading_ranges = Vec::<(Range<usize>, String)>::new();
         let mut current = None::<(usize, String)>;
         let mut displays = Vec::<Vec<Vec<MarkdownCellDisplay>>>::new();
@@ -307,22 +306,14 @@ impl MarkdownDocument {
                 _ => (),
             }
         }
-        for (index, (start, end, rows, parser_width, row_syntax, alignments)) in
-            raw_tables.into_iter().enumerate()
+        let table_ranges = raw_tables
+            .iter()
+            .map(|(start, end, ..)| *start..*end)
+            .collect::<Vec<_>>();
+        let names = table_names::name_tables(text, &heading_ranges, &table_ranges);
+        for (index, ((start, end, rows, parser_width, row_syntax, alignments), name)) in
+            raw_tables.into_iter().zip(names).enumerate()
         {
-            heading.clear();
-            let mut heading_range = None;
-            if let Some((range, title)) = heading_ranges
-                .iter()
-                .rev()
-                .find(|(range, _)| range.end <= start)
-                && text
-                    .get(range.end..start)
-                    .is_some_and(|between| between.trim().is_empty())
-            {
-                heading.clone_from(title);
-                heading_range = (!title.is_empty()).then(|| range.clone());
-            }
             let header_end = row_syntax.first().map_or(start, |syntax| syntax.range.end);
             let after_header = text.get(header_end..end).unwrap_or_default();
             let separator_start = after_header
@@ -344,16 +335,12 @@ impl MarkdownDocument {
             }
             .to_owned();
             tables.push(MarkdownTable {
-                name_generated: heading.is_empty(),
-                name: if heading.is_empty() {
-                    format!("表{}", index + 1)
-                } else {
-                    heading.clone()
-                },
+                name_generated: name.name.is_none(),
+                name: name.name.unwrap_or_else(|| format!("表{}", index + 1)),
                 rows,
                 alignments,
                 source_range: start..end,
-                heading_range,
+                heading_range: name.heading_range,
                 parser_width,
                 row_syntax,
                 separator_line,

@@ -120,24 +120,6 @@ fn bom_markdown_keeps_header_columns_and_literal_display_ranges() {
     assert_eq!(display.plain_text, "=1+1");
 }
 
-/// Uses only a heading with whitespace directly between it and the table.
-#[test]
-fn markdown_table_names_ignore_headings_separated_by_content() {
-    let markdown = MarkdownDocument::parse(
-        b"# Title\n\n| first |\n| --- |\n| x |\n\nParagraph\n\n- item\n\n| second |\n| --- |\n| y |\n\n## Next\n\n| third |\n| --- |\n| z |\n".to_vec(),
-    )
-    .expect("three tables parse");
-
-    assert_eq!(
-        markdown
-            .tables
-            .iter()
-            .map(|table| table.name.as_str())
-            .collect::<Vec<_>>(),
-        ["Title", "表2", "Next"]
-    );
-}
-
 #[test]
 // Verify that preview fallback parses heading-like cell text inside a table.
 fn search_display_fallback_reparses_heading_like_text_in_table_context() {

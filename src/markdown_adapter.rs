@@ -16,6 +16,7 @@ mod editing;
 mod parser;
 mod structure;
 mod syntax;
+mod table_names;
 mod view;
 
 use display::*;
@@ -45,7 +46,7 @@ pub struct MarkdownTable {
     /// Explicit GFM separator alignment by column; missing entries use app defaults.
     pub alignments: Vec<Option<MarkdownTableAlignment>>,
     pub source_range: Range<usize>,
-    /// The heading directly above the table that gives the table its name.
+    /// The heading deleted with the table: the one that names only this table, directly above it.
     pub(crate) heading_range: Option<Range<usize>>,
     parser_width: usize,
     row_syntax: Vec<MarkdownRowSyntax>,
