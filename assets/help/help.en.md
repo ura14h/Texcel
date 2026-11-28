@@ -43,7 +43,7 @@ Content that starts with `=` is a formula, such as `=B2*C2` or `=SUM(D2:D3)`.
 - To enter text that starts with `=`, put `'` in front of it.
 - Text with leading zeros, such as `00123`, stays text. Totals such as SUM ignore it.
 
-Formulas can use arithmetic (`+ - * / ^ %`), comparison, and text joining (`&`). The functions they calculate are listed with descriptions in "Appendix: Functions" at the end.
+Formulas can use arithmetic (`+ - * / ^ %`), comparison, and text joining (`&`). The functions they calculate are listed with descriptions in "Functions" at the end.
 
 ## Fill
 
@@ -94,7 +94,7 @@ Ctrl+Z undoes and Ctrl+Shift+Z redoes (Ctrl+Y also redoes on Windows). Each docu
 - Edit > Search… (Ctrl+F) and Replace… (Ctrl+H, or Cmd+Shift+H on macOS) search and replace.
 - The Data menu sorts, trims spaces, splits and joins columns, transposes, and finds or removes duplicate rows. Each of these can be undone in one step.
 
-## Appendix: Functions
+## Functions
 
 Formulas calculate with the functions below, which are also the ones the **fx** list shows. A formula that uses another function keeps its text as entered. Arguments in `[ ]` can be left out.
 

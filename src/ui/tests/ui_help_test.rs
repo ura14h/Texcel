@@ -84,8 +84,28 @@ fn help_opens_the_built_in_guide_in_its_own_window() {
         let _ = image.save(directory.join("help-window-ja.png"));
     }
 
-    // The outline at the left lists the headings; choosing one scrolls the guide to it.
-    let appendix = "付録：使える関数";
+    // The outline at the left lists the headings on an opaque fill; choosing one scrolls the
+    // guide to it.
+    let outline_fills = harness
+        .output()
+        .shapes
+        .iter()
+        .filter_map(|clipped| match &clipped.shape {
+            // The pane spans the window's height at the outline's width.
+            egui::Shape::Rect(rect)
+                if (rect.rect.width() - 200.0).abs() < 2.0 && rect.rect.height() > 500.0 =>
+            {
+                Some(rect.fill)
+            }
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    assert!(!outline_fills.is_empty(), "the outline pane is drawn");
+    assert!(
+        outline_fills.iter().all(|fill| fill.a() == 255),
+        "the outline fill is opaque: {outline_fills:?}"
+    );
+    let appendix = "使える関数";
     let heading_top = |harness: &Harness<'_, TexcelApp>| {
         harness
             .query_all(By::new().role(egui::Role::Label).label(appendix))
@@ -155,9 +175,12 @@ fn help_appendix_lists_every_calculated_function() {
     for (guide, heading) in [
         (
             include_str!("../../../assets/help/help.en.md"),
-            "## Appendix",
+            "## Functions",
         ),
-        (include_str!("../../../assets/help/help.ja.md"), "## 付録"),
+        (
+            include_str!("../../../assets/help/help.ja.md"),
+            "## 使える関数",
+        ),
     ] {
         let appendix = &guide[guide.find(heading).expect("the guide has the appendix")..];
         let mut listed = appendix

@@ -141,7 +141,9 @@ fn draw_help_outline(ui: &mut egui::Ui, blocks: &[Block], current: Option<usize>
         .exact_size(OUTLINE_WIDTH)
         .frame(
             egui::Frame::new()
-                .fill(ui.visuals().faint_bg_color)
+                // An opaque fill: egui's faint background is a translucent tint, which shows
+                // as black in a window with nothing painted under it.
+                .fill(GridThemePalette::from_visuals(ui.visuals()).header_background)
                 .inner_margin(egui::Margin::symmetric(0, 12)),
         )
         .show(ui, |ui| {
@@ -172,6 +174,13 @@ fn draw_help_outline(ui: &mut egui::Ui, blocks: &[Block], current: Option<usize>
                         if selected || response.hovered() {
                             ui.painter().rect_filled(rect, 0.0, visuals.weak_bg_fill);
                         }
+                        // Entries read as ordinary text; only the current one takes the
+                        // selection color.
+                        let text_color = if selected {
+                            visuals.text_color()
+                        } else {
+                            ui.visuals().text_color()
+                        };
                         let font = if *level <= 1 {
                             FontId::new(visual::BODY_SIZE, grid_font_family(true))
                         } else {
@@ -184,7 +193,7 @@ fn draw_help_outline(ui: &mut egui::Ui, blocks: &[Block], current: Option<usize>
                                 Align2::LEFT_CENTER,
                                 &title,
                                 font,
-                                visuals.text_color(),
+                                text_color,
                             );
                         if response.clicked() {
                             chosen = Some(index);
