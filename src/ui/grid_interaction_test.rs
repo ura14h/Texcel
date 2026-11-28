@@ -1350,3 +1350,36 @@ fn sheet_zoom_and_ui_text_size_are_independent() {
         "the UI text size keeps the sheet size: {base} -> {after_ui_size}"
     );
 }
+
+#[test]
+/// Draws the edge of frozen rows and columns as a black line, as Excel does.
+fn frozen_pane_edges_are_drawn_in_black() {
+    let mut harness = grid_harness(4, 40);
+    harness.ctx.set_theme(egui::Theme::Light);
+    {
+        let document = harness.state_mut().workspace.active_document_mut().unwrap();
+        let table_id = document.active_table().unwrap().id;
+        let view = document.view_mut(table_id).unwrap();
+        view.set_layout_value(
+            LayoutTarget::Freeze,
+            LayoutValue::Freeze(FrozenPanes {
+                rows: 1,
+                columns: 1,
+            }),
+        );
+    }
+    harness.run_steps(2);
+    let black_lines = harness
+        .output()
+        .shapes
+        .iter()
+        .filter(|clipped| match &clipped.shape {
+            egui::Shape::LineSegment { points, stroke } => {
+                stroke.color == egui::Color32::BLACK
+                    && (points[0].x == points[1].x || points[0].y == points[1].y)
+            }
+            _ => false,
+        })
+        .count();
+    assert_eq!(black_lines, 2, "one vertical and one horizontal edge");
+}

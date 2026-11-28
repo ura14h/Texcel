@@ -7,6 +7,9 @@ pub(super) struct GridThemePalette {
     pub(super) active_header_fill: Color32,
     pub(super) foreground: Color32,
     pub(super) grid: Color32,
+    /// The line at the edge of frozen rows and columns: black, as in Excel, or near white
+    /// on a dark theme.
+    pub(super) frozen_boundary: Color32,
     pub(super) selection_fill: Color32,
     pub(super) selection: Color32,
     pub(super) error: Color32,
@@ -38,6 +41,11 @@ impl GridThemePalette {
                 visuals.text_color()
             },
             grid,
+            frozen_boundary: if visuals.dark_mode {
+                Color32::from_rgb(226, 228, 232)
+            } else {
+                Color32::BLACK
+            },
             selection_fill: visuals.selection.bg_fill.gamma_multiply(0.22),
             selection: visuals.selection.stroke.color,
             error: visuals.error_fg_color,

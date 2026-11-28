@@ -49,7 +49,7 @@ impl GridViewportFrame<'_> {
                     Pos2::new(x, self.viewport_origin.y),
                     Pos2::new(x, self.viewport_rect.max.y),
                 ],
-                Stroke::new(1.25, self.palette.grid),
+                Stroke::new(1.0, self.palette.frozen_boundary),
             );
         }
         if self.grid.layout.frozen().rows > 0 {
@@ -63,7 +63,7 @@ impl GridViewportFrame<'_> {
                     Pos2::new(self.viewport_origin.x, y),
                     Pos2::new(self.viewport_rect.max.x, y),
                 ],
-                Stroke::new(1.25, self.palette.grid),
+                Stroke::new(1.0, self.palette.frozen_boundary),
             );
         }
         if let Some(drag) = self.input.fill_handle_drag {
