@@ -405,7 +405,7 @@ fn formula_autofit_waits_for_the_visible_calculation_root() {
     let ctx = harness.ctx.clone();
     harness
         .state_mut()
-        .request_column_auto_fit(&ctx, document_id, table_id, 1);
+        .request_columns_auto_fit(&ctx, document_id, table_id, vec![1]);
     assert!(
         harness
             .state()
@@ -504,7 +504,7 @@ fn deferred_autofit_does_not_overwrite_a_manual_layout_change() {
         let revision = app.workspace.documents[&document_id].revision;
         let token = app.next_job_token(document_id, revision);
         app.pending_calculations.insert(document_id, token);
-        app.request_column_auto_fit(&ctx, document_id, table_id, 0);
+        app.request_columns_auto_fit(&ctx, document_id, table_id, vec![0]);
     }
     assert!(
         harness
@@ -558,7 +558,7 @@ fn canceled_calculation_discards_deferred_autofit() {
         let revision = app.workspace.documents[&document_id].revision;
         let token = app.next_job_token(document_id, revision);
         app.pending_calculations.insert(document_id, token);
-        app.request_column_auto_fit(&ctx, document_id, table_id, 0);
+        app.request_columns_auto_fit(&ctx, document_id, table_id, vec![0]);
         assert!(app.deferred_auto_fits.contains_key(&document_id));
         app.cancel_calculation(document_id);
         assert!(!app.deferred_auto_fits.contains_key(&document_id));
@@ -577,7 +577,7 @@ fn stopped_file_worker_ends_all_auto_fit_requests() {
     let ctx = harness.ctx.clone();
     harness
         .state_mut()
-        .request_column_auto_fit(&ctx, document_id, table_id, 0);
+        .request_columns_auto_fit(&ctx, document_id, table_id, vec![0]);
     assert!(harness.state().pending_auto_fits.contains_key(&document_id));
 
     let revision = harness.state().workspace.documents[&document_id].revision;
@@ -591,7 +591,7 @@ fn stopped_file_worker_ends_all_auto_fit_requests() {
     );
     harness
         .state_mut()
-        .request_column_auto_fit(&ctx, document_id, table_id, 1);
+        .request_columns_auto_fit(&ctx, document_id, table_id, vec![1]);
     assert!(
         harness
             .state()
@@ -1382,4 +1382,117 @@ fn frozen_pane_edges_are_drawn_in_black() {
         })
         .count();
     assert_eq!(black_lines, 2, "one vertical and one horizontal edge");
+}
+
+/// Selects columns B through D as whole columns.
+fn select_whole_columns_b_to_d(harness: &mut Harness<'_, TexcelApp>) -> (DocumentId, TableId) {
+    let document = harness.state_mut().workspace.active_document_mut().unwrap();
+    let table_id = document.active_table().unwrap().id;
+    document
+        .view_mut(table_id)
+        .unwrap()
+        .set_selection(CellRange {
+            anchor: CellAddress { row: 0, column: 1 },
+            head: CellAddress {
+                row: MAX_ROWS - 1,
+                column: 3,
+            },
+        });
+    (document.id, table_id)
+}
+
+// Resizes every selected whole column when one of their header edges is dragged.
+#[test]
+fn dragging_a_selected_column_edge_resizes_every_selected_column() {
+    let mut harness = grid_harness(4, 6);
+    let (document_id, table_id) = select_whole_columns_b_to_d(&mut harness);
+    harness.step();
+    let (start_width, untouched_width) = {
+        let layout = &harness.state().workspace.documents[&document_id]
+            .view(table_id)
+            .unwrap()
+            .layout;
+        (layout.column_width_pixels(2), layout.column_width_pixels(4))
+    };
+    let c1 = harness
+        .query_all(By::new().role(egui::Role::GridCell).label_contains("C1"))
+        .next()
+        .expect("C1 is visible")
+        .rect();
+    let point = Pos2::new(c1.right() - 1.0, c1.top() - HEADER_HEIGHT * 0.5);
+    send_event(&mut harness, egui::Event::PointerMoved(point));
+    send_event(
+        &mut harness,
+        egui::Event::PointerButton {
+            pos: point,
+            button: egui::PointerButton::Primary,
+            pressed: true,
+            modifiers: egui::Modifiers::NONE,
+        },
+    );
+    let moved = point + Vec2::new(60.0, 0.0);
+    send_event(&mut harness, egui::Event::PointerMoved(moved));
+    send_event(
+        &mut harness,
+        egui::Event::PointerButton {
+            pos: moved,
+            button: egui::PointerButton::Primary,
+            pressed: false,
+            modifiers: egui::Modifiers::NONE,
+        },
+    );
+    let layout = &harness.state().workspace.documents[&document_id]
+        .view(table_id)
+        .unwrap()
+        .layout;
+    let widths = (1..=3)
+        .map(|column| layout.column_width_pixels(column))
+        .collect::<Vec<_>>();
+    assert!(widths[1] > start_width, "the dragged column C grows");
+    assert!(
+        widths.iter().all(|width| *width == widths[1]),
+        "B through D match: {widths:?}"
+    );
+    assert_eq!(
+        layout.column_width_pixels(4),
+        untouched_width,
+        "E is not selected"
+    );
+}
+
+// Applies a header edge action to the selected whole columns, or to the one column otherwise.
+#[test]
+fn header_edge_actions_cover_the_selected_whole_columns() {
+    let mut harness = grid_harness(4, 6);
+    let (document_id, table_id) = select_whole_columns_b_to_d(&mut harness);
+    let app = harness.state();
+    assert_eq!(
+        app.header_action_columns(document_id, table_id, 2),
+        [1, 2, 3]
+    );
+    assert_eq!(app.header_action_columns(document_id, table_id, 4), [4]);
+
+    // The whole sheet stops at the table's used columns.
+    let document = harness.state_mut().workspace.active_document_mut().unwrap();
+    document
+        .view_mut(table_id)
+        .unwrap()
+        .set_selection(CellRange {
+            anchor: CellAddress::default(),
+            head: CellAddress {
+                row: MAX_ROWS - 1,
+                column: MAX_COLUMNS - 1,
+            },
+        });
+    let last = document
+        .tables
+        .iter()
+        .find(|table| table.id == table_id)
+        .unwrap()
+        .extent_end()
+        .column;
+    let columns = harness
+        .state()
+        .header_action_columns(document_id, table_id, 0);
+    assert_eq!(columns, (0..=last).collect::<Vec<_>>());
 }

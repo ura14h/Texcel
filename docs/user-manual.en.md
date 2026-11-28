@@ -182,7 +182,7 @@ Table > Fill lets you choose filling by copying or with a series explicitly. Ctr
 ### 5.5 Rows, columns, and tables
 
 - Insert rows and columns from the Insert menu. Delete, duplicate, and move them from Table > Rows and Table > Columns. The same commands are on the right-click menus of cells, row numbers, and column letters. Inserting adds rows above the selected rows and columns to the left of the selected columns.
-- Drag the border between column letters to change a column's width, or double-click it to fit the content. Column widths are a view setting and are not saved in the file.
+- Drag the border between column letters to change a column's width, or double-click it to fit the content. With several whole columns selected, dragging the border of one of them gives all of them that width, and double-clicking fits all of them. Column widths are a view setting and are not saved in the file.
 - Add, duplicate, and delete tables from the Table menu or from a table tab's right-click menu. A CSV document holds only one table.
 
 ### 5.6 Markdown formatting

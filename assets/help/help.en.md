@@ -53,7 +53,7 @@ Drag the small square at the lower right of the selection to fill that range. Ev
 
 - Insert rows and columns from the Insert menu (Ctrl+Shift+R and C). Delete, duplicate, and move them from Table > Rows and Table > Columns, or from the right-click menus.
 - Add, duplicate, and delete tables from the Table menu or a table tab's right-click menu.
-- Drag the border between column letters to change a width, or double-click it to fit the contents. View > Column Width… sets it in half-width characters.
+- Drag the border between column letters to change a width, or double-click it to fit the contents. With several columns selected, this applies to all of them. View > Column Width… sets it in half-width characters.
 
 ## Markdown formatting
 

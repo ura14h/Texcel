@@ -98,13 +98,24 @@ impl TexcelApp {
         if !navigation_blocked
             && let Some((document_id, table_id, target, value)) = outcome.resized_layout.take()
         {
+            // A dragged edge of a selected whole column resizes every selected column.
+            let targets = match target {
+                LayoutTarget::Column(column) => self
+                    .header_action_columns(document_id, table_id, column)
+                    .into_iter()
+                    .map(LayoutTarget::Column)
+                    .collect(),
+                other => vec![other],
+            };
             let applied = self
                 .workspace
                 .documents
                 .get_mut(&document_id)
                 .and_then(|document| document.view_mut(table_id))
                 .is_some_and(|view| {
-                    view.set_layout_value(target, value);
+                    for target in targets {
+                        view.set_layout_value(target, value.clone());
+                    }
                     true
                 });
             if applied && outcome.resize_finished {
@@ -118,7 +129,9 @@ impl TexcelApp {
         if !navigation_blocked
             && let Some((document_id, table_id, column)) = outcome.auto_fit_requested.take()
         {
-            self.request_column_auto_fit(ctx, document_id, table_id, column);
+            // A double-clicked edge of a selected whole column fits every selected column.
+            let columns = self.header_action_columns(document_id, table_id, column);
+            self.request_columns_auto_fit(ctx, document_id, table_id, columns);
         }
         if let Some(drag) = outcome.selection_drag_started {
             if formula_reference_pick {

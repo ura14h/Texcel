@@ -30,15 +30,43 @@ fn document_cell_display_mode(mode: crate::document::DocumentDisplayMode) -> Cel
 }
 
 impl TexcelApp {
-    /// Submits one column for background width measurement.
-    pub(super) fn request_column_auto_fit(
-        &mut self,
-        ctx: &egui::Context,
+    /// Returns the columns a header edge action applies to: every selected whole column when
+    /// `column` is one of them, as in Excel, or else `column` alone. A selection of the whole
+    /// sheet stops at the table's used columns (or `column`), not the sheet's 16,384.
+    pub(super) fn header_action_columns(
+        &self,
         document_id: DocumentId,
         table_id: TableId,
         column: usize,
-    ) {
-        self.request_columns_auto_fit(ctx, document_id, table_id, vec![column]);
+    ) -> Vec<usize> {
+        let Some(document) = self.workspace.documents.get(&document_id) else {
+            return vec![column];
+        };
+        let (Some(table), Some(view)) = (
+            document.tables.iter().find(|table| table.id == table_id),
+            document.view(table_id),
+        ) else {
+            return vec![column];
+        };
+        let whole_columns = view
+            .selected_ranges()
+            .map(CellRange::normalized)
+            .filter(|(start, end)| start.row == 0 && end.row + 1 >= MAX_ROWS)
+            .collect::<Vec<_>>();
+        if !whole_columns
+            .iter()
+            .any(|(start, end)| (start.column..=end.column).contains(&column))
+        {
+            return vec![column];
+        }
+        let last = table.extent_end().column.max(column);
+        let mut columns = whole_columns
+            .iter()
+            .flat_map(|(start, end)| start.column..=end.column.min(last))
+            .collect::<Vec<_>>();
+        columns.sort_unstable();
+        columns.dedup();
+        columns
     }
 
     /// Submits every column up to the table's used extent for one background measurement.
@@ -61,7 +89,7 @@ impl TexcelApp {
     }
 
     /// Submits the given columns for one background width measurement.
-    fn request_columns_auto_fit(
+    pub(super) fn request_columns_auto_fit(
         &mut self,
         ctx: &egui::Context,
         document_id: DocumentId,
