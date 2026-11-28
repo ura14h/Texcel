@@ -125,60 +125,110 @@ fn show_block(
                 });
         }
         Block::Table { alignments, rows } => {
-            // Columns keep their natural width when the table fits; otherwise the widest
-            // columns wrap so the table stays in view.
-            let columns = rows.iter().map(Vec::len).max().unwrap_or(1).max(1);
-            let mut natural = vec![0.0_f32; columns];
-            for (row_index, row) in rows.iter().enumerate() {
-                for (column, cell) in row.iter().enumerate() {
-                    let mut job = inline_job(ui, cell, size, row_index == 0);
-                    job.wrap.max_width = f32::INFINITY;
-                    let width = ui.painter().layout_job(job).size().x;
-                    natural[column] = natural[column].max(width);
-                }
-            }
-            let room = ui.available_width() - size * (columns as f32 - 1.0) - size * 0.6 - 1.0;
-            let widths = fit_column_widths(&natural, room, size);
-            let response = egui::Frame::new()
-                .stroke(Stroke::new(
-                    0.5,
-                    ui.visuals().widgets.noninteractive.bg_stroke.color,
-                ))
-                .inner_margin(egui::Margin::same((size * 0.3) as i8))
-                .show(ui, |ui| {
-                    egui::Grid::new(("texcel_markdown_table", index))
-                        .striped(true)
-                        .min_col_width(0.0)
-                        .spacing(Vec2::new(size, size * 0.3))
-                        .show(ui, |ui| {
-                            for (row_index, row) in rows.iter().enumerate() {
-                                for (column, cell) in row.iter().enumerate() {
-                                    let mut job = inline_job(ui, cell, size, row_index == 0);
-                                    job.wrap.max_width = widths[column];
-                                    job.halign = match alignments.get(column) {
-                                        Some(pulldown_cmark::Alignment::Center) => {
-                                            egui::Align::Center
-                                        }
-                                        Some(pulldown_cmark::Alignment::Right) => {
-                                            egui::Align::RIGHT
-                                        }
-                                        _ => egui::Align::LEFT,
-                                    };
-                                    // A laid-out galley keeps its width; a label would
-                                    // rewrap at the grid's wider available width.
-                                    let galley = ui.painter().layout_job(job);
-                                    ui.add(egui::Label::new(galley));
-                                }
-                                ui.end_row();
-                            }
-                        });
-                });
-            output.table_rects.push(response.response.rect);
+            let rect = show_table(ui, alignments, rows, size, index);
+            output.table_rects.push(rect);
         }
         Block::Rule => {
             ui.separator();
         }
     }
+}
+
+/// Draws one table with each column as wide as its widest cell, aligned as the separator
+/// row says, and wraps the widest columns when the table would not fit.
+fn show_table(
+    ui: &mut egui::Ui,
+    alignments: &[pulldown_cmark::Alignment],
+    rows: &[Vec<Inline>],
+    size: f32,
+    index: usize,
+) -> Rect {
+    let columns = rows.iter().map(Vec::len).max().unwrap_or(1).max(1);
+    let mut natural = vec![0.0_f32; columns];
+    for (row_index, row) in rows.iter().enumerate() {
+        for (column, cell) in row.iter().enumerate() {
+            let mut job = inline_job(ui, cell, size, row_index == 0);
+            job.wrap.max_width = f32::INFINITY;
+            let width = ui.painter().layout_job(job).size().x;
+            natural[column] = natural[column].max(width);
+        }
+    }
+    // Many columns shrink the gaps too, so even a very wide table stays in view.
+    let frame = size * 0.6 + 1.0;
+    let gap = size.min((ui.available_width() - frame).max(0.0) / (columns as f32 * 2.0));
+    let room = ui.available_width() - gap * (columns as f32 - 1.0) - frame;
+    let widths = fit_column_widths(&natural, room, gap);
+    let aligns = (0..columns)
+        .map(|column| match alignments.get(column) {
+            Some(pulldown_cmark::Alignment::Center) => egui::Align::Center,
+            Some(pulldown_cmark::Alignment::Right) => egui::Align::RIGHT,
+            _ => egui::Align::LEFT,
+        })
+        .collect::<Vec<_>>();
+    // Wrap each cell at its column width, then size each column to its widest cell.
+    let galleys = rows
+        .iter()
+        .enumerate()
+        .map(|(row_index, row)| {
+            row.iter()
+                .enumerate()
+                .map(|(column, cell)| {
+                    let mut job = inline_job(ui, cell, size, row_index == 0);
+                    job.wrap.max_width = widths[column];
+                    job.halign = aligns[column];
+                    ui.painter().layout_job(job)
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let mut column_widths = vec![0.0_f32; columns];
+    for row in &galleys {
+        for (column, galley) in row.iter().enumerate() {
+            // A glyph wider than a very narrow column is clipped instead of widening it.
+            column_widths[column] = column_widths[column]
+                .max(galley.size().x)
+                .min(widths[column]);
+        }
+    }
+    let text_color = ui.visuals().text_color();
+    egui::Frame::new()
+        .stroke(Stroke::new(
+            0.5,
+            ui.visuals().widgets.noninteractive.bg_stroke.color,
+        ))
+        .inner_margin(egui::Margin::same((size * 0.3) as i8))
+        .show(ui, |ui| {
+            egui::Grid::new(("texcel_markdown_table", index))
+                .striped(true)
+                .min_col_width(0.0)
+                .spacing(Vec2::new(gap, size * 0.3))
+                .show(ui, |ui| {
+                    for row in galleys {
+                        for (column, galley) in row.into_iter().enumerate() {
+                            let (rect, response) = ui.allocate_exact_size(
+                                Vec2::new(column_widths[column], galley.size().y),
+                                Sense::hover(),
+                            );
+                            let text = galley.text().to_owned();
+                            response.widget_info(|| {
+                                egui::WidgetInfo::labeled(egui::Role::Label, true, &text)
+                            });
+                            // A right- or center-aligned galley is drawn from that edge.
+                            let anchor = match aligns[column] {
+                                egui::Align::Center => rect.center_top(),
+                                egui::Align::Max => rect.right_top(),
+                                egui::Align::Min => rect.left_top(),
+                            };
+                            ui.painter()
+                                .with_clip_rect(rect.intersect(ui.clip_rect()))
+                                .galley(anchor, galley, text_color);
+                        }
+                        ui.end_row();
+                    }
+                });
+        })
+        .response
+        .rect
 }
 
 /// Gives narrow columns their natural width and splits the remaining room evenly among
