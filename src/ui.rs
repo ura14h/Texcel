@@ -302,9 +302,10 @@ pub struct TexcelApp {
     markdown_cell_displays: BTreeMap<MarkdownCellDisplayKey, CachedMarkdownCellDisplay>,
     pending_markdown_displays: BTreeMap<MarkdownCellDisplayKey, PendingMarkdownCellDisplay>,
     pending_auto_fits: BTreeMap<DocumentId, autofit::PendingAutoFit>,
-    /// Loaded documents whose first column fit has not finished, with when they loaded and
-    /// whether the fit was requested.
-    initial_auto_fits: BTreeMap<DocumentId, (Instant, bool)>,
+    /// When each still-opening document began, for the opening progress window.
+    opening_since: BTreeMap<DocumentId, Instant>,
+    /// Loaded documents whose tables still need their first column fit.
+    initial_auto_fits: BTreeMap<DocumentId, initial_autofit::InitialAutoFit>,
     deferred_auto_fits: BTreeMap<DocumentId, autofit::DeferredAutoFit>,
     calculation_worker: CalculationWorker,
     pending_calculations: BTreeMap<DocumentId, JobToken>,
@@ -372,6 +373,7 @@ mod grid_segment;
 mod grid_selection;
 mod help_window;
 mod ime;
+mod initial_autofit;
 mod keyboard;
 mod keyboard_navigation;
 mod layout_dialog;
@@ -384,6 +386,7 @@ mod markdown_text_layout;
 mod markdown_view;
 mod minimap;
 mod open_queue;
+pub(super) mod opening_progress;
 mod ordered_edit_input;
 mod paste_special_dialog;
 mod preferences;

@@ -36,6 +36,8 @@ struct HostRuntime {
     last_focused_viewport: Option<egui::ViewportId>,
     /// The window placed last, which the next new window follows until focus moves.
     last_placement: Option<placement::WindowPlacement>,
+    /// Where the opening progress window appeared, kept while it shows.
+    opening_position: Option<egui::Pos2>,
 }
 
 impl TexcelAppHost {
@@ -62,6 +64,7 @@ impl TexcelAppHost {
                     placements: BTreeMap::new(),
                     last_focused_viewport: None,
                     last_placement: None,
+                    opening_position: None,
                 },
             );
         });
@@ -199,6 +202,7 @@ impl eframe::App for TexcelAppHost {
         });
         draw_child_viewports(self.id, &ctx, children, retired);
         draw_help_viewport(self.id, &ctx);
+        draw_opening_viewport(self.id, &ctx);
     }
 }
 
@@ -285,6 +289,8 @@ impl HostRuntime {
             || close_dialog_open
             || self.app.active_queued_open.is_some()
             || !self.app.queued_open_paths.is_empty()
+            // An opened document is having its columns fitted and comes to the root next.
+            || !self.app.initial_auto_fits.is_empty()
         {
             return;
         }
@@ -403,6 +409,20 @@ fn draw_help_viewport(host_id: u64, ctx: &egui::Context) {
         builder,
         move |ui, _class| {
             with_host(host_id, |host| host.app.draw_help_window_contents(ui));
+        },
+    );
+}
+
+/// Shows the opening progress window while a file has been opening for a while.
+fn draw_opening_viewport(host_id: u64, ctx: &egui::Context) {
+    let Some(builder) = with_host(host_id, |host| host.opening_viewport_builder(ctx)) else {
+        return;
+    };
+    ctx.show_viewport_deferred(
+        opening_progress::opening_viewport_id(),
+        builder,
+        move |ui, _class| {
+            with_host(host_id, |host| host.app.draw_opening_progress_contents(ui));
         },
     );
 }

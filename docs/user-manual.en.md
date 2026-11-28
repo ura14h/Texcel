@@ -267,7 +267,7 @@ The View menu has these commands. None of them change the file.
 - Text Wrapping: wrap long content or not.
 - Freeze Panes: keep the rows and columns through the selected cell, the rows through the selected row, or the columns through the selected column in view while scrolling.
 - Column Width…: set a column's width in half-width characters (up to two decimal places). A width of 10 holds ten monospace half-width characters.
-- AutoFit Column Widths: fit every column of the table to its contents. When you open a file, the columns of the first table shown are fitted before the window appears (widths you set earlier are kept).
+- AutoFit Column Widths: fit every column of the table to its contents. When you open a file, the columns of every table are fitted before the window appears (widths you set earlier are kept). If opening takes a while, an **Opening Files** window shows how far it has got.
 
 ## 10. Search and data tools
 

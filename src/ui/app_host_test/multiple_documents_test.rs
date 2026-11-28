@@ -361,11 +361,13 @@ fn open_in_host(harness: &mut Harness<'_, TexcelAppHost>, path: &Path) -> Docume
     let deadline = Instant::now() + Duration::from_secs(5);
     loop {
         harness.step();
+        // The document is ready once its columns are fitted and it has its window.
         let loaded = with_host(harness.state().id, |host| {
             host.app
                 .file_backings
                 .iter()
                 .find_map(|(id, backing)| (backing.path == path).then_some(*id))
+                .filter(|id| !host.app.initial_auto_fits.contains_key(id))
         });
         if let Some(id) = loaded {
             harness.step();
@@ -603,5 +605,71 @@ fn new_window_waits_for_its_first_column_fit() {
     assert!(
         saw_waiting_window,
         "the new document waited for its first fit"
+    );
+}
+
+#[test]
+/// Shows the opening progress window while a large file takes time to open, with a share
+/// that only grows, and removes it once the document's window is ready.
+fn opening_a_slow_file_shows_its_progress_until_the_window_opens() {
+    let directory = crate::ui::tests::TestDirectory::new();
+    let path = directory.0.join("large.md");
+    let mut contents = String::from("| value | note |\n| --- | --- |\n");
+    for row in 0..20_000 {
+        contents.push_str(&format!("| {row} | row {row} |\n"));
+    }
+    fs::write(&path, contents).expect("write a large table");
+    let path = fs::canonicalize(path).expect("canonicalize the input");
+    let settings_path = directory.0.join("settings.json");
+    let mut harness = Harness::builder()
+        .with_size([1000.0, 700.0])
+        .allow_missing_glyphs()
+        .build_eframe(move |creation| {
+            creation.egui_ctx.set_embed_viewports(false);
+            let app = TexcelApp::new_with_settings_path(creation, Some(settings_path));
+            TexcelAppHost::new(app, creation.egui_ctx.viewport_id())
+        });
+    harness.step();
+    with_host(harness.state().id, |host| {
+        host.app.queue_open_paths([path.clone()])
+    });
+    let progress = crate::ui::opening_progress::opening_viewport_id();
+    let deadline = Instant::now() + Duration::from_secs(20);
+    let mut shown = false;
+    let mut last_fraction = 0.0_f32;
+    loop {
+        harness.step();
+        let window_listed = harness.output().viewport_output.contains_key(&progress);
+        let (entries, ready) = with_host(harness.state().id, |host| {
+            let ready = host
+                .app
+                .file_backings
+                .values()
+                .any(|backing| backing.path == path)
+                && host.app.initial_auto_fits.is_empty()
+                && host.root_document.is_some();
+            (host.app.opening_entries(), ready)
+        });
+        // Entries are read after the frame, so one may have just become due; the window
+        // counts once a frame both drew it and still had entries.
+        if let Some(entry) = entries.first() {
+            assert!(entry.fraction >= last_fraction, "the share never goes back");
+            last_fraction = entry.fraction;
+            shown |= window_listed;
+        }
+        if ready {
+            harness.step();
+            break;
+        }
+        assert!(Instant::now() < deadline, "the large file opens");
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    assert!(shown, "a slow opening shows the progress window");
+    assert!(
+        with_host(harness.state().id, |host| host
+            .app
+            .opening_entries()
+            .is_empty()),
+        "the progress ends once the window is ready"
     );
 }

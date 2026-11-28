@@ -63,3 +63,29 @@ fn opening_fit_reads_the_first_rows_only() {
         .column_width_pixels(0);
     assert!(width > 112.0, "AutoFit reads every row: {width}");
 }
+
+#[test]
+// Fits every table of an opened file, not only the one shown first.
+fn opening_fits_every_table() {
+    let long = "a long value that needs a wide column";
+    let directory = ScenarioDirectory::new();
+    let path = directory.0.join("two.md");
+    std::fs::write(
+        &path,
+        format!("| A |\n| --- |\n| x |\n\ntext\n\n| B |\n| --- |\n| {long} |\n"),
+    )
+    .expect("write the input");
+    let mut harness = scenario_harness(directory.0.join("settings.json"));
+    queue_open_and_wait(&mut harness, path);
+    let document = harness.state().workspace.active_document().unwrap();
+    let second = document.tables[1].id;
+    assert_ne!(
+        document.active_table, second,
+        "the second table is not shown first"
+    );
+    let width = document.view(second).unwrap().layout.column_width_pixels(0);
+    assert!(
+        width > 112.0,
+        "the second table's long column widens: {width}"
+    );
+}

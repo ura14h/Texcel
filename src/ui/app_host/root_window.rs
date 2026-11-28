@@ -47,12 +47,14 @@ impl HostRuntime {
     }
 
     /// Picks the document the root takes over: the one about to come forward, or else the
-    /// most recently opened.
+    /// most recently opened. A document still having its columns fitted on opening waits, so
+    /// the root never shows it before it is ready.
     fn root_candidate(&self) -> Option<DocumentId> {
         let has_window = |document_id: &DocumentId| {
             self.document_viewports
                 .get(document_id)
                 .is_some_and(|viewport| *viewport != self.root_viewport)
+                && !self.app.initial_auto_fits.contains_key(document_id)
         };
         self.app
             .pending_document_focus
@@ -106,6 +108,11 @@ impl HostRuntime {
         }
         if !self.app.initial_auto_fits.is_empty() {
             ctx.request_repaint_after(Duration::from_millis(30));
+        }
+        self.app.refresh_opening_progress();
+        if self.app.has_opening_documents() {
+            // Check again when the progress window is due and while it shows.
+            ctx.request_repaint_after(Duration::from_millis(100));
         }
     }
 }

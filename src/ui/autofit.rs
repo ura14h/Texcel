@@ -30,11 +30,6 @@ fn document_cell_display_mode(mode: crate::document::DocumentDisplayMode) -> Cel
     }
 }
 
-/// How long a newly loaded document's window waits for its first column fit.
-const INITIAL_AUTO_FIT_WAIT: Duration = Duration::from_secs(2);
-/// Rows measured by the fit on opening; a long file's later rows are not read for it.
-const INITIAL_AUTO_FIT_ROWS: usize = 1_000;
-
 impl TexcelApp {
     /// Returns the columns a header edge action applies to: every selected whole column when
     /// `column` is one of them, as in Excel, or else `column` alone. A selection of the whole
@@ -107,7 +102,7 @@ impl TexcelApp {
 
     /// Submits the given columns for one background width measurement, optionally over the
     /// first `row_limit` rows only.
-    fn request_columns_auto_fit_within(
+    pub(super) fn request_columns_auto_fit_within(
         &mut self,
         ctx: &egui::Context,
         document_id: DocumentId,
@@ -121,10 +116,8 @@ impl TexcelApp {
         let Some(view) = document.view(table_id) else {
             return;
         };
-        if self.workspace.active_document != Some(document_id)
-            || document.active_table != table_id
-            || self.edit.is_editing()
-        {
+        // Any table of the active document can be fitted; the opening fit covers every table.
+        if self.workspace.active_document != Some(document_id) || self.edit.is_editing() {
             return;
         }
         let layout_revision = view.layout.revision();
@@ -227,62 +220,6 @@ impl TexcelApp {
         ctx.request_repaint();
     }
 
-    /// Fits the active table of a newly loaded document once, before its window is shown:
-    /// every used column that has no saved width. Returns once the fit is done, could not
-    /// start, or took too long, so the window then appears.
-    pub(super) fn advance_initial_auto_fit(
-        &mut self,
-        ctx: &egui::Context,
-        document_id: DocumentId,
-    ) {
-        let Some((loaded_at, requested)) = self.initial_auto_fits.get(&document_id).copied() else {
-            return;
-        };
-        if loaded_at.elapsed() > INITIAL_AUTO_FIT_WAIT {
-            self.initial_auto_fits.remove(&document_id);
-            return;
-        }
-        self.start_ready_auto_fits(ctx);
-        let running = self.pending_auto_fits.contains_key(&document_id)
-            || self.deferred_auto_fits.contains_key(&document_id);
-        if requested {
-            if !running {
-                self.initial_auto_fits.remove(&document_id);
-            }
-            return;
-        }
-        let Some(document) = self.workspace.documents.get(&document_id) else {
-            self.initial_auto_fits.remove(&document_id);
-            return;
-        };
-        let table_id = document.active_table;
-        let columns = document
-            .tables
-            .iter()
-            .find(|table| table.id == table_id)
-            .zip(document.view(table_id))
-            .map(|(table, view)| {
-                (0..=table.extent_end().column)
-                    .filter(|column| view.layout.column(*column).is_none())
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or_default();
-        if columns.is_empty() || running {
-            self.initial_auto_fits.remove(&document_id);
-            return;
-        }
-        if let Some(entry) = self.initial_auto_fits.get_mut(&document_id) {
-            entry.1 = true;
-        }
-        self.request_columns_auto_fit_within(
-            ctx,
-            document_id,
-            table_id,
-            columns,
-            Some(INITIAL_AUTO_FIT_ROWS),
-        );
-    }
-
     /// Starts deferred measurements after the visible calculation root is published.
     pub(super) fn start_ready_auto_fits(&mut self, ctx: &egui::Context) {
         let mut ready = Vec::new();
@@ -293,7 +230,6 @@ impl TexcelApp {
                 continue;
             };
             let layout_is_current = self.workspace.active_document == Some(*document_id)
-                && document.active_table == deferred.table_id
                 && document
                     .view(deferred.table_id)
                     .is_some_and(|view| view.layout.revision() == deferred.layout_revision);
@@ -386,7 +322,6 @@ impl TexcelApp {
             .get(&document_id)
             .is_some_and(|document| {
                 self.workspace.active_document == Some(document_id)
-                    && document.active_table == pending.table_id
                     && document.revision == token.revision
                     && document.calculation_revision == pending.calculation_revision
                     && document_cell_display_mode(document.display_mode) == pending.display_mode

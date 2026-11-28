@@ -106,3 +106,29 @@ pub(super) fn cascade_after(base: WindowPlacement, monitor: Option<Vec2>) -> Win
         size: base.size,
     }
 }
+
+impl HostRuntime {
+    /// Describes the opening progress window, centred over the window the user works in when
+    /// it first appears, or returns nothing while no file has been opening for long.
+    pub(super) fn opening_viewport_builder(
+        &mut self,
+        ctx: &egui::Context,
+    ) -> Option<egui::ViewportBuilder> {
+        let rows = self.app.opening_entries().len();
+        if rows == 0 {
+            self.opening_position = None;
+            return None;
+        }
+        let builder = self.app.opening_viewport_builder(rows);
+        if self.opening_position.is_none() {
+            let size = builder.inner_size.unwrap_or(Vec2::new(420.0, 124.0));
+            self.opening_position = self
+                .focused_window_placement(ctx)
+                .map(|base| base.position + (base.size - size) * 0.5);
+        }
+        Some(match self.opening_position {
+            Some(position) => builder.with_position(position),
+            None => builder,
+        })
+    }
+}
