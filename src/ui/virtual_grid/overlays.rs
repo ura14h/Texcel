@@ -44,6 +44,8 @@ impl GridViewportFrame<'_> {
                     .layout
                     .prefix_column_width_pixels(self.grid.layout.frozen().columns)
                     as f32;
+            // The line lies just inside the scrolling pane, so it covers no frozen cell.
+            let x = x + 0.5;
             painter.line_segment(
                 [
                     Pos2::new(x, self.viewport_origin.y),
@@ -58,6 +60,7 @@ impl GridViewportFrame<'_> {
                 + self
                     .row_layout
                     .prefix_height(self.grid.layout.frozen().rows);
+            let y = y + 0.5;
             painter.line_segment(
                 [
                     Pos2::new(self.viewport_origin.x, y),
