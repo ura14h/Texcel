@@ -25,6 +25,7 @@ impl TexcelApp {
     pub(super) fn draw_bottom(&mut self, root: &mut egui::Ui, navigation_blocked: bool) {
         self.refresh_status_lifetime(root.ctx());
         let mut sheet_action = None;
+        let mut sheet_tab_shown = None;
         let mut footer_action = None;
         let panel_fill = root.visuals().panel_fill;
         egui::Panel::bottom("texcel_footer")
@@ -38,7 +39,8 @@ impl TexcelApp {
             .show(root, |ui| {
                 ui.spacing_mut().item_spacing.y = 0.0;
                 ui.vertical(|ui| {
-                    sheet_action = sheet_tabs::draw_sheet_band(self, ui, navigation_blocked);
+                    (sheet_action, sheet_tab_shown) =
+                        sheet_tabs::draw_sheet_band(self, ui, navigation_blocked);
                     ui.separator();
                     egui::Frame::new()
                         .fill(ui.visuals().faint_bg_color)
@@ -54,6 +56,9 @@ impl TexcelApp {
                         });
                 });
             });
+        if sheet_tab_shown.is_some() {
+            self.sheet_tab_shown_table = sheet_tab_shown;
+        }
         if let Some(action) = sheet_action {
             match action {
                 sheet_tabs::SheetBandAction::Select(table_id) if !navigation_blocked => {

@@ -639,3 +639,104 @@ fn hovered_sheet_tab_keeps_its_height() {
         tab.height()
     );
 }
+
+#[test]
+/// Choosing a table whose tab is scrolled out of the sheet strip, as the table list and the
+/// minimap do, scrolls the strip so that tab is in view, near the middle.
+fn choosing_a_table_elsewhere_scrolls_its_tab_into_view() {
+    let directory = scenario::ScenarioDirectory::new();
+    let path = directory.0.join("many.md");
+    let mut source = String::new();
+    for index in 1..=40 {
+        source.push_str(&format!(
+            "## Sheet {index}\n\n| Key |\n| --- |\n| {index} |\n\n"
+        ));
+    }
+    fs::write(&path, source).expect("write the fixture");
+    let mut harness = scenario::scenario_harness(directory.0.join("settings.json"));
+    scenario::queue_open_and_wait(&mut harness, path);
+    let tab = |harness: &Harness<'_, TexcelApp>, name: &str| {
+        harness
+            .query_all(By::new().label(name))
+            .map(|node| node.rect())
+            .find(|rect| rect.bottom() > 540.0)
+    };
+    let before = tab(&harness, "Sheet 30").expect("the tab exists");
+    assert!(
+        before.left() > 900.0,
+        "the tab starts out of view: {before:?}"
+    );
+
+    let table = harness.state().workspace.active_document().unwrap().tables[29].id;
+    harness.state_mut().select_table_from_chrome(table);
+    for _ in 0..6 {
+        harness.step();
+    }
+    let after = tab(&harness, "Sheet 30").expect("the tab exists");
+    assert!(
+        after.left() >= 0.0 && after.right() <= 700.0,
+        "the tab is in the strip: {after:?}"
+    );
+    assert!(
+        (200.0..500.0).contains(&after.center().x),
+        "the tab is near the middle of the strip: {after:?}"
+    );
+}
+
+#[test]
+/// Choosing a table from the table list of a non-Markdown document (HTML here) also
+/// scrolls its tab into view.
+fn choosing_from_the_table_list_scrolls_the_tab_into_view() {
+    let directory = scenario::ScenarioDirectory::new();
+    let path = directory.0.join("many.html");
+    let mut source = String::from("<html><body>");
+    for index in 1..=40 {
+        source.push_str(&format!(
+            "<table><caption>Sheet {index}</caption><tr><th>Key</th></tr><tr><td>v{index}</td></tr></table>"
+        ));
+    }
+    source.push_str("</body></html>");
+    fs::write(&path, source).expect("write the fixture");
+    let mut harness = scenario::scenario_harness(directory.0.join("settings.json"));
+    scenario::queue_open_and_wait(&mut harness, path);
+    let tab = |harness: &Harness<'_, TexcelApp>| {
+        harness
+            .query_all(By::new().label("Sheet 14"))
+            .map(|node| node.rect())
+            .find(|rect| rect.bottom() > 540.0)
+    };
+    assert!(tab(&harness).expect("the tab exists").left() > 900.0);
+    // Close the import report that HTML opens with.
+    let close = crate::i18n::context_text(&harness.ctx, "action-close");
+    harness
+        .query_all(By::new().role(egui::Role::Button).label(&close))
+        .next()
+        .expect("the import report's Close button")
+        .click();
+    harness.run_steps(2);
+
+    // Open the list and pick the table from it, as a user does.
+    let list = crate::i18n::context_text(&harness.ctx, "dialog-table-list");
+    harness
+        .query_all(By::new().role(egui::Role::Button).label_contains(&list))
+        .next()
+        .expect("the table list button")
+        .click();
+    harness.run_steps(3);
+    let item = harness
+        .query_all(By::new().label_contains("Sheet 14 —"))
+        .next()
+        .expect("the list names the table")
+        .rect();
+    scenario::click_point(&mut harness, item.center());
+    for _ in 0..6 {
+        harness.step();
+    }
+    let document = harness.state().workspace.active_document().unwrap();
+    assert_eq!(document.active_table, document.tables[13].id);
+    let after = tab(&harness).expect("the tab exists");
+    assert!(
+        (200.0..500.0).contains(&after.center().x),
+        "the tab is near the middle of the strip: {after:?}"
+    );
+}

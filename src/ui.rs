@@ -142,6 +142,8 @@ pub struct TexcelApp {
     minimap_open: bool,
     /// The table this window's minimap last brought into view.
     minimap_shown_table: Option<(DocumentId, TableId)>,
+    /// The table whose tab this window's sheet strip last brought into view.
+    sheet_tab_shown_table: Option<(DocumentId, TableId)>,
     minimap_caches: BTreeMap<DocumentId, minimap::MinimapCache>,
     settings_worker: Option<SettingsWorker>,
     settings_file: SettingsFile,

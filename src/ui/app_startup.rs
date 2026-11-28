@@ -102,6 +102,7 @@ impl TexcelApp {
             help_outline: help_window::HelpOutline::default(),
             minimap_open: false,
             minimap_shown_table: None,
+            sheet_tab_shown_table: None,
             minimap_caches: BTreeMap::new(),
             settings_worker,
             settings_file: SettingsFile::default(),

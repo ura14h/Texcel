@@ -7,13 +7,20 @@ pub(super) enum SheetBandAction {
     ToggleMinimap,
 }
 
-/// Draws the sheet strip with tabs and Add inside the scroller.
+/// Draws the sheet strip with tabs and Add inside the scroller. Also returns the document
+/// and table whose tab this pass brought into view, for the window to remember.
 pub(super) fn draw_sheet_band(
     app: &TexcelApp,
     ui: &mut egui::Ui,
     navigation_blocked: bool,
-) -> Option<SheetBandAction> {
+) -> (Option<SheetBandAction>, Option<(DocumentId, TableId)>) {
     let document = app.workspace.active_document();
+    // Bring the active tab into view when it changed since the strip last showed it, such
+    // as after choosing a table from the minimap or the table list.
+    let reveal = document
+        .map(|document| (document.id, document.active_table))
+        .filter(|active| app.sheet_tab_shown_table != Some(*active));
+    let mut shown = None;
     let tabs = document.map_or_else(Vec::new, |document| {
         let mut counts = BTreeMap::<String, usize>::new();
         document
@@ -74,6 +81,13 @@ pub(super) fn draw_sheet_band(
                         ui.horizontal(|ui| {
                             for (table_id, name, active) in &tabs {
                                 let response = chrome::sheet_tab_button(ui, *active, name);
+                                if *active && reveal.is_some() {
+                                    // A tab already in sight stays put, such as one just clicked.
+                                    if !ui.clip_rect().contains_rect(response.rect) {
+                                        ui.scroll_to_rect(response.rect, Some(egui::Align::Center));
+                                    }
+                                    shown = reveal;
+                                }
                                 if response.clicked() {
                                     action = Some(SheetBandAction::Select(*table_id));
                                 }
@@ -206,7 +220,7 @@ pub(super) fn draw_sheet_band(
                 }
             });
         });
-    action
+    (action, shown)
 }
 
 /// Names a table by its value nearest to A1, shortened for the table list.
