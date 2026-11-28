@@ -674,7 +674,10 @@ fn save_and_close_preserves_csv_view_and_calculation_settings_for_reopen() {
         let mut view_layout = TableLayout::default();
         view_layout.apply_value(
             LayoutTarget::Column(0),
-            LayoutValue::Column(Some(ColumnLayout { width: Some(31.0) })),
+            LayoutValue::Column(Some(ColumnLayout {
+                width: Some(31.0),
+                ..Default::default()
+            })),
         );
         view.layout = Arc::new(view_layout);
         document
@@ -3512,7 +3515,10 @@ fn csv_layout_actions_change_only_the_view_state() {
         table_id,
         vec![(
             LayoutTarget::Column(3),
-            LayoutValue::Column(Some(ColumnLayout { width: Some(12.0) })),
+            LayoutValue::Column(Some(ColumnLayout {
+                width: Some(12.0),
+                ..Default::default()
+            })),
         )],
     )
     .expect("text formats can change local display geometry");

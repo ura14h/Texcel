@@ -79,6 +79,7 @@ impl XlsxDocument {
                     LayoutTarget::Column(index),
                     LayoutValue::Column(Some(ColumnLayout {
                         width: Some(column.width),
+                        fitted_on_opening: false,
                     })),
                 );
             }

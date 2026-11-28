@@ -74,7 +74,7 @@ pub(super) fn snapshot_table_preferences(document: &Document) -> Vec<TablePrefer
                 }),
                 view_layout: view.map_or_else(
                     || Arc::new(TableLayout::default()),
-                    |view| Arc::clone(&view.layout),
+                    |view| Arc::new(view.layout.without_opening_fits()),
                 ),
             }
         })

@@ -139,7 +139,10 @@ fn structural_save_preferences_follow_the_saved_version_identity() {
         let mut layout = TableLayout::default();
         layout.apply_value(
             LayoutTarget::Column(original_address.column),
-            LayoutValue::Column(Some(ColumnLayout { width: Some(31.0) })),
+            LayoutValue::Column(Some(ColumnLayout {
+                width: Some(31.0),
+                ..Default::default()
+            })),
         );
         view.layout = Arc::new(layout);
     }
@@ -216,7 +219,10 @@ fn structural_save_preferences_follow_the_saved_version_identity() {
         let mut later_layout = (*view.layout).clone();
         later_layout.apply_value(
             LayoutTarget::Column(later_address.column),
-            LayoutValue::Column(Some(ColumnLayout { width: Some(45.0) })),
+            LayoutValue::Column(Some(ColumnLayout {
+                width: Some(45.0),
+                ..Default::default()
+            })),
         );
         view.layout = Arc::new(later_layout);
         document
@@ -326,7 +332,10 @@ fn dirty_value_edits_keep_document_preferences_in_the_settings_snapshot() {
         let mut layout = TableLayout::default();
         layout.apply_value(
             LayoutTarget::Column(0),
-            LayoutValue::Column(Some(ColumnLayout { width: Some(37.0) })),
+            LayoutValue::Column(Some(ColumnLayout {
+                width: Some(37.0),
+                ..Default::default()
+            })),
         );
         view.layout = Arc::new(layout);
     }
@@ -480,7 +489,10 @@ fn late_settings_restore_skips_coordinates_after_a_structure_edit() {
     let mut saved_layout = TableLayout::default();
     saved_layout.apply_value(
         LayoutTarget::Column(0),
-        LayoutValue::Column(Some(ColumnLayout { width: Some(41.0) })),
+        LayoutValue::Column(Some(ColumnLayout {
+            width: Some(41.0),
+            ..Default::default()
+        })),
     );
     stale_table.view_layout = Arc::new(saved_layout);
     app.settings_file.upsert_document(DocumentPreferences {

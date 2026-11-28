@@ -11,7 +11,10 @@ fn layout_with_merges_roundtrips_through_serialization() {
     layout.apply_value(LayoutTarget::Merge(merge), LayoutValue::Merge(true));
     layout.apply_value(
         LayoutTarget::Column(2),
-        LayoutValue::Column(Some(ColumnLayout { width: Some(47.0) })),
+        LayoutValue::Column(Some(ColumnLayout {
+            width: Some(47.0),
+            ..Default::default()
+        })),
     );
 
     let encoded = serde_json::to_value(&layout).expect("layout serializes");
@@ -232,7 +235,10 @@ fn explicit_zero_width_column_has_zero_extent() {
     let mut layout = TableLayout::default();
     layout.apply_value(
         LayoutTarget::Column(0),
-        LayoutValue::Column(Some(ColumnLayout { width: Some(0.0) })),
+        LayoutValue::Column(Some(ColumnLayout {
+            width: Some(0.0),
+            ..Default::default()
+        })),
     );
     assert_eq!(layout.column_width_pixels(0), 0.0);
     assert_eq!(layout.prefix_column_width_pixels(1), 0.0);
@@ -246,7 +252,10 @@ fn sized_columns_follow_the_character_width_and_positions_add_up() {
     for (column, width) in [(1, Some(10.0)), (3, Some(0.0)), (4, Some(2.5))] {
         layout.apply_value(
             LayoutTarget::Column(column),
-            LayoutValue::Column(Some(ColumnLayout { width })),
+            LayoutValue::Column(Some(ColumnLayout {
+                width,
+                ..Default::default()
+            })),
         );
     }
     for character_width in [7.0, 8.4] {

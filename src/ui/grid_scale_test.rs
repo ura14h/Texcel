@@ -6,7 +6,10 @@ fn scaled_layout_multiplies_only_pixel_sizes() {
     let mut layout = TableLayout::default();
     layout.apply_value(
         LayoutTarget::Column(1),
-        LayoutValue::Column(Some(ColumnLayout { width: Some(20.0) })),
+        LayoutValue::Column(Some(ColumnLayout {
+            width: Some(20.0),
+            ..Default::default()
+        })),
     );
     let scaled = ScaledLayout::new(&layout, 2.0, crate::document::REFERENCE_CHARACTER_WIDTH);
     assert_eq!(

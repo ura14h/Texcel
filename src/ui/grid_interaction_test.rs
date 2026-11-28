@@ -522,7 +522,10 @@ fn deferred_autofit_does_not_overwrite_a_manual_layout_change() {
         .unwrap()
         .set_layout_value(
             LayoutTarget::Column(0),
-            LayoutValue::Column(Some(ColumnLayout { width: Some(20.0) })),
+            LayoutValue::Column(Some(ColumnLayout {
+                width: Some(20.0),
+                ..Default::default()
+            })),
         );
     harness
         .state_mut()

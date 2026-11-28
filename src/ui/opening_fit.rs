@@ -160,22 +160,18 @@ impl TexcelApp {
                 continue;
             };
             for (column, width) in columns {
-                let mut layout = view.layout.column(*column).unwrap_or_default();
-                layout.width = Some(*width);
+                let layout = ColumnLayout {
+                    width: Some(*width),
+                    fitted_on_opening: true,
+                };
                 view.set_layout_value(
                     LayoutTarget::Column(*column),
                     LayoutValue::Column(Some(layout)),
                 );
             }
         }
+        // The fitted widths are not the user's choice, so they do not change saved settings.
         self.opening_fits.remove(&document_id);
-        for (table_id, _) in widths {
-            self.mark_document_preference_change(
-                document_id,
-                *table_id,
-                TablePreferenceField::ViewLayout,
-            );
-        }
         true
     }
 

@@ -23,6 +23,18 @@ impl TableLayout {
         self.columns.iter().map(|(index, layout)| (*index, *layout))
     }
 
+    /// Returns the layout to save as the user's choice: without the widths fitted on opening,
+    /// which the next opening measures again with the fonts and content of that time.
+    pub fn without_opening_fits(&self) -> Self {
+        let mut layout = self.clone();
+        for (index, column) in self.columns() {
+            if column.fitted_on_opening {
+                layout.apply_value(LayoutTarget::Column(index), LayoutValue::Column(None));
+            }
+        }
+        layout
+    }
+
     /// Reports whether an imported sheet had row heights or hidden rows.
     pub fn has_imported_row_layout(&self) -> bool {
         self.imported_row_layout

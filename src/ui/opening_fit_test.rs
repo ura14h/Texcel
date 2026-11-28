@@ -120,7 +120,10 @@ fn reopening_keeps_saved_widths_and_fits_the_rest() {
         .unwrap()
         .set_layout_value(
             LayoutTarget::Column(0),
-            LayoutValue::Column(Some(crate::document::ColumnLayout { width: Some(5.0) })),
+            LayoutValue::Column(Some(crate::document::ColumnLayout {
+                width: Some(5.0),
+                ..Default::default()
+            })),
         );
     harness.state_mut().mark_document_preference_change(
         document_id,
@@ -144,6 +147,62 @@ fn reopening_keeps_saved_widths_and_fits_the_rest() {
         fitted.is_some_and(|width| width > 20.0),
         "column B is fitted: {fitted:?}"
     );
+}
+
+#[test]
+// Saves only the widths the user chose. Widths fitted on opening are measured again on the
+// next opening; saving them kept stale widths (from older fonts or measuring) for good.
+fn widths_fitted_on_opening_are_not_saved() {
+    let directory = ScenarioDirectory::new();
+    let path = directory.0.join("saved.md");
+    let long = "a long value that needs a wide column";
+    std::fs::write(
+        &path,
+        format!("| A | B |\n| --- | --- |\n| {long} | {long} |\n"),
+    )
+    .expect("write the input");
+    let mut harness = scenario_harness(directory.0.join("settings.json"));
+    queue_open_and_wait(&mut harness, path.clone());
+    let (document_id, table_id) = {
+        let document = harness.state().workspace.active_document().unwrap();
+        (document.id, document.active_table)
+    };
+    // The user sets column A; column B keeps its fitted width.
+    harness
+        .state_mut()
+        .workspace
+        .documents
+        .get_mut(&document_id)
+        .unwrap()
+        .view_mut(table_id)
+        .unwrap()
+        .set_layout_value(
+            LayoutTarget::Column(0),
+            LayoutValue::Column(Some(crate::document::ColumnLayout {
+                width: Some(5.0),
+                ..Default::default()
+            })),
+        );
+    harness.state_mut().mark_document_preference_change(
+        document_id,
+        table_id,
+        TablePreferenceField::ViewLayout,
+    );
+    super::scenario_tests::wait_until(&mut harness, |app| {
+        app.settings_saved_generation >= app.settings_save_generation
+            && app.settings_pending_save.is_none()
+            && app.settings_in_flight_generation.is_none()
+    });
+    let saved = harness
+        .state()
+        .settings_file
+        .documents
+        .iter()
+        .find(|document| document.key.path.ends_with("saved.md"))
+        .map(|document| Arc::clone(&document.tables[0].view_layout))
+        .expect("the file's settings are saved");
+    assert_eq!(saved.column(0).and_then(|column| column.width), Some(5.0));
+    assert_eq!(saved.column(1), None, "the fitted width is not saved");
 }
 
 #[test]

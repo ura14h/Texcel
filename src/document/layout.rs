@@ -10,6 +10,10 @@ use super::coordinate::MergedRange;
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq, Serialize)]
 pub struct ColumnLayout {
     pub width: Option<f64>,
+    /// Set when the width was fitted to the content while the file opened, not chosen by the
+    /// user. Such a width is measured again on every opening, so it is never saved.
+    #[serde(default)]
+    pub fitted_on_opening: bool,
 }
 
 /// Frozen row and column counts.
