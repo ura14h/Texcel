@@ -85,3 +85,66 @@ fn markdown_file_minimap_switches_tables() {
     }
     assert!(seen, "the minimap shows the unsaved edit");
 }
+
+#[test]
+/// Keeps the minimap beside the sheet, with its text against its left edge, while inserted
+/// columns widen a table.
+fn minimap_stays_left_aligned_as_columns_are_inserted() {
+    let directory = ScenarioDirectory::new();
+    let path = directory.0.join("tables.md");
+    std::fs::copy(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("samples")
+            .join("tables.md"),
+        &path,
+    )
+    .expect("copy the sample");
+    let mut harness = scenario_harness(directory.0.join("settings.json"));
+    queue_open_and_wait(&mut harness, path);
+    harness.state_mut().minimap_open = true;
+    let heading_left = |harness: &mut egui_kittest::Harness<'_, TexcelApp>| {
+        for _ in 0..100 {
+            harness.step();
+            std::thread::sleep(std::time::Duration::from_millis(3));
+        }
+        harness
+            .query_all(By::new().label_contains("この文章はセル編集で変化しない"))
+            .next()
+            .expect("the minimap shows the paragraph")
+            .rect()
+            .left()
+    };
+    let before = heading_left(&mut harness);
+    super::scenario_tests::click_cell(&mut harness, "B2");
+    for _ in 0..12 {
+        harness
+            .state_mut()
+            .request_structure_action(StructureAction::InsertColumns);
+        for _ in 0..20 {
+            harness.step();
+            std::thread::sleep(std::time::Duration::from_millis(2));
+        }
+    }
+    let after = heading_left(&mut harness);
+    let _ = harness.render().map(|image| {
+        image.save(
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("target")
+                .join("kittest-renders")
+                .join("minimap-inserted-columns.png"),
+        )
+    });
+    assert!(
+        (after - before).abs() < 0.5,
+        "the paragraph stays at the left edge: {before} -> {after}"
+    );
+    // The sheet ends where the minimap starts, so the minimap is not drawn under it.
+    let sheet_right = harness
+        .query_all(By::new().role(egui::Role::GridCell))
+        .map(|cell| cell.rect().right())
+        .fold(f32::MIN, f32::max);
+    assert!(
+        sheet_right <= after,
+        "the sheet ({sheet_right}) stays left of the minimap ({after})"
+    );
+}
