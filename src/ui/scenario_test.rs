@@ -370,7 +370,7 @@ pub(super) fn queue_open_and_wait(harness: &mut Harness<'_, TexcelApp>, path: Pa
             && app.pending_csv_opens.is_empty()
             && app.pending_workbook_loads.is_empty()
             // A loaded file's window shows after its first column fit (or its time limit).
-            && app.initial_auto_fits.is_empty()
+            && app.opening_fits.is_empty()
     });
 }
 

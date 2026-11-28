@@ -54,7 +54,7 @@ impl HostRuntime {
             self.document_viewports
                 .get(document_id)
                 .is_some_and(|viewport| *viewport != self.root_viewport)
-                && !self.app.initial_auto_fits.contains_key(document_id)
+                && !self.app.opening_fits.contains_key(document_id)
         };
         self.app
             .pending_document_focus
@@ -88,31 +88,15 @@ impl HostRuntime {
         }
     }
 
-    /// Runs the first column fit of newly loaded documents in their own window state, before
-    /// their windows are created, so a window opens with its columns already fitted.
-    pub(super) fn advance_initial_auto_fits(&mut self, ctx: &egui::Context) {
-        let documents = self
-            .app
-            .initial_auto_fits
-            .keys()
-            .copied()
-            .collect::<Vec<_>>();
-        for document_id in documents {
-            let Some(viewport) = self.document_viewports.get(&document_id).copied() else {
-                continue;
-            };
-            self.app
-                .with_window_state(viewport, Some(document_id), |app| {
-                    app.advance_initial_auto_fit(ctx, document_id);
-                });
-        }
-        if !self.app.initial_auto_fits.is_empty() {
-            ctx.request_repaint_after(Duration::from_millis(30));
-        }
+    /// Moves the opening of loaded documents forward: their column fits do not depend on any
+    /// window, so they run here whether or not the root is shown.
+    pub(super) fn advance_opening(&mut self, ctx: &egui::Context) {
+        self.app.advance_opening_fits(ctx);
         self.app.refresh_opening_progress();
         if self.app.has_opening_documents() {
-            // Check again when the progress window is due and while it shows.
-            ctx.request_repaint_after(Duration::from_millis(100));
+            // Check again while documents open: for a free worker slot, a finished
+            // calculation, and when the progress window is due.
+            ctx.request_repaint_after(Duration::from_millis(50));
         }
     }
 }

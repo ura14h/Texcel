@@ -28,7 +28,7 @@ impl TexcelApp {
                     self.initialize_calculation(token, calculation);
                     document.set_source(Some(Arc::new(SourceDocument::Csv(Arc::clone(&source)))));
                     self.workspace.insert_loaded_document(document);
-                    self.queue_initial_auto_fit(document_id);
+                    self.queue_opening_fit(document_id);
                     self.remember_recent_file(user_path.clone());
                     self.preferred_settings_identity_by_path
                         .insert(normalize_recent_path(&user_path), identity.clone());
@@ -65,7 +65,7 @@ impl TexcelApp {
                     &source,
                 )))));
                 self.workspace.insert_loaded_document(document);
-                self.queue_initial_auto_fit(document_id);
+                self.queue_opening_fit(document_id);
                 self.import_origins.insert(document_id, path.clone());
                 self.remember_recent_file(user_path.clone());
                 self.preferred_settings_identity_by_path
@@ -115,7 +115,7 @@ impl TexcelApp {
                     &source,
                 )))));
                 self.workspace.insert_loaded_document(document);
-                self.queue_initial_auto_fit(document_id);
+                self.queue_opening_fit(document_id);
                 self.remember_recent_file(user_path.clone());
                 self.preferred_settings_identity_by_path
                     .insert(normalize_recent_path(&user_path), identity.clone());

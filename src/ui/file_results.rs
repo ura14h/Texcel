@@ -350,7 +350,9 @@ impl TexcelApp {
                 self.handle_analysis_result(document_id, token, kind)
             }
             FileResultKind::AutoFitPrepared { widths } => {
-                self.handle_auto_fit_result(document_id, token, widths);
+                if !self.handle_opening_fit_result(document_id, token, &widths) {
+                    self.handle_auto_fit_result(document_id, token, widths);
+                }
                 true
             }
             kind @ (FileResultKind::ExportPrepared(_) | FileResultKind::Exported { .. }) => {

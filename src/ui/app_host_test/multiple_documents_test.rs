@@ -367,7 +367,7 @@ fn open_in_host(harness: &mut Harness<'_, TexcelAppHost>, path: &Path) -> Docume
                 .file_backings
                 .iter()
                 .find_map(|(id, backing)| (backing.path == path).then_some(*id))
-                .filter(|id| !host.app.initial_auto_fits.contains_key(id))
+                .filter(|id| !host.app.opening_fits.contains_key(id))
         });
         if let Some(id) = loaded {
             harness.step();
@@ -583,7 +583,7 @@ fn new_window_waits_for_its_first_column_fit() {
                 .file_backings
                 .iter()
                 .find_map(|(id, backing)| (backing.path == readme).then_some(*id));
-            let waiting = document.is_some_and(|id| host.app.initial_auto_fits.contains_key(&id));
+            let waiting = document.is_some_and(|id| host.app.opening_fits.contains_key(&id));
             let listed = document.is_some_and(|id| {
                 host.child_viewports()
                     .iter()
@@ -646,7 +646,7 @@ fn opening_a_slow_file_shows_its_progress_until_the_window_opens() {
                 .file_backings
                 .values()
                 .any(|backing| backing.path == path)
-                && host.app.initial_auto_fits.is_empty()
+                && host.app.opening_fits.is_empty()
                 && host.root_document.is_some();
             (host.app.opening_entries(), ready)
         });
@@ -672,4 +672,47 @@ fn opening_a_slow_file_shows_its_progress_until_the_window_opens() {
             .is_empty()),
         "the progress ends once the window is ready"
     );
+}
+
+#[test]
+/// Fits every used column of every table when README.md or the user manual opens in the
+/// window host. Fits sent while the first calculation ran were dropped when a table's layout
+/// changed meanwhile, and a window that had not drawn yet discarded every result, so most
+/// tables kept their default widths.
+fn opening_in_the_window_host_fits_every_table() {
+    for name in ["samples/README.md", "docs/user-manual.ja.md"] {
+        let directory = crate::ui::tests::TestDirectory::new();
+        let path = directory.0.join("document.md");
+        fs::copy(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(name), &path)
+            .expect("copy the document");
+        let path = fs::canonicalize(path).expect("canonicalize the copy");
+        let settings_path = directory.0.join("settings.json");
+        let mut harness = Harness::builder()
+            .with_size([1000.0, 700.0])
+            .allow_missing_glyphs()
+            .build_eframe(move |creation| {
+                creation.egui_ctx.set_embed_viewports(false);
+                let app = TexcelApp::new_with_settings_path(creation, Some(settings_path));
+                TexcelAppHost::new(app, creation.egui_ctx.viewport_id())
+            });
+        harness.step();
+        let document_id = open_in_host(&mut harness, &path);
+        with_host(harness.state().id, |host| {
+            let document = &host.app.workspace.documents[&document_id];
+            for table in &document.tables {
+                let layout = &document
+                    .view(table.id)
+                    .expect("the table has a view")
+                    .layout;
+                let unfitted = (0..=table.extent_end().column)
+                    .filter(|column| layout.column(*column).and_then(|c| c.width).is_none())
+                    .collect::<Vec<_>>();
+                assert!(
+                    unfitted.is_empty(),
+                    "{name} {}: unfitted {unfitted:?}",
+                    table.name
+                );
+            }
+        });
+    }
 }

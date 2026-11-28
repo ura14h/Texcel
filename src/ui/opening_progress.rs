@@ -44,7 +44,7 @@ impl TexcelApp {
         self.pending_file_load_paths
             .keys()
             .filter(|document_id| !waiting_for_user(document_id))
-            .chain(self.initial_auto_fits.keys())
+            .chain(self.opening_fits.keys())
             .copied()
             .collect()
     }
@@ -63,9 +63,9 @@ impl TexcelApp {
         !self.opening_since.is_empty()
     }
 
-    /// Describes one opening file: its name, its current step, and how far it has got.
-    /// Reading and parsing count for the first 40%, the first calculation for 50%, and
-    /// fitting the tables for the rest.
+    /// Describes one opening file: its name, its current step, and how far it has got. The
+    /// worker reports steps, not shares, so each step stands for a fixed share: reading 5%,
+    /// parsing 20%, the first calculation 50%, and measuring the columns 75%.
     fn opening_entry(&self, document_id: DocumentId) -> Option<OpeningEntry> {
         if let Some(path) = self.pending_file_load_paths.get(&document_id) {
             let name = path.file_name()?.to_string_lossy().into_owned();
@@ -86,21 +86,18 @@ impl TexcelApp {
             });
         }
         let name = self.workspace.documents.get(&document_id)?.name.clone();
-        let fitting = self.initial_auto_fits.get(&document_id)?;
-        if self.pending_initial_calculations.contains_key(&document_id) {
-            return Some(OpeningEntry {
-                name,
-                stage: Message::new("opening-stage-calculating"),
-                fraction: 0.5,
-            });
-        }
-        let (done, total) = fitting.progress();
+        let (stage, fraction) = match self.opening_fit_step(document_id)? {
+            super::opening_fit::OpeningFitStep::Calculating => {
+                (Message::new("opening-stage-calculating"), 0.5)
+            }
+            super::opening_fit::OpeningFitStep::Measuring => {
+                (Message::new("opening-stage-fitting"), 0.75)
+            }
+        };
         Some(OpeningEntry {
             name,
-            stage: Message::new("opening-stage-fitting")
-                .with_number("done", done as i64)
-                .with_number("total", total as i64),
-            fraction: 0.6 + 0.4 * fitting.fraction_done(),
+            stage,
+            fraction,
         })
     }
 

@@ -123,7 +123,7 @@ fn reaching_markdown_byte_limit_warns_and_blocks_only_the_overflowing_edit() {
         || !harness.state().queued_open_paths.is_empty()
         || !harness.state().pending_markdown_loads.is_empty()
         // The window shows once its columns are fitted on opening.
-        || !harness.state().initial_auto_fits.is_empty()
+        || !harness.state().opening_fits.is_empty()
     {
         scenario::send_batch(&mut harness, []);
         assert!(

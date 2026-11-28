@@ -80,9 +80,12 @@ fn structure_table_metadata(document: &Document) -> Vec<StructureTableMeta> {
 /// Captures only the edited cells and layout inputs needed to auto-fit one column.
 pub(super) fn auto_fit_structure_request(
     document: &Document,
-    view_table_id: TableId,
-    columns: &[usize],
+    targets: &[crate::file_worker::AutoFitTarget],
 ) -> StructureRequest {
+    // The structure request names one table for its view; the targets name the rest.
+    let view_table_id = targets
+        .first()
+        .map_or(document.active_table, |target| target.table_id);
     let view = document
         .view(view_table_id)
         .expect("auto-fit target table has view state");
@@ -93,9 +96,13 @@ pub(super) fn auto_fit_structure_request(
         source: document.source.as_ref().map(Arc::clone),
         operation: None,
         tables: structure_table_metadata(document),
-        changes: columns
+        changes: targets
             .iter()
-            .flat_map(|column| document.changed_cell_snapshot_for_column(view_table_id, *column))
+            .flat_map(|target| {
+                target.columns.iter().flat_map(|column| {
+                    document.changed_cell_snapshot_for_column(target.table_id, *column)
+                })
+            })
             .collect(),
         text_overlay_cells: document.text_overlay_cells(),
         text_overlay_revision: document.text_overlay_snapshot().revision,

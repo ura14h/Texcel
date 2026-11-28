@@ -105,7 +105,7 @@ impl eframe::App for TexcelAppHost {
                 || last_document_window_closed;
             host.process_file_results(ctx);
             host.settle_root_window(ctx);
-            host.advance_initial_auto_fits(ctx);
+            host.advance_opening(ctx);
             let document = host.root_document;
             let no_document_windows = host.app.workspace.documents.is_empty();
             #[cfg(any(target_os = "macos", target_os = "windows"))]
@@ -264,7 +264,7 @@ impl HostRuntime {
             return;
         };
         // A window waiting for its first column fit does not exist yet.
-        if self.app.initial_auto_fits.contains_key(&document_id) {
+        if self.app.opening_fits.contains_key(&document_id) {
             return;
         }
         if let Some(viewport) = self.document_viewports.get(&document_id).copied() {
@@ -290,7 +290,7 @@ impl HostRuntime {
             || self.app.active_queued_open.is_some()
             || !self.app.queued_open_paths.is_empty()
             // An opened document is having its columns fitted and comes to the root next.
-            || !self.app.initial_auto_fits.is_empty()
+            || !self.app.opening_fits.is_empty()
         {
             return;
         }
@@ -323,8 +323,7 @@ impl HostRuntime {
             .iter()
             // A new window opens once its first column fit is done.
             .filter(|(document_id, viewport)| {
-                **viewport != self.root_viewport
-                    && !self.app.initial_auto_fits.contains_key(document_id)
+                **viewport != self.root_viewport && !self.app.opening_fits.contains_key(document_id)
             })
             .map(|(document_id, viewport)| ChildWindow {
                 document_id: *document_id,

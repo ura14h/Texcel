@@ -174,12 +174,10 @@ pub struct TextOverlaySaveRequest {
 #[derive(Clone, Debug)]
 pub struct AutoFitRequest {
     pub structure: crate::structure::StructureRequest,
-    /// Columns measured in one pass over the rebuilt table.
-    pub columns: Vec<usize>,
-    pub layout: crate::document::TableLayout,
+    /// Tables measured in one pass over the rebuilt document, each with its own columns.
+    pub targets: Vec<AutoFitTarget>,
     pub display_mode: crate::document::CellDisplayMode,
     pub language: crate::i18n::Language,
-    pub wrap_text: bool,
     pub show_invisibles: bool,
     pub calculation: Option<FormulaResultSnapshot>,
     pub font_definitions: eframe::egui::FontDefinitions,
@@ -192,6 +190,18 @@ pub struct AutoFitRequest {
     pub character_width: f64,
     /// Measures only rows before this one, so the fit on opening a large file stays quick.
     pub row_limit: Option<usize>,
+}
+
+/// Measured widths per table: each column with its width in half-width character units.
+pub type TableColumnWidths = Vec<(crate::document::TableId, Vec<(usize, f64)>)>;
+
+/// One table of an AutoFit request: the columns to measure and how the table is shown.
+#[derive(Clone, Debug)]
+pub struct AutoFitTarget {
+    pub table_id: crate::document::TableId,
+    pub columns: Vec<usize>,
+    pub layout: crate::document::TableLayout,
+    pub wrap_text: bool,
 }
 
 // The kind of async operation, so the UI can show clear progress and errors.
@@ -257,9 +267,10 @@ pub enum FileResultKind {
     SearchPrepared(crate::structure::PreparedSearch),
     DataEditPrepared(crate::structure::PreparedDataEdit),
     StructurePrepared(crate::document::PreparedStructure),
-    /// Measured widths, one per requested column, in Excel-style character units.
+    /// Measured widths per requested table, one per requested column, in half-width
+    /// character units.
     AutoFitPrepared {
-        widths: Vec<(usize, f64)>,
+        widths: TableColumnWidths,
     },
     MarkdownCellDisplayPrepared {
         table_id: u64,

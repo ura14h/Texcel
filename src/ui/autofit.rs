@@ -4,7 +4,6 @@ pub(super) struct DeferredAutoFit {
     table_id: TableId,
     columns: Vec<usize>,
     layout_revision: u64,
-    row_limit: Option<usize>,
 }
 
 pub(super) struct PendingAutoFit {
@@ -89,7 +88,7 @@ impl TexcelApp {
         self.request_columns_auto_fit(ctx, document_id, table_id, (0..=last_column).collect());
     }
 
-    /// Submits the given columns for one background width measurement over every row.
+    /// Submits the given columns of one table for a background width measurement.
     pub(super) fn request_columns_auto_fit(
         &mut self,
         ctx: &egui::Context,
@@ -97,108 +96,68 @@ impl TexcelApp {
         table_id: TableId,
         columns: Vec<usize>,
     ) {
-        self.request_columns_auto_fit_within(ctx, document_id, table_id, columns, None);
-    }
-
-    /// Submits the given columns for one background width measurement, optionally over the
-    /// first `row_limit` rows only.
-    pub(super) fn request_columns_auto_fit_within(
-        &mut self,
-        ctx: &egui::Context,
-        document_id: DocumentId,
-        table_id: TableId,
-        columns: Vec<usize>,
-        row_limit: Option<usize>,
-    ) {
         let Some(document) = self.workspace.documents.get(&document_id) else {
             return;
         };
         let Some(view) = document.view(table_id) else {
             return;
         };
-        // Any table of the active document can be fitted; the opening fit covers every table.
         if self.workspace.active_document != Some(document_id) || self.edit.is_editing() {
             return;
         }
         let layout_revision = view.layout.revision();
+        let deferred = DeferredAutoFit {
+            table_id,
+            columns: columns.clone(),
+            layout_revision,
+        };
+        // The fit measures formula results, so it starts once the calculation is done.
         if self.pending_calculations.contains_key(&document_id)
             || self.pending_initial_calculations.contains_key(&document_id)
             || self.calculation_retries.contains(&document_id)
         {
-            self.deferred_auto_fits.insert(
-                document_id,
-                DeferredAutoFit {
-                    table_id,
-                    columns,
-                    layout_revision,
-                    row_limit,
-                },
-            );
+            self.deferred_auto_fits.insert(document_id, deferred);
             return;
         }
-        let (revision, calculation_revision, layout_revision, wrap_text, display_mode, layout) = {
-            let Some(document) = self.workspace.documents.get(&document_id) else {
-                return;
-            };
-            let (Some(_), Some(view)) = (
-                document.tables.iter().find(|table| table.id == table_id),
-                document.view(table_id),
-            ) else {
-                return;
-            };
-            (
-                document.revision,
-                document.calculation_revision,
-                view.layout.revision(),
-                view.wrap_text,
-                document_cell_display_mode(document.display_mode),
-                view.layout.as_ref().clone(),
-            )
-        };
         if self.pending_auto_fits.contains_key(&document_id) {
             return;
         }
-        let calculation = self
-            .calculation_snapshots
-            .get(&document_id)
-            .filter(|(version, _)| *version == calculation_revision)
-            .map(|(_, snapshot)| Arc::clone(snapshot));
-        let calculation_snapshot = calculation.clone();
-        let (font_definitions, text_options) =
-            ctx.fonts(|fonts| (fonts.definitions().clone(), *fonts.options()));
-        let pixels_per_point = ctx.pixels_per_point();
-        let token = self.next_job_token(document_id, revision);
-        let request = crate::file_worker::AutoFitRequest {
-            structure: auto_fit_structure_request(
-                self.workspace
-                    .documents
-                    .get(&document_id)
-                    .expect("auto-fit document remains open"),
-                table_id,
-                &columns,
-            ),
+        let (revision, calculation_revision, wrap_text, display_mode) = (
+            document.revision,
+            document.calculation_revision,
+            view.wrap_text,
+            document_cell_display_mode(document.display_mode),
+        );
+        let target = crate::file_worker::AutoFitTarget {
+            table_id,
             columns: columns.clone(),
-            layout,
-            display_mode,
-            language: self.language,
+            layout: view.layout.as_ref().clone(),
             wrap_text,
-            show_invisibles: self.show_invisibles,
-            calculation,
-            font_definitions,
-            text_options,
-            pixels_per_point,
-            font_layout_generation: self.font_layout_generation,
-            minimum_column_width_pixels: 32.0,
-            maximum_column_width_pixels: (crate::document::MAX_COLUMN_WIDTH_UNITS
-                * self.grid_character_width
-                + crate::document::COLUMN_TEXT_PADDING_PIXELS)
-                as f32,
-            character_width: self.grid_character_width,
-            row_limit,
         };
-        if self.file_worker.auto_fit(token, request).is_err() {
-            self.status = Some(Message::new("status-layout-change-failed"));
+        let Some(request) = self.auto_fit_request(
+            ctx,
+            document_id,
+            vec![target],
+            None,
+            self.grid_character_width,
+        ) else {
             return;
+        };
+        let calculation_snapshot = request.calculation.clone();
+        let pixels_per_point = request.pixels_per_point;
+        let token = self.next_job_token(document_id, revision);
+        match self.file_worker.auto_fit(token, request) {
+            Ok(()) => (),
+            // A busy worker (for example right after a file loads) takes the fit later.
+            Err(SubmitError::QueueFull) => {
+                self.deferred_auto_fits.insert(document_id, deferred);
+                ctx.request_repaint_after(Duration::from_millis(50));
+                return;
+            }
+            Err(SubmitError::Stopped) => {
+                self.status = Some(Message::new("status-layout-change-failed"));
+                return;
+            }
         }
         self.pending_auto_fits.insert(
             document_id,
@@ -218,6 +177,44 @@ impl TexcelApp {
             },
         );
         ctx.request_repaint();
+    }
+
+    /// Builds one measurement request for the given tables of a document, with its current
+    /// content, formula results, and the fonts at the current screen scale.
+    pub(super) fn auto_fit_request(
+        &self,
+        ctx: &egui::Context,
+        document_id: DocumentId,
+        targets: Vec<crate::file_worker::AutoFitTarget>,
+        row_limit: Option<usize>,
+        character_width: f64,
+    ) -> Option<crate::file_worker::AutoFitRequest> {
+        let document = self.workspace.documents.get(&document_id)?;
+        let calculation = self
+            .calculation_snapshots
+            .get(&document_id)
+            .filter(|(version, _)| *version == document.calculation_revision)
+            .map(|(_, snapshot)| Arc::clone(snapshot));
+        let (font_definitions, text_options) =
+            ctx.fonts(|fonts| (fonts.definitions().clone(), *fonts.options()));
+        Some(crate::file_worker::AutoFitRequest {
+            structure: auto_fit_structure_request(document, &targets),
+            targets,
+            display_mode: document_cell_display_mode(document.display_mode),
+            language: self.language,
+            show_invisibles: self.show_invisibles,
+            calculation,
+            font_definitions,
+            text_options,
+            pixels_per_point: ctx.pixels_per_point(),
+            font_layout_generation: self.font_layout_generation,
+            minimum_column_width_pixels: 32.0,
+            maximum_column_width_pixels: (crate::document::MAX_COLUMN_WIDTH_UNITS * character_width
+                + crate::document::COLUMN_TEXT_PADDING_PIXELS)
+                as f32,
+            character_width,
+            row_limit,
+        })
     }
 
     /// Starts deferred measurements after the visible calculation root is published.
@@ -240,29 +237,18 @@ impl TexcelApp {
             let calculation_is_pending = self.pending_calculations.contains_key(document_id)
                 || self.pending_initial_calculations.contains_key(document_id)
                 || self.calculation_retries.contains(document_id);
-            let has_current_root = self
-                .calculation_snapshots
-                .get(document_id)
-                .is_some_and(|(revision, _)| *revision == document.calculation_revision);
+            // Once the calculation is done the fit starts, with its results when there are
+            // any; a document without formulas has none, and its fit must not be dropped.
             if !calculation_is_pending {
-                if has_current_root {
-                    ready.push((
-                        *document_id,
-                        deferred.table_id,
-                        deferred.columns.clone(),
-                        deferred.row_limit,
-                    ));
-                } else {
-                    discard.push(*document_id);
-                }
+                ready.push((*document_id, deferred.table_id, deferred.columns.clone()));
             }
         }
         for document_id in discard {
             self.deferred_auto_fits.remove(&document_id);
         }
-        for (document_id, table_id, columns, row_limit) in ready {
+        for (document_id, table_id, columns) in ready {
             self.deferred_auto_fits.remove(&document_id);
-            self.request_columns_auto_fit_within(ctx, document_id, table_id, columns, row_limit);
+            self.request_columns_auto_fit(ctx, document_id, table_id, columns);
         }
     }
 
@@ -293,11 +279,17 @@ impl TexcelApp {
         &mut self,
         document_id: DocumentId,
         token: JobToken,
-        widths: Vec<(usize, f64)>,
+        widths: crate::file_worker::TableColumnWidths,
     ) {
         let Some(pending) = self.pending_auto_fits.get(&document_id) else {
             return;
         };
+        // A user's fit measures one table.
+        let widths = widths
+            .into_iter()
+            .find(|(table_id, _)| *table_id == pending.table_id)
+            .map(|(_, widths)| widths)
+            .unwrap_or_default();
         if pending.token != token {
             return;
         }

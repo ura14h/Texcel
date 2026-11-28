@@ -135,11 +135,13 @@ impl TexcelApp {
         self.process_recovery(&ctx);
         self.advance_app_close(&ctx);
         self.process_calculation_results(&ctx);
-        // The window host runs the first column fit itself; a single window does it here.
-        if !self.multi_window_mode
-            && let Some(document_id) = self.workspace.active_document
-        {
-            self.advance_initial_auto_fit(&ctx, document_id);
+        // The window host moves openings forward itself; a single window does it here.
+        if !self.multi_window_mode {
+            self.advance_opening_fits(&ctx);
+            self.refresh_opening_progress();
+            if self.has_opening_documents() {
+                ctx.request_repaint_after(Duration::from_millis(50));
+            }
         }
         self.draw_close_document_dialog(&ctx);
         self.draw_save_conflict_dialog(&ctx);

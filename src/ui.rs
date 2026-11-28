@@ -305,7 +305,7 @@ pub struct TexcelApp {
     /// When each still-opening document began, for the opening progress window.
     opening_since: BTreeMap<DocumentId, Instant>,
     /// Loaded documents whose tables still need their first column fit.
-    initial_auto_fits: BTreeMap<DocumentId, initial_autofit::InitialAutoFit>,
+    opening_fits: BTreeMap<DocumentId, opening_fit::OpeningFit>,
     deferred_auto_fits: BTreeMap<DocumentId, autofit::DeferredAutoFit>,
     calculation_worker: CalculationWorker,
     pending_calculations: BTreeMap<DocumentId, JobToken>,
@@ -373,7 +373,6 @@ mod grid_segment;
 mod grid_selection;
 mod help_window;
 mod ime;
-mod initial_autofit;
 mod keyboard;
 mod keyboard_navigation;
 mod layout_dialog;
@@ -386,6 +385,7 @@ mod markdown_text_layout;
 mod markdown_view;
 mod minimap;
 mod open_queue;
+mod opening_fit;
 pub(super) mod opening_progress;
 mod ordered_edit_input;
 mod paste_special_dialog;
@@ -528,11 +528,11 @@ mod header_selection_tests;
 #[path = "ui/freeze_view_test.rs"]
 mod freeze_view_tests;
 #[cfg(test)]
-#[path = "ui/initial_autofit_test.rs"]
-mod initial_autofit_tests;
-#[cfg(test)]
 #[path = "ui/minimap_test.rs"]
 mod minimap_tests;
+#[cfg(test)]
+#[path = "ui/opening_fit_test.rs"]
+mod opening_fit_tests;
 #[cfg(test)]
 #[path = "ui/wrap_height_test.rs"]
 mod wrap_height_tests;

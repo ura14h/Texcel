@@ -1140,7 +1140,7 @@ fn wait_for_csv_load(harness: &mut Harness<'_, TexcelApp>, document_id: Document
         // The loaded document shows once its first column fit is done.
         let app = harness.state();
         if !app.pending_csv_opens.contains_key(&document_id)
-            && !app.initial_auto_fits.contains_key(&document_id)
+            && !app.opening_fits.contains_key(&document_id)
         {
             return;
         }
