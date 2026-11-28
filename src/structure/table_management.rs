@@ -202,7 +202,31 @@ pub(crate) fn prepare_table_structure(
         request.cross_sheet_references,
     ));
 
+    // A duplicate is a copy of its table, so it starts with that table's column widths and
+    // frozen panes, from the top-left cell.
+    let layout_of = |table_id| {
+        if table_id == request.view_table_id {
+            return Some(Arc::clone(&request.view_layout));
+        }
+        request
+            .tables
+            .iter()
+            .find(|table| table.id == table_id)
+            .map(|table| Arc::clone(&table.view_layout))
+    };
+    let duplicate_layout =
+        duplicated_from.and_then(|(new_id, original_id)| Some((new_id, layout_of(original_id)?)));
     let table_view = |table_id| {
+        if let Some((_, layout)) = duplicate_layout
+            .as_ref()
+            .filter(|(new_id, _)| *new_id == table_id)
+        {
+            return (
+                Arc::clone(layout),
+                CellRange::default(),
+                ScrollPosition::default(),
+            );
+        }
         if table_id == request.view_table_id {
             return (
                 Arc::clone(&request.view_layout),

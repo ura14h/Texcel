@@ -36,6 +36,7 @@ impl Document {
         if invalid_table_set || invalid_incremental_set {
             return Err(DocumentError::MissingTable(prepared.view_table_id));
         }
+        let new_views = self.new_table_view(&prepared);
         if let Some(history_file) = prepared.history_file.take() {
             let target = prepared.target;
             let swap_source = prepared.source_before.is_some() || prepared.source_after.is_some();
@@ -54,7 +55,7 @@ impl Document {
                 );
             }
             let retired_tables = std::mem::replace(&mut self.tables, prepared.tables);
-            let mut view_archive = BTreeMap::new();
+            let mut view_archive = new_views;
             if prepared.replace_table_set {
                 reconcile_table_views(&mut self.views, &self.tables, &mut view_archive);
             }
@@ -128,7 +129,7 @@ impl Document {
             target: prepared.target,
             target_before: prepared.target_before,
             replace_table_set: prepared.replace_table_set,
-            view_archive: prepared.replace_table_set.then(BTreeMap::new),
+            view_archive: prepared.replace_table_set.then_some(new_views),
             string_cells_archive: prepared.replace_table_set.then(BTreeMap::new),
             before_calculation: Some(before_calculation),
             after_calculation: Some(prepared.after_calculation),
@@ -319,5 +320,24 @@ impl Document {
         self.advance_calculation_revision();
         self.pending_calculation_reset = Some(prepared.calculation);
         Ok((prepared.target, retired_tables))
+    }
+}
+
+impl Document {
+    /// Gives a table that the structure change creates its prepared view (a duplicate's copied
+    /// widths, say). Views of tables that come into being are taken from the archive, so the
+    /// view is put there; an existing table keeps its own.
+    fn new_table_view(&self, prepared: &PreparedStructure) -> BTreeMap<TableId, TableViewState> {
+        let mut archive = BTreeMap::new();
+        if prepared.replace_table_set && !self.views.contains_key(&prepared.view_table_id) {
+            let mut view = TableViewState {
+                layout: Arc::clone(&prepared.view_layout_after),
+                scroll: prepared.scroll_after,
+                ..TableViewState::default()
+            };
+            view.set_selection(prepared.selection_after);
+            archive.insert(prepared.view_table_id, view);
+        }
+        archive
     }
 }

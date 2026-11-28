@@ -187,3 +187,54 @@ fn opening_fit_measures_the_header_row_in_bold() {
         "the column ({width}) holds the bold heading ({bold}) and its padding"
     );
 }
+
+#[test]
+// A duplicated table is a copy of its table, so it keeps that table's fitted widths.
+fn duplicated_table_keeps_the_widths_of_its_table() {
+    let long = "a long value that needs a wide column";
+    let (mut harness, widths) =
+        widths_after_open(&format!("| A | B |\n| --- | --- |\n| x | {long} |\n"), 2);
+    let (document_id, original) = {
+        let document = harness.state().workspace.active_document().unwrap();
+        (document.id, document.active_table)
+    };
+    harness.state_mut().request_table_management(
+        StructureAction::DuplicateTable,
+        Some(original),
+        None,
+    );
+    super::scenario_tests::wait_until(&mut harness, |app| {
+        app.pending_structures.is_empty() && app.workspace.documents[&document_id].tables.len() == 2
+    });
+    let document = &harness.state().workspace.documents[&document_id];
+    let copy = document.tables[1].id;
+    let layout = &document.view(copy).unwrap().layout;
+    let copied = (0..2)
+        .map(|column| layout.column_width_pixels(column))
+        .collect::<Vec<_>>();
+    assert_eq!(copied, widths, "the copy has its table's widths");
+
+    // Undo removes the copy and Redo brings it back with the same widths.
+    let widths_of_copy = |harness: &egui_kittest::Harness<'_, TexcelApp>| {
+        let document = &harness.state().workspace.documents[&document_id];
+        let layout = &document.view(copy)?.layout;
+        Some(
+            (0..2)
+                .map(|column| layout.column_width_pixels(column))
+                .collect::<Vec<_>>(),
+        )
+    };
+    harness.state_mut().apply_undo(false);
+    super::scenario_tests::wait_until(&mut harness, |app| {
+        app.workspace.documents[&document_id].tables.len() == 1
+    });
+    harness.state_mut().apply_undo(true);
+    super::scenario_tests::wait_until(&mut harness, |app| {
+        app.workspace.documents[&document_id].tables.len() == 2
+    });
+    assert_eq!(
+        widths_of_copy(&harness),
+        Some(widths),
+        "Redo keeps the widths"
+    );
+}
