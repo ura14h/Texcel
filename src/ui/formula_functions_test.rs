@@ -27,13 +27,20 @@ fn active_cell(app: &TexcelApp) -> (DocumentId, CellAddress) {
 }
 
 #[test]
-/// Lists the engine's functions in order and filters them without regard to case.
-fn function_names_are_sorted_and_filterable() {
+/// Lists only the functions formulas calculate, in order, and filters them without regard
+/// to case.
+fn function_names_are_the_calculated_ones_sorted_and_filterable() {
     let names = builtin_function_names();
-    assert!(names.iter().any(|name| name == "SUM"));
+    assert_eq!(names.len(), crate::calc::SUPPORTED_FUNCTIONS.len());
+    assert!(
+        names
+            .iter()
+            .all(|name| crate::calc::SUPPORTED_FUNCTIONS.contains(&name.as_str()))
+    );
     assert!(names.windows(2).all(|pair| pair[0] < pair[1]));
-    let matches = filter_function_names(names, " vlook ");
-    assert_eq!(matches, vec!["VLOOKUP"]);
+    assert!(!names.iter().any(|name| name == "VLOOKUP"));
+    let matches = filter_function_names(names, " round ");
+    assert_eq!(matches, vec!["ROUND", "ROUNDDOWN", "ROUNDUP"]);
 }
 
 #[test]

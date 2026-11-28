@@ -96,7 +96,7 @@ Ctrl+Z undoes and Ctrl+Shift+Z redoes (Ctrl+Y also redoes on Windows). Each docu
 
 ## Appendix: Functions
 
-Formulas calculate with the functions below. The **fx** list shows more function names, but only these are calculated; a formula that uses another function keeps its text as entered. Arguments in `[ ]` can be left out.
+Formulas calculate with the functions below, which are also the ones the **fx** list shows. A formula that uses another function keeps its text as entered. Arguments in `[ ]` can be left out.
 
 | Group | Syntax | Description |
 | --- | --- | --- |

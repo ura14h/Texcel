@@ -20,16 +20,16 @@ enum FormulaBarIcon {
     Function,
 }
 
-/// Returns the engine's built-in function names once, sorted for the picker.
+/// Returns the functions formulas calculate, sorted for the picker. The engine knows many
+/// more names, but formulas that use them are kept as text and never calculated.
 pub(super) fn builtin_function_names() -> &'static [String] {
     static NAMES: OnceLock<Vec<String>> = OnceLock::new();
     NAMES.get_or_init(|| {
-        let Ok(language) = ironcalc_base::language::get_language("en") else {
-            return Vec::new();
-        };
-        let mut names = ironcalc_base::function_names(language);
+        let mut names = crate::calc::SUPPORTED_FUNCTIONS
+            .iter()
+            .map(|name| (*name).to_owned())
+            .collect::<Vec<_>>();
         names.sort();
-        names.dedup();
         names
     })
 }
