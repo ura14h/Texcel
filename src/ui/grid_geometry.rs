@@ -46,12 +46,18 @@ pub(super) fn visible_columns_in_pixels(
         return visible;
     }
     while position < end && columns > 0 {
-        let column = column_at_position(layout, columns, position);
+        let mut column = column_at_position(layout, columns, position);
         if visible.last() == Some(&column) {
             position += 0.25;
             continue;
         }
-        let next = layout.prefix_column_width_pixels(column + 1) as f32;
+        let mut next = layout.prefix_column_width_pixels(column + 1) as f32;
+        // A start rounded to f32, such as the frozen width, can land on the end of the
+        // previous column; the visible columns begin at the next one.
+        while next <= position && column + 1 < columns {
+            column += 1;
+            next = layout.prefix_column_width_pixels(column + 1) as f32;
+        }
         if next <= position {
             break;
         }

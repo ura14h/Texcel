@@ -516,6 +516,9 @@ mod formula_structure_tests;
 mod header_selection_tests;
 
 #[cfg(test)]
+#[path = "ui/freeze_view_test.rs"]
+mod freeze_view_tests;
+#[cfg(test)]
 #[path = "ui/minimap_test.rs"]
 mod minimap_tests;
 #[cfg(test)]
