@@ -519,3 +519,6 @@ mod header_selection_tests;
 #[cfg(test)]
 #[path = "ui/minimap_test.rs"]
 mod minimap_tests;
+#[cfg(test)]
+#[path = "ui/wrap_height_test.rs"]
+mod wrap_height_tests;

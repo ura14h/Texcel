@@ -110,7 +110,7 @@ pub(super) fn adjust_visible_row_heights(
     measure_rows.dedup();
     let mut adjusted_scroll = scroll;
     for row in measure_rows {
-        let (fingerprint, wrapped_cells) = wrapped_row_cells_for_ranges(
+        let (fingerprint, _) = wrapped_row_cells_for_ranges(
             document,
             table,
             layout,
@@ -118,6 +118,8 @@ pub(super) fn adjust_visible_row_heights(
             &measure_column_ranges,
             display.wrap_text,
         );
+        // The height comes from the text as this mode shows it: in live editing a link
+        // shows only its label, so its address must not add lines.
         let (display_fingerprint, display_height) = measure_display_row_height(
             ui.ctx(),
             grid,
@@ -132,17 +134,7 @@ pub(super) fn adjust_visible_row_heights(
         let fingerprint = combined_fingerprint.finish();
         let height = row_layout
             .measured_height(row, document.revision, fingerprint)
-            .unwrap_or_else(|| {
-                measure_wrapped_cells(
-                    ui.ctx(),
-                    &wrapped_cells,
-                    display.wrap_text,
-                    display.show_invisibles,
-                    display.mode == CellDisplayMode::Source,
-                    display.scale,
-                )
-                .max(display_height)
-            });
+            .unwrap_or(display_height);
         let delta = row_layout.update_row(row, document.revision, fingerprint, height);
         if row >= frozen_row_count && row < first_visible_row {
             adjusted_scroll.y += delta;

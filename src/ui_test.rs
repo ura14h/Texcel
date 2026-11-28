@@ -3451,8 +3451,9 @@ fn wrapped_rows_keep_the_view_anchor_and_selected_row_position() {
     let mut layout = GridRowLayout::default();
     layout.ensure_row_count(table.row_count());
     let (fingerprint, wrapped_cells) = wrapped_row_cells(&document, table, &table.layout, 2, 0..1);
-    let measured_height = measure_wrapped_cells(&ctx, &wrapped_cells, true, false, false, 1.0);
-    assert!(measured_height > ROW_HEIGHT);
+    assert_eq!(wrapped_cells.len(), 1);
+    // A wrapped row three lines tall moves the rows below it.
+    let measured_height = ROW_HEIGHT * 3.0;
 
     let selected_row = 4;
     let old_scroll = HEADER_HEIGHT + layout.prefix_height(3) + 8.0;

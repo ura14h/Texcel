@@ -88,49 +88,6 @@ pub(super) fn visible_rows_in_pixels(
     visible
 }
 
-// Measure wrapped cell content to determine row heights.
-pub(super) fn measure_wrapped_cells(
-    ctx: &egui::Context,
-    wrapped_cells: &[(CellAddress, String, f32)],
-    wrap_text: bool,
-    show_invisibles: bool,
-    monospace: bool,
-    scale: f32,
-) -> f32 {
-    let mut height = ROW_HEIGHT * scale;
-    for (_, text, width) in wrapped_cells {
-        if text.is_empty() {
-            continue;
-        }
-        let cell_style = CellTextStyle {
-            wrap_text,
-            alignment: None,
-        };
-        let mut job = cell_layout_job(
-            text,
-            CellTextFormat {
-                style: &cell_style,
-                color: Color32::BLACK,
-                width: *width,
-                show_invisibles,
-                scale,
-            },
-        )
-        .0;
-        if monospace {
-            apply_grid_monospace(&mut job);
-        }
-        let line_height = super::cell_paint::cell_text_line_height(ctx, &job);
-        let galley = ctx.fonts_mut(|fonts| fonts.layout_job(job));
-        height = height.max(
-            (measured_galley_height(&galley, line_height)
-                + GRID_CELL_TEXT_VERTICAL_PADDING * scale)
-                .min(MAX_WRAPPED_ROW_HEIGHT * scale),
-        );
-    }
-    height
-}
-
 // Measure the rendered height of one row in the current view.
 pub(super) fn measure_display_row_height(
     ctx: &egui::Context,
