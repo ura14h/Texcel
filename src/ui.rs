@@ -97,6 +97,7 @@ pub struct TexcelApp {
     window_states: BTreeMap<egui::ViewportId, window_state::WindowState>,
     current_viewport: Option<egui::ViewportId>,
     multi_window_mode: bool,
+    /// Set by the window host, which then takes worker results and moves openings forward.
     host_result_dispatch: bool,
     app_exit_start_pending: bool,
     app_exit_transaction: bool,

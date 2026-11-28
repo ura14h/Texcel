@@ -135,8 +135,8 @@ impl TexcelApp {
         self.process_recovery(&ctx);
         self.advance_app_close(&ctx);
         self.process_calculation_results(&ctx);
-        // The window host moves openings forward itself; a single window does it here.
-        if !self.multi_window_mode {
+        // The window host moves openings forward itself; without a host this pass does it.
+        if !self.host_result_dispatch {
             self.advance_opening_fits(&ctx);
             self.refresh_opening_progress();
             if self.has_opening_documents() {
