@@ -117,7 +117,7 @@ Texcel starts with an empty sheet (Table1). You can type into any cell right awa
 | Name box | The address of the selected cell, such as `B2`. Type `C12` or `A1:D20` and press Enter to go to that cell or range. Absolute and mixed forms such as `$C$12`, `$C12`, and `C$12` also work |
 | ✗ ✓ fx | ✗ cancels the entry, ✓ confirms it, and fx inserts a function. ✗ and ✓ work only while you are entering text |
 | Formula bar | The selected cell's source, including formulas and Markdown marks. Click it to edit from that point |
-| Live / Source | Right of the formula bar. Switches the display mode; the current mode is highlighted |
+| Live Editing / Source Editing | Right of the formula bar. Shows the current display mode; click it to switch to the other one |
 | Grid | Cells with column letters (A, B, …) and row numbers (1, 2, …). Letters and numbers inside the range that is saved to the file are dark; those outside it are light |
 | Table tabs | Switch between the tables in the document. **+** adds a table |
 | List | Picks a table from a list. Each entry shows the table name and the content of the filled cell nearest to A1. For a Markdown file you opened, it shows a minimap of the whole file right of the sheet instead; click a table on it to switch to that table |
@@ -131,7 +131,7 @@ Each window holds one document. New Document and Open… open a new window. If t
 - **Live Editing** (default) shows formula results and renders Markdown formatting such as bold, italic, and links.
 - **Source Editing** shows the Markdown source of every cell, including formulas and marks such as `**`.
 
-Switch with Live and Source to the right of the formula bar, the View menu, or Ctrl+/ (Cmd+/ on macOS). Switching does not change the document.
+Switch with the button to the right of the formula bar, the View menu, or Ctrl+/ (Cmd+/ on macOS). Switching does not change the document.
 
 ## 5. Basic operations
 

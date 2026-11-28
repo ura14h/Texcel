@@ -11,7 +11,7 @@ On macOS, read Ctrl as Cmd below, except where Control is written out.
 | Name box | The selected cell's address. Type `C12` or `A1:D20` and press Enter to select it |
 | Buttons left of the formula bar | Cancel the entry, confirm it, or insert a function (fx) |
 | Formula bar | The selected cell's source, with formulas and Markdown marks. Click it to edit from that point |
-| Live / Source | Right of the formula bar. Switches the display mode |
+| Live Editing / Source Editing | Right of the formula bar. Shows the current display mode; click to switch |
 | Table tabs and List | Switch between the tables in the document. **+** adds a table |
 | Zoom | The sheet zoom. Click it to choose another zoom |
 | Status bar | Finished work, warnings, and how many cells, rows, and columns are selected |

@@ -1224,9 +1224,9 @@ fn cancelled_cell_preedit_reaches_the_platform_output() {
                     Pos2::new(first_row.center().x, first_row.top() - HEADER_HEIGHT / 2.0)
                 }
                 "mode-bar" => harness
-                    .query_all(By::new().role(egui::Role::Button).label("Source Editing"))
+                    .query_all(By::new().role(egui::Role::Button).label("Live Editing"))
                     .next()
-                    .expect("the source mode control is visible beside the formula bar")
+                    .expect("the mode switch is visible beside the formula bar")
                     .rect()
                     .center(),
                 _ => unreachable!(),
