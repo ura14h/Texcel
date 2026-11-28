@@ -163,7 +163,10 @@ impl TexcelApp {
                 self.request_all_columns_auto_fit(ctx, document_id, table_id);
                 return;
             }
-            LayoutAction::FreezeRows | LayoutAction::FreezeColumns | LayoutAction::Unfreeze => {}
+            LayoutAction::FreezeCells
+            | LayoutAction::FreezeRows
+            | LayoutAction::FreezeColumns
+            | LayoutAction::Unfreeze => {}
         }
         let address = active_cell;
         let values = self
@@ -173,6 +176,14 @@ impl TexcelApp {
             .and_then(|document| {
                 let layout = &document.view(table_id)?.layout;
                 let values = match action {
+                    // Rows above and columns left of the selection, both through it.
+                    LayoutAction::FreezeCells => vec![(
+                        LayoutTarget::Freeze,
+                        LayoutValue::Freeze(FrozenPanes {
+                            rows: address.row.saturating_add(1),
+                            columns: address.column.saturating_add(1),
+                        }),
+                    )],
                     LayoutAction::FreezeRows => {
                         let frozen = layout.frozen();
                         vec![(

@@ -128,6 +128,7 @@ view-mode-help = Switch the display mode for every table in this document. This 
 top-imported-document-name = { $name } (imported)
 view-column-width = Column Width…
 view-autofit-columns = AutoFit Column Widths
+view-freeze-cells = Freeze Through Selected Cell
 view-freeze-rows = Freeze Through Selected Row
 view-freeze-columns = Freeze Through Selected Column
 view-unfreeze = Unfreeze Panes

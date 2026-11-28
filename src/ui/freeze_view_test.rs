@@ -72,3 +72,17 @@ fn freezing_rows_keeps_frozen_cells_whole() {
     assert_eq!(horizontal.len(), 1);
     assert!(horizontal[0] > b3.bottom(), "the edge does not cover row 3");
 }
+
+#[test]
+/// Freezes the rows and the columns through the selected cell at once.
+fn freezing_through_the_selected_cell_freezes_both() {
+    let harness = frozen_through_b3(LayoutAction::FreezeCells);
+    let document = harness.state().workspace.active_document().unwrap();
+    let table_id = document.active_table().unwrap().id;
+    let frozen = document.view(table_id).unwrap().layout.frozen();
+    assert_eq!((frozen.rows, frozen.columns), (3, 2));
+    let b3 = cell_rect(&harness, "B3").expect("frozen B3 is visible");
+    let (vertical, horizontal) = frozen_edges(&harness);
+    assert_eq!((vertical.len(), horizontal.len()), (1, 1));
+    assert!(vertical[0] > b3.right() && horizontal[0] > b3.bottom());
+}

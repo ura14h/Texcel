@@ -175,6 +175,7 @@ pub(super) enum CellFormatAction {
 pub(super) enum LayoutAction {
     EditColumnWidth,
     AutoFitAllColumns,
+    FreezeCells,
     FreezeRows,
     FreezeColumns,
     Unfreeze,

@@ -151,6 +151,7 @@ impl TexcelApp {
             "view.zoom_reset" => !blocked && (self.sheet_zoom.0 - 1.0).abs() > f32::EPSILON,
             "view.column_width"
             | "view.autofit_columns"
+            | "view.freeze_cells"
             | "view.freeze_rows"
             | "view.freeze_columns"
             | "view.unfreeze" => {

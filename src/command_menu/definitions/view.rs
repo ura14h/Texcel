@@ -38,6 +38,13 @@ const VIEW_AUTOFIT_COLUMNS: MenuAction = action(
     NoKey,
     MenuCheck::None,
 );
+/// Freezes the rows and the columns through the selected cell at once.
+const VIEW_FREEZE_CELLS: MenuAction = action(
+    "view.freeze_cells",
+    "view-freeze-cells",
+    NoKey,
+    MenuCheck::None,
+);
 const VIEW_FREEZE_ROWS: MenuAction = action(
     "view.freeze_rows",
     "view-freeze-rows",
@@ -61,6 +68,7 @@ const FREEZE: MenuSubmenu = submenu(
     "menu.view.freeze",
     "menu-view-freeze",
     &[
+        A(&VIEW_FREEZE_CELLS),
         A(&VIEW_FREEZE_ROWS),
         A(&VIEW_FREEZE_COLUMNS),
         A(&VIEW_UNFREEZE),

@@ -128,6 +128,7 @@ view-mode-help = 文書内のすべての表の表示を切り替えます。フ
 top-imported-document-name = { $name }（取り込み）
 view-column-width = 列の幅…
 view-autofit-columns = 列の幅の自動調整
+view-freeze-cells = 選択セルまで固定
 view-freeze-rows = 選択行まで固定
 view-freeze-columns = 選択列まで固定
 view-unfreeze = 固定を解除

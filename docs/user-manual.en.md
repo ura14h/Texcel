@@ -265,7 +265,7 @@ The View menu has these commands. None of them change the file.
 
 - Zoom: Ctrl/Cmd++ and Ctrl/Cmd+− change the sheet zoom in steps of 10%, and Ctrl/Cmd+0 returns to 100%. Click the percentage at the lower right of the window to choose 200%, 100%, 75%, 50%, 25%, or a custom zoom from 10% to 400%. Each window has its own sheet zoom; menus, the formula bar, and dialogs keep their size.
 - Text Wrapping: wrap long content or not.
-- Freeze Panes: keep rows or columns up to the selection in view while scrolling.
+- Freeze Panes: keep the rows and columns through the selected cell, the rows through the selected row, or the columns through the selected column in view while scrolling.
 - Column Width…: set a column's width in half-width characters (up to two decimal places). A width of 10 holds ten monospace half-width characters.
 - AutoFit Column Widths: fit every column of the table to its contents.
 
