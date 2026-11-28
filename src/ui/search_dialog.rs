@@ -86,6 +86,7 @@ impl TexcelApp {
                                     }
                                 })
                                 .show_ui(ui, |ui| {
+                                    visual::prepare_context_menu(ui);
                                     ui.selectable_value(
                                         &mut dialog.scope,
                                         SearchScope::Selection,
@@ -112,6 +113,7 @@ impl TexcelApp {
                                     }
                                 })
                                 .show_ui(ui, |ui| {
+                                    visual::prepare_context_menu(ui);
                                     ui.selectable_value(
                                         &mut dialog.representation,
                                         crate::structure::SearchRepresentation::Source,

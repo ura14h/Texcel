@@ -26,6 +26,7 @@ pub(super) fn language_selector(
         .selected_text(selected)
         .width(control_width(ui))
         .show_ui(ui, |ui| {
+            visual::prepare_context_menu(ui);
             ui.selectable_value(
                 choice,
                 LanguageChoice::System,
@@ -113,6 +114,7 @@ pub(super) fn draw_appearance_page(
                     })
                     .width(font_width)
                     .show_ui(ui, |ui| {
+                        visual::prepare_context_menu(ui);
                         ui.selectable_value(
                             font_preset,
                             FontPreset::Auto,
@@ -175,6 +177,7 @@ fn ui_font_points_selector(
         .selected_text(points_text(*ui_font_points))
         .width(width)
         .show_ui(ui, |ui| {
+            visual::prepare_context_menu(ui);
             for points in crate::settings::ui_font_point_choices() {
                 ui.selectable_value(ui_font_points, points, points_text(points));
             }

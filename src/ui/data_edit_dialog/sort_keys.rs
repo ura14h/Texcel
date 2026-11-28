@@ -29,6 +29,7 @@ pub(super) fn draw_sort_keys(
                     }
                 })
                 .show_ui(ui, |ui| {
+                    visual::prepare_context_menu(ui);
                     ui.selectable_value(
                         &mut key.kind,
                         crate::structure::SortValueKind::Text,

@@ -136,6 +136,7 @@ fn draw_preview_table_choice(
                         .map_or_else(String::new, |(_, name)| name.clone()),
                 )
                 .show_ui(ui, |ui| {
+                    visual::prepare_context_menu(ui);
                     for (index, name) in &tables {
                         ui.selectable_value(&mut state.selected_table, *index, name);
                     }

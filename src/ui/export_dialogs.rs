@@ -100,6 +100,7 @@ impl TexcelApp {
                                     ))
                                     .width(ui.available_width())
                                     .show_ui(ui, |ui| {
+                                        visual::prepare_context_menu(ui);
                                         for (id, name) in &tables {
                                             ui.selectable_value(
                                                 &mut state.options.scope,

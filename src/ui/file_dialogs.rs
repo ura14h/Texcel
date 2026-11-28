@@ -102,6 +102,7 @@ impl TexcelApp {
                             ))
                             .width(ui.available_width().min(360.0))
                             .show_ui(ui, |ui| {
+                                visual::prepare_context_menu(ui);
                                 ui.selectable_value(
                                     &mut settings.selected_encoding,
                                     EncodingChoice::Auto,
